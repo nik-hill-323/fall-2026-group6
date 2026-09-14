@@ -64,8 +64,6 @@
                config-driven repository (WM-Concord) with a reusable diagnostic interface.
             
 
-![Figure 1: Example figure](2026_Fall_10.png)
-*Figure 1: Caption*
 
 ## 2 Dataset:  
 
