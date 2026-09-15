@@ -1,0 +1,24 @@
+# Built on the course AMI (Ubuntu 26.04, A10G, CUDA 13). Install with:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu130
+# Python 3.13
+accelerate==1.15.0
+automata-lib==9.2.0
+einops==0.8.2
+geopandas==1.1.4
+jaxtyping==0.3.11
+jupyterlab==4.6.2
+matplotlib==3.11.1
+networkx==3.6.1
+numpy==2.4.4
+osmnx==2.1.1
+pandas==3.0.5
+pysr==2.4.0
+rdkit==2026.3.6
+scikit-learn==1.9.0
+scipy==1.18.0
+shapely==2.1.2
+torch==2.13.0+cu130
+torchaudio==2.11.0+cu130
+torchvision==0.28.0+cu130
+transformer-lens==3.9.0
+transformers==5.14.1
