@@ -4,62 +4,62 @@ Note: Use Markdown Cheat Sheet download in the directory as needed.
   - https://github.com/im-luka/markdown-cheatsheet
 
 ---
-## Date: Week 1 - Month Day Year 
+## Date: Week 1 - September 1, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Team formed: Nikhil, Siddu, Venkatesh, Viharika
+    - First proposals (LongAgent Bench, SpecComp Bench) submitted as petitions
+    - Advisor feedback: proposals too easy for four people over one semester
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Submit petition proposals
+* [x] Collect advisor feedback
+* [x] Search for a harder project on transformer internals
 ---
 
-## Date: Week 2 - Month Day Year 
+## Date: Week 2 - September 8, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Considered SAE Faithful (proposal 7), already taken by another group
+    - Settled on WM Concord: do four world model diagnostics agree?
+    - Proposal written and submitted as proposal 10
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Write and submit WM Concord proposal
+* [x] Pick the four diagnostics (D1 to D4) and hypotheses (H1 to H4)
+* [x] Collect core papers (Li 2023, Vafa 2024, Vafa 2025, Yuan and Sogaard 2025)
 ---
-## Date: Week 3 - Month Day Year 
+## Date: Week 3 - September 15, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Repository created with the required folder template and main branch ruleset
+    - AWS g5.2xlarge access and environment setup
+    - Project board, first milestone, and first issues created
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Create repo, ruleset, milestone, and project board
+* [x] Pin requirements.txt on the A10G instance (PR #3)
+* [x] Literature notes for 4 core papers (PR #10, closes #1)
+* [ ] Draft run_matrix.csv (#4)
+* [ ] Download Othello and Vafa 2024 artifacts (#2)
 ---
-## Date: Week 4 - Month Day Year 
+## Date: Week 4 - September 22, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #1 (#5): no code yet, about 3 weeks behind, two members without commits
+    - New requirements: vector figures only, draw.io or SVG diagrams, LaTeX report with 10+ cited works by October 6
+    - Plan: Othello first, with diagnostic D4 (linear probe) end to end before the October 20 presentation
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Give instructor Write access to the project board
+* [x] Re date Week 3 milestone, add Preliminary and Final milestones
+* [x] One owner per issue
+* [x] Merge requirements.txt and references.bib
+* [x] Move proposal to reports/proposal.md, rewrite README
+* [ ] Start LaTeX report skeleton with literature review section
+* [ ] Add pytest and a GitHub Action
+* [ ] Every team member lands at least one reviewed pull request this week
+* [ ] Othello model zoo and D4 probe running end to end on the g5.2xlarge
 ---
 ## Date: Week 5 - Month Day Year 
 - Topics of discussion
