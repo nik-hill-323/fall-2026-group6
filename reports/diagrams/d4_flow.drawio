@@ -1,0 +1,173 @@
+<mxfile host="app.diagrams.net" agent="wm-concord">
+  <diagram id="d4flowfull" name="D4 full pipeline">
+    <mxGraphModel dx="1557" dy="1070" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="laneA" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#999999;verticalAlign=top;fontSize=14;fontStyle=1;fontColor=#666666;" value="Lane A: data and ground truth" vertex="1">
+          <mxGeometry height="620" width="320" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="laneB" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#999999;verticalAlign=top;fontSize=14;fontStyle=1;fontColor=#666666;" value="Lane B: model zoo" vertex="1">
+          <mxGeometry height="620" width="320" x="390" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="laneC" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#999999;verticalAlign=top;fontSize=14;fontStyle=1;fontColor=#666666;" value="Lane C: representation probing, one model at a time" vertex="1">
+          <mxGeometry height="1080" width="360" x="740" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="A1. Raw Othello games&#xa;championship and synthetic move lists" vertex="1">
+          <mxGeometry height="60" width="280" x="60" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="A2. Replay through the Othello rules&#xa;the simulator recomputes every board" vertex="1">
+          <mxGeometry height="60" width="280" x="60" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="A3. True board after every move&#xa;this is the answer key" vertex="1">
+          <mxGeometry height="60" width="280" x="60" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="A4. Relative labels per square&#xa;mine, theirs, empty, not black and white" vertex="1">
+          <mxGeometry height="60" width="280" x="60" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="A5. Split by game&#xa;train and test games never mix" vertex="1">
+          <mxGeometry height="60" width="280" x="60" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="A6. Tokenize the moves&#xa;one token per square played" vertex="1">
+          <mxGeometry height="60" width="280" x="60" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="B1. One row of the run matrix&#xa;size, training distribution, seed" vertex="1">
+          <mxGeometry height="60" width="280" x="410" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="B2. Train on next move prediction&#xa;the model is never shown a board" vertex="1">
+          <mxGeometry height="60" width="280" x="410" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="B3. Validation gate&#xa;held out next move accuracy, weak models flagged" vertex="1">
+          <mxGeometry height="60" width="280" x="410" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="B4. Save checkpoint and config&#xa;registry holds path, config hash, seed" vertex="1">
+          <mxGeometry height="60" width="280" x="410" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="B5. Repeat for every run matrix row&#xa;the result is the model zoo" vertex="1">
+          <mxGeometry height="60" width="280" x="410" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="layerloop" parent="1" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=none;strokeColor=#b85450;verticalAlign=top;align=right;fontSize=11;fontColor=#b85450;" value="repeat for every layer" vertex="1">
+          <mxGeometry height="645" width="340" x="750" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="C1. Load one model from the registry" vertex="1">
+          <mxGeometry height="50" width="300" x="770" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="C2. Hook the activations at layer L&#xa;the residual stream, one vector per move" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="C3. Build the probe table&#xa;one row: vector plus 64 square labels" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="C4. Train the linear probe&#xa;logistic regression, one per square" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="C5. Train the nonlinear probe&#xa;one hidden layer, same splits" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="C6. Train the control probe&#xa;same probe on shuffled labels" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="C7. Score on held out games&#xa;probe accuracy and control accuracy" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="C8. Selectivity&#xa;probe accuracy minus control accuracy" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" value="C9. Causal patch&#xa;edit the vector so one square flips" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="840" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" value="C10. Do the predicted moves follow?&#xa;yes means causal, no means decodable but not causal" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="C11. Write the result row&#xa;model, layer, probe type, accuracy, selectivity, causal flag" vertex="1">
+          <mxGeometry height="60" width="300" x="770" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="ea12" edge="1" parent="1" source="a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="a2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea23" edge="1" parent="1" source="a2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="a3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea34" edge="1" parent="1" source="a3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="a4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea45" edge="1" parent="1" source="a4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="a5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea56" edge="1" parent="1" source="a5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="a6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eb12" edge="1" parent="1" source="b1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="b2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eb23" edge="1" parent="1" source="b2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="b3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eb34" edge="1" parent="1" source="b3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="b4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="eb45" edge="1" parent="1" source="b4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="b5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec12" edge="1" parent="1" source="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec23" edge="1" parent="1" source="c2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec34" edge="1" parent="1" source="c3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec45" edge="1" parent="1" source="c4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec56" edge="1" parent="1" source="c5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec67" edge="1" parent="1" source="c6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec78" edge="1" parent="1" source="c7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec89" edge="1" parent="1" source="c8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec910" edge="1" parent="1" source="c9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ec1011" edge="1" parent="1" source="c10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="c11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ea6b2" edge="1" parent="1" source="a6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;" target="b2" value="training data">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="375" y="580" />
+              <mxPoint x="375" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ea4c3" edge="1" parent="1" source="a4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;" value="labels">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="50" y="400.03" />
+              <mxPoint x="50" y="20.1" />
+              <mxPoint x="750" y="20.1" />
+              <mxPoint x="750" y="320.03" />
+            </Array>
+            <mxPoint x="80" y="400" as="sourcePoint" />
+            <mxPoint x="789.9999999999998" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eb5c1" edge="1" parent="1" source="b5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;" target="c1" value="each model">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="580" />
+              <mxPoint x="720" y="125" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
