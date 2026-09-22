@@ -1,12 +1,26 @@
-"""Generate src/docs/run_matrix.csv, the fixed list of every model to train and
-every (model x diagnostic) evaluation to run.
+"""Generate the fixed run matrix: every model to train and every diagnostic
+run to perform. Two files:
 
-Edit the AXES block, then run from the repo root:
+    src/docs/models.csv      one row per model      (243 rows)
+    src/docs/run_matrix.csv  one row per evaluation (972 rows, 4 per model)
+
+Scope as agreed at the Sep 22 session:
+    domains        othello, maps, interpreter
+    architectures  transformer, lstm, mamba
+    scales         small, medium, large
+    distributions  3 per domain (see DISTRIBUTIONS)
+    seeds          0, 1, 2
+    diagnostics    D1, D2, D3, D4
+
+Naming (used for configs/, checkpoints/, results/):
+    model_id = {domain}_{arch}_{scale}_{distribution}_s{seed}
+    run_id   = {model_id}_{diagnostic}
+
+Run from the repo root:
 
     python src/component/run_matrix.py
 
-The file it writes is the contract for the whole project. Once Week 1 closes,
-rows are only ever marked done or skipped, never added.
+Once frozen, rows are only ever marked done or skipped, never added.
 """
 
 from __future__ import annotations
@@ -15,101 +29,99 @@ import csv
 import itertools
 from pathlib import Path
 
-# --------------------------------------------------------------------------- #
-# AXES
-# --------------------------------------------------------------------------- #
-
-DOMAINS: list[str] = ["navigation", "lattice", "othello", "connect4", "interpreter", "chemistry"]
-ARCHS: list[str] = ["transformer", "ssm", "lstm"]
+DOMAINS: list[str] = ["othello", "maps", "interpreter"]
+ARCHS: list[str] = ["transformer", "lstm", "mamba"]
 SCALES: list[str] = ["small", "medium", "large"]
-DISTS: list[str] = ["expert", "noisy", "random"]
 SEEDS: list[int] = [0, 1, 2]
+DIAGNOSTICS: list[str] = ["D1", "D2", "D3", "D4"]
 
-# Tier 4 hold-outs: kept out of every phase until Week 14.
-HELD_OUT_DOMAIN = "chemistry"
-HELD_OUT_ARCH = "lstm"
-
-# What "expert / noisy / random" means in each domain.
-DIST_MEANING: dict[str, dict[str, str]] = {
-    "navigation": {"expert": "shortest paths", "noisy": "noisy shortest paths", "random": "random walks"},
-    "lattice": {"expert": "shortest paths", "noisy": "noisy shortest paths", "random": "random walks"},
-    "othello": {"expert": "championship games", "noisy": "championship + random moves", "random": "random legal games"},
-    "connect4": {"expert": "minimax play", "noisy": "minimax + random moves", "random": "random legal games"},
-    "interpreter": {"expert": "structured programs", "noisy": "structured + random ops", "random": "random valid ops"},
-    "chemistry": {"expert": "USPTO / ORD routes", "noisy": "routes + random steps", "random": "random valid steps"},
+# Three training distributions per domain. Othello and interpreter are
+# tentative until their generators exist.
+DISTRIBUTIONS: dict[str, list[str]] = {
+    "maps": ["shortest_paths", "noisy_shortest_paths", "random_walks"],
+    "othello": ["synthetic", "championship", "mixed"],
+    "interpreter": ["random", "structured_short", "structured_long"],
 }
 
-DIAGNOSTICS: list[str] = ["d1_next_token", "d2_myhill_nerode", "d3_inductive_bias", "d4_probing", "fragility"]
+# H4 hold-outs. Not decided yet; these are the suggested values from the
+# handoff and are flagged in the held_out column so they can be filtered.
+HELD_OUT_DOMAIN = "interpreter"
+HELD_OUT_ARCH = "mamba"
 
-# Training priority. Tier 1 trains first; if the Week 5 gate trips, tier 3 is
-# dropped first, then tier 2 (this is the "cut scale first, then seeds" rule).
-def tier(scale: str, seed: int) -> int:
-    if scale == "medium" and seed == 0:
-        return 1
-    if scale in ("small", "medium") and seed in (0, 1):
-        return 2
-    return 3
+DIAG_NAMES = {
+    "D1": "next_token",
+    "D2": "state_equiv",
+    "D3": "inductive_bias",
+    "D4": "probing",
+}
 
-
-# --------------------------------------------------------------------------- #
-# GENERATION
-# --------------------------------------------------------------------------- #
 
 def model_rows() -> list[dict]:
     rows = []
-    for domain, arch, scale, dist, seed in itertools.product(DOMAINS, ARCHS, SCALES, DISTS, SEEDS):
-        held_out = domain == HELD_OUT_DOMAIN or arch == HELD_OUT_ARCH
-        rows.append(
-            {
-                "run_id": f"{domain}-{arch}-{scale}-{dist}-s{seed}",
-                "kind": "train",
-                "domain": domain,
-                "arch": arch,
-                "scale": scale,
-                "train_dist": dist,
-                "train_dist_meaning": DIST_MEANING[domain][dist],
-                "seed": seed,
-                "diagnostic": "",
-                "held_out": "yes" if held_out else "no",
-                "tier": 4 if held_out else tier(scale, seed),
-                "status": "planned",
-                "notes": "",
-            }
-        )
+    for domain in DOMAINS:
+        for arch, scale, dist, seed in itertools.product(ARCHS, SCALES, DISTRIBUTIONS[domain], SEEDS):
+            model_id = f"{domain}_{arch}_{scale}_{dist}_s{seed}"
+            rows.append(
+                {
+                    "model_id": model_id,
+                    "domain": domain,
+                    "arch": arch,
+                    "scale": scale,
+                    "distribution": dist,
+                    "seed": seed,
+                    "held_out": "yes" if (domain == HELD_OUT_DOMAIN or arch == HELD_OUT_ARCH) else "no",
+                    "config": f"configs/runs/{model_id}.yaml",
+                    "checkpoint": f"checkpoints/{model_id}/model.pt",
+                    "status": "planned",
+                    "notes": "",
+                }
+            )
     return rows
 
 
 def eval_rows(models: list[dict]) -> list[dict]:
     rows = []
     for m in models:
-        for diag in DIAGNOSTICS:
-            r = dict(m)
-            r["run_id"] = f"{m['run_id']}::{diag}"
-            r["kind"] = "eval"
-            r["diagnostic"] = diag
-            rows.append(r)
+        for d in DIAGNOSTICS:
+            rows.append(
+                {
+                    "run_id": f"{m['model_id']}_{d}",
+                    "model_id": m["model_id"],
+                    "diagnostic": d,
+                    "domain": m["domain"],
+                    "arch": m["arch"],
+                    "scale": m["scale"],
+                    "distribution": m["distribution"],
+                    "seed": m["seed"],
+                    "held_out": m["held_out"],
+                    "result": f"results/{d}_{DIAG_NAMES[d]}/{m['model_id']}.json",
+                    "status": "planned",
+                    "notes": "",
+                }
+            )
     return rows
 
 
-def main() -> None:
-    out = Path(__file__).resolve().parents[1] / "docs" / "run_matrix.csv"
-    out.parent.mkdir(parents=True, exist_ok=True)
-
-    models = model_rows()
-    evals = eval_rows(models)
-    rows = models + evals
-
-    with out.open("w", newline="") as f:
+def write(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
 
-    dev = [m for m in models if m["held_out"] == "no"]
-    by_tier = {t: sum(1 for m in dev if m["tier"] == t) for t in (1, 2, 3)}
-    print(f"wrote {out}")
-    print(f"models total: {len(models)}  (development: {len(dev)}, held-out: {len(models) - len(dev)})")
-    print(f"development models by tier: {by_tier}")
-    print(f"evaluations: {len(evals)}")
+
+def main() -> None:
+    docs = Path(__file__).resolve().parents[1] / "docs"
+    models = model_rows()
+    evals = eval_rows(models)
+    write(docs / "models.csv", models)
+    write(docs / "run_matrix.csv", evals)
+
+    per_domain = {d: sum(1 for m in models if m["domain"] == d) for d in DOMAINS}
+    dev = sum(1 for m in models if m["held_out"] == "no")
+    print(f"models.csv     : {len(models)} models  {per_domain}")
+    print(f"run_matrix.csv : {len(evals)} evaluations ({len(DIAGNOSTICS)} per model)")
+    print(f"development    : {dev} models   held-out (H4): {len(models) - dev}")
 
 
 if __name__ == "__main__":
