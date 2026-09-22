@@ -1,4 +1,99 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560" font-family="Helvetica, Arial, sans-serif" font-size="13">
+<svg content="&lt;mxfile host=&quot;app.diagrams.net&quot; type=&quot;device&quot;&gt;
+  &lt;diagram id=&quot;d3-inductive-bias&quot; name=&quot;D3 inductive-bias probe&quot;&gt;
+    &lt;mxGraphModel dx=&quot;1200&quot; dy=&quot;700&quot; grid=&quot;1&quot; gridSize=&quot;10&quot; guides=&quot;1&quot; tooltips=&quot;1&quot; connect=&quot;1&quot; arrows=&quot;1&quot; fold=&quot;1&quot; page=&quot;1&quot; pageScale=&quot;1&quot; pageWidth=&quot;1169&quot; pageHeight=&quot;827&quot; math=&quot;0&quot; shadow=&quot;0&quot;&gt;
+      &lt;root&gt;
+        &lt;mxCell id=&quot;0&quot;/&gt;
+        &lt;mxCell id=&quot;1&quot; parent=&quot;0&quot;/&gt;
+
+        &lt;mxCell id=&quot;title&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font style=&amp;quot;font-size: 18px&amp;quot;&amp;gt;Diagnostic 3: Inductive-bias probe&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;lt;font color=&amp;quot;#666666&amp;quot;&amp;gt;Does the pretrained model carry the world model? Give it a new job with almost no data and see what it brings.&amp;lt;/font&amp;gt;&quot; style=&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;200&quot; y=&quot;20&quot; width=&quot;780&quot; height=&quot;50&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+
+        &lt;mxCell id=&quot;lblMain&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font color=&amp;quot;#888888&amp;quot;&amp;gt;MAIN PATH&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&quot; style=&quot;text;html=1;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;20&quot; y=&quot;140&quot; width=&quot;100&quot; height=&quot;20&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;lblBase&quot; value=&quot;&amp;lt;b&amp;gt;&amp;lt;font color=&amp;quot;#888888&amp;quot;&amp;gt;BASELINE&amp;lt;/font&amp;gt;&amp;lt;/b&amp;gt;&quot; style=&quot;text;html=1;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;20&quot; y=&quot;390&quot; width=&quot;100&quot; height=&quot;20&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+
+        &lt;!-- 1 Pretrained --&gt;
+        &lt;mxCell id=&quot;b1&quot; value=&quot;&amp;lt;b&amp;gt;1  Pretrained model&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;trained on next-move prediction&amp;lt;br&amp;gt;never told the rules&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0fe;strokeColor=#1a56c4;strokeWidth=2;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;40&quot; y=&quot;90&quot; width=&quot;170&quot; height=&quot;90&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 2 New task --&gt;
+        &lt;mxCell id=&quot;b2&quot; value=&quot;&amp;lt;b&amp;gt;2  New task&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;&amp;quot;where is the walker now?&amp;quot;&amp;lt;br&amp;gt;only 16 labelled examples&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff4e0;strokeColor=#c47a00;strokeWidth=2;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;270&quot; y=&quot;235&quot; width=&quot;170&quot; height=&quot;90&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 3 Adapt --&gt;
+        &lt;mxCell id=&quot;b3&quot; value=&quot;&amp;lt;b&amp;gt;3  Adapt&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;fine-tune whole model, gently&amp;lt;br&amp;gt;add a new output head&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0fe;strokeColor=#1a56c4;strokeWidth=2;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;500&quot; y=&quot;90&quot; width=&quot;170&quot; height=&quot;90&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 4 Test set --&gt;
+        &lt;mxCell id=&quot;b4&quot; value=&quot;&amp;lt;b&amp;gt;4  Fresh test set&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;300 unseen sequences&amp;lt;br&amp;gt;same rules, hit the walls&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#fff4e0;strokeColor=#c47a00;strokeWidth=2;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;730&quot; y=&quot;235&quot; width=&quot;170&quot; height=&quot;90&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 5 Acc A --&gt;
+        &lt;mxCell id=&quot;b5&quot; value=&quot;&amp;lt;b&amp;gt;5  Accuracy A&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;0.64&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0fe;strokeColor=#1a56c4;strokeWidth=2;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;960&quot; y=&quot;100&quot; width=&quot;120&quot; height=&quot;70&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 6 Untrained --&gt;
+        &lt;mxCell id=&quot;b6&quot; value=&quot;&amp;lt;b&amp;gt;6  Untrained model&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;same architecture&amp;lt;br&amp;gt;random weights&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f3f3;strokeColor=#777777;strokeWidth=2;dashed=1;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;40&quot; y=&quot;380&quot; width=&quot;170&quot; height=&quot;90&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 7 Adapt baseline --&gt;
+        &lt;mxCell id=&quot;b7&quot; value=&quot;&amp;lt;b&amp;gt;7  Adapt&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;same 16 examples&amp;lt;br&amp;gt;same number of steps&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f3f3;strokeColor=#777777;strokeWidth=2;dashed=1;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;500&quot; y=&quot;380&quot; width=&quot;170&quot; height=&quot;90&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 8 Acc B --&gt;
+        &lt;mxCell id=&quot;b8&quot; value=&quot;&amp;lt;b&amp;gt;8  Accuracy B&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;0.39&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f3f3;strokeColor=#777777;strokeWidth=2;dashed=1;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;960&quot; y=&quot;390&quot; width=&quot;120&quot; height=&quot;70&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;!-- 9 Gap --&gt;
+        &lt;mxCell id=&quot;b9&quot; value=&quot;&amp;lt;b&amp;gt;9  Gap&amp;lt;/b&amp;gt;&amp;lt;br&amp;gt;A minus B&amp;lt;br&amp;gt;+0.25&quot; style=&quot;rhombus;whiteSpace=wrap;html=1;fillColor=#e6f7ea;strokeColor=#1e7d3a;strokeWidth=2;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;1090&quot; y=&quot;225&quot; width=&quot;90&quot; height=&quot;110&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+
+        &lt;!-- Verdict note --&gt;
+        &lt;mxCell id=&quot;note&quot; value=&quot;&amp;lt;b&amp;gt;Reading the gap.&amp;lt;/b&amp;gt; Big and positive: pretraining carried the world model into the new task. Near zero: it carried nothing useful.&amp;lt;br&amp;gt;Extra check: if the adapted model matches the no-walls shortcut (0.53) on wall cases, it learned counting, not the world.&quot; style=&quot;rounded=1;whiteSpace=wrap;html=1;fillColor=#f7f7f7;strokeColor=#bbbbbb;align=center;&quot; vertex=&quot;1&quot; parent=&quot;1&quot;&gt;
+          &lt;mxGeometry x=&quot;270&quot; y=&quot;495&quot; width=&quot;630&quot; height=&quot;50&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+
+        &lt;!-- Edges --&gt;
+        &lt;mxCell id=&quot;e13&quot; value=&quot;model weights&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b1&quot; target=&quot;b3&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e67&quot; value=&quot;model weights&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b6&quot; target=&quot;b7&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e23&quot; value=&quot;16 labelled seqs&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#c47a00;fontColor=#c47a00;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b2&quot; target=&quot;b3&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e27&quot; value=&quot;16 labelled seqs&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#c47a00;fontColor=#c47a00;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b2&quot; target=&quot;b7&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e34&quot; value=&quot;predictions&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b3&quot; target=&quot;b4&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e74&quot; value=&quot;predictions&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b7&quot; target=&quot;b4&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e45&quot; value=&quot;vs true labels&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b4&quot; target=&quot;b5&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e48&quot; value=&quot;vs true labels&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b4&quot; target=&quot;b8&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e59&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#1e7d3a;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b5&quot; target=&quot;b9&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+        &lt;mxCell id=&quot;e89&quot; style=&quot;edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#1e7d3a;strokeWidth=1.5;&quot; edge=&quot;1&quot; parent=&quot;1&quot; source=&quot;b8&quot; target=&quot;b9&quot;&gt;
+          &lt;mxGeometry relative=&quot;1&quot; as=&quot;geometry&quot;/&gt;
+        &lt;/mxCell&gt;
+      &lt;/root&gt;
+    &lt;/mxGraphModel&gt;
+  &lt;/diagram&gt;
+&lt;/mxfile&gt;
+" xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560" font-family="Helvetica, Arial, sans-serif" font-size="13">
   <defs>
     <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="strokeWidth">
       <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
