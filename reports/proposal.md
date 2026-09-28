@@ -320,9 +320,9 @@
                   probed by this literature, and to a held-out architecture family?
 
 
-            PHASE 5: PAPER AND CODE RELEASE (Weeks 15-16)
+            PHASE 5: PAPER AND CODE RELEASE (Weeks 14-15)
 
-            [Week 15: Research Paper Draft]
+            [Weeks 14 and 15: Research Paper Draft, started in parallel with the H4 analysis]
             Paper structure (8-10 pages, NeurIPS/ICML/ICLR world-model or interpretability workshop, or TMLR
             format; Neural Computing & Applications as the journal target):
             1. Abstract: four diagnostics, one model zoo, concordance and predictive-validity findings
@@ -341,7 +341,7 @@
             10. Conclusion & Future Work: extension to continuous-state and video world models, and to
                 non-deterministic (probabilistic automaton) settings
 
-            [Week 16: Code Release & Documentation]
+            [Week 15: Code Release & Documentation]
             - Publish the WM-Concord repository: config-driven
               run_diagnostics.py --domain all --model all --diagnostic all
             - A documented plug-in interface so any future world-model diagnostic can be added and compared
@@ -366,11 +366,10 @@
             Week 11:   Cross-diagnostic concordance analysis with bootstrapped CIs -- H1
             Week 12:   Attribution of disagreement to domain/architecture/scale properties -- H2
             Week 13:   Fragility-suite evaluation; which diagnostic predicts downstream failure -- H3
-            Week 14:   New-domain analysis (interpreter, chemistry) and Tier 4 held-out check -- H4
-            Week 15:   Research paper draft
-            Week 16:   WM-Concord code release, plug-in diagnostic interface, notebooks, final presentation
+            Week 14:   New-domain analysis (interpreter, chemistry) and Tier 4 held-out check -- H4; paper draft started
+            Week 15:   Research paper draft finished; WM-Concord code release, plug-in diagnostic interface, notebooks, final presentation
 
-            TOTAL: 16 weeks (one semester)
+            TOTAL: 15 weeks (one semester)
 
             KEY MILESTONES:
             - Week 2:  Implementation verified against published results before any new claim is made
@@ -380,7 +379,7 @@
             - Week 11: Concordance resolved (H1)
             - Week 13: Predictive validity resolved (H3) -- the project's headline result
             - Week 14: All hypotheses (H1-H4) resolved; new domains and held-out check complete
-            - Week 16: Paper submitted; WM-Concord released
+            - Week 15: Paper submitted; WM-Concord released
 
             STAGE GATES (decision points that change the plan, not status meetings):
             - Week 2:  If published results cannot be reproduced, halt and fix the implementation before
@@ -396,7 +395,7 @@
                        regardless
             - Week 13: Freeze the master table; no new models or diagnostics admitted after this point
 
-            DELIVERABLES BY WEEK 16:
+            DELIVERABLES BY WEEK 15:
             - A cross-diagnostic validity study spanning four diagnostic families, six domains, three
               architecture families, and multiple scales, seeds, and training distributions
             - Quantitative answers to whether world-model diagnostics agree, where they diverge, which one
@@ -536,7 +535,7 @@
                           checkpoint the master table after every diagnostic
             - Weeks 11-13: Trigger the Week 11 null gate if the diagnostics agree; freeze the master table at
                           the end of Week 13
-            - Weeks 14-16: Cross-check new-domain and held-out results against the main findings; 3-day code
+            - Weeks 14-15: Cross-check new-domain and held-out results against the main findings; 3-day code
                           freeze for README, version manifest, and notebook review before release
             
 
