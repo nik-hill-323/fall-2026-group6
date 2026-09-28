@@ -56,24 +56,30 @@ Note: Use Markdown Cheat Sheet download in the directory as needed.
 * [x] One owner per issue
 * [x] Merge requirements.txt and references.bib
 * [x] Move proposal to reports/proposal.md, rewrite README
-* [ ] Start LaTeX report skeleton with literature review section
-* [ ] Add pytest and a GitHub Action
-* [ ] Every team member lands at least one reviewed pull request this week
-* [ ] Othello model zoo and D4 probe running end to end on the g5.2xlarge
+* [x] Environment built on the g5.2xlarge, Vafa 2024 and Othello artifacts downloaded (#2 closed)
+* [x] D1 explainer and diagram (PR #21), D4 explainer, diagram and toy probe (PR #16, PR #18)
+* [x] D3 toy probe and diagram opened for review (PR #23)
+* [x] Run matrix fixed at 3 domains, 243 models, 972 runs (PR #19, in review)
+* [x] Week 3 milestone closed
+* [ ] Start LaTeX report skeleton with literature review section (moved to Week 5)
+* [ ] Add pytest and a GitHub Action (moved to Week 5)
+* [ ] Every team member lands at least one reviewed pull request this week (3 of 4)
+* [ ] Othello model zoo and D4 probe running end to end on the g5.2xlarge (moved to Week 5)
 ---
-## Date: Week 5 - Month Day Year 
+## Date: Week 5 - September 29, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #2 (#22): process caught up, still about 3 weeks behind the plan
+    - Top priority: reproduction gate, one published number reproduced before building on it
+    - Scope fixed in the proposal: 3 domains (navigation, Othello, interpreter), 15 weeks
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Diagram naming standard, one bib file, proposal fit to 15 weeks and 3 domains (PR #25, closes #24)
+* [ ] Reproduction gate: Othello GPT linear probe accuracy next to the published value
+* [ ] Measure training throughput for one zoo model and add it to PR #19
+* [ ] D4 toy probe: Hewitt and Liang control task, layer 0 baseline, test for the Othello rules
+* [ ] D2 explainer (#7) and D1 toy script (#6)
+* [ ] LaTeX report skeleton in Sample_Report.tex and literature review with 10+ works (due October 6)
 ---
 ## Date: Week 6 - Month Day Year 
 - Topics of discussion
