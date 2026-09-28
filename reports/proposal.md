@@ -45,10 +45,10 @@
                released navigation model checkpoints, establishing a verified implementation of the
                compression-error and distinction-error metrics before any new claim is made.
             2. Construct a controlled model zoo: small sequence models trained on domains with a known
-               ground-truth deterministic finite automaton (DFA), varying along four axes deliberately chosen
-               to spread the diagnostics apart -- training-data distribution (shortest-path vs. noisy vs.
-               random-walk traces), model scale, training budget, and architecture family (transformer vs.
-               state-space model vs. LSTM).
+               ground-truth deterministic finite automaton (DFA), varying along three axes deliberately chosen
+               to spread the diagnostics apart -- training-data distribution (three per domain, e.g.
+               shortest-path vs. noisy vs. random-walk traces on navigation), model scale (three sizes), and
+               architecture family (transformer vs. state-space model vs. LSTM), each with three seeds.
             3. Implement all four diagnostic families against a common interface and run every diagnostic on
                every model in the zoo: next-token validity, Myhill-Nerode compression/distinction metrics,
                inductive-bias probes (including symbolic-regression recovery of the postulated law), and
@@ -59,8 +59,8 @@
             5. Establish predictive validity: build a downstream fragility suite of related-but-shifted tasks
                per domain and determine which diagnostic best predicts a model's failure on them, giving the
                field a defensible criterion for which instrument to trust.
-            6. Extend the analysis to a domain class never probed by this literature (chemical reaction
-               sequences and program-interpreter state), and package the whole pipeline as an open-source,
+            6. Extend the analysis to a domain class never probed by this literature (program-interpreter
+               state), and package the whole pipeline as an open-source,
                config-driven repository (WM-Concord) with a reusable diagnostic interface.
             
 
@@ -87,30 +87,27 @@
             3. Navigation / street networks: OpenStreetMap street graphs via OSMnx, from which shortest-path
                and random-walk token sequences are generated with a known transition structure:
                https://github.com/gboeing/osmnx
-            4. Lattice traversal: synthetic agent movement over a finite line segment and 2-D grid, the
-               spatial-structure setting used in both Vafa papers -- generated in-house, no download required
-            5. Board games with exactly specified state: Othello (Tier 1 corpus) and cumulative Connect-4,
-               the worked example from Vafa et al. (2024) whose Myhill-Nerode interior is enormous and whose
-               state-pooling failure mode is therefore easy to detect -- generated in-house
-            6. Program-interpreter state (NEW DOMAIN): token sequences from a small deterministic stack
+            4. Board game with exactly specified state: Othello (Tier 1 corpus), the standard testbed of the
+               representation-probing tradition
+            5. Program-interpreter state (NEW DOMAIN): token sequences from a small deterministic stack
                machine / register machine whose full state is known at every step, giving a DFA of tunable
                size and a domain this literature has never probed -- generated in-house
-            7. Chemical reaction sequences (NEW DOMAIN): the Open Reaction Database and the USPTO-50k
-               reaction corpus, used to build reaction-step sequences over a rule-defined state space
-               (available reagents / functional groups present), the "chemistry" case that Vafa et al. (2024)
-               name as within scope but do not test:
-               https://open-reaction-database.org/  and  https://github.com/connorcoley/rexgen_direct
+
+            SCOPE (fixed at the Sep 22, 2026 working session): the zoo uses exactly three domains --
+            navigation, Othello, and the interpreter. Lattice traversal, cumulative Connect 4, and chemical
+            reaction sequences from the original plan are out of scope, and the training budget axis is
+            dropped. The resulting run matrix is 3 domains x 3 architectures x 3 scales x 3 distributions x
+            3 seeds = 243 models and 972 (model x diagnostic) evaluations.
 
             TIER 3 -- DOWNSTREAM FRAGILITY SUITE (the predictive-validity criterion, H3):
-            8. Per-domain held-out task variants that are structurally related but subtly different from the
+            6. Per-domain held-out task variants that are structurally related but subtly different from the
                training task -- detour-constrained routing on the navigation graphs, altered legal-move rules
-               on the game domains, modified instruction semantics on the interpreter domain, and shifted
-               reagent-availability constraints on the chemistry domain. Each variant is specified as an
+               on Othello, and modified instruction semantics on the interpreter domain. Each variant is specified as an
                explicit DFA modification so that "correct behavior" is unambiguous, and each is constructed
                in Weeks 3-4 and frozen before any diagnostic is run, so no diagnostic can be tuned against it
 
             TIER 4 -- HELD-OUT GENERALIZATION (evaluation only, not used for development):
-            9. One architecture family and one domain held out of Weeks 3-12 entirely, used in Week 14 only,
+            7. One architecture family and one domain held out of Weeks 3-12 entirely, used in Week 14 only,
                to test whether the concordance and predictive-validity findings generalize beyond the models
                and domains used to develop the analysis
 
@@ -203,7 +200,7 @@
 
             [Week 1: Environment, Artifacts, and the Run Matrix]
             - Install PyTorch, TransformerLens (activation hooks and probing), PySR (symbolic regression),
-              scikit-learn, automata tooling, RDKit (chemistry domain), and OSMnx (street graphs)
+              scikit-learn, automata tooling, and OSMnx (street graphs)
             - Download Tier 1 artifacts: the Vafa et al. (2024) navigation data and checkpoints, and the
               Othello-GPT corpora and reference checkpoints
             - Project structure: domains/, zoo/, diagnostics/, fragility/, analysis/, notebooks/
@@ -223,9 +220,8 @@
             PHASE 2: DOMAIN GENERATORS AND THE MODEL ZOO (Weeks 3-5)
 
             [Week 3: Domain Generators and DFA Specifications]
-            - Implement the common generator interface for all six domains (navigation, lattice, Othello,
-              cumulative Connect-4, interpreter state, chemical reaction sequences), each emitting (sequence,
-              ground-truth state, legal next-token set)
+            - Implement the common generator interface for all three domains (navigation, Othello,
+              interpreter state), each emitting (sequence, ground-truth state, legal next-token set)
             - Record per-domain difficulty statistics: state-space size, alphabet size, and estimated mean
               Myhill-Nerode boundary length, so cross-domain comparisons later are anchored to measured
               domain complexity rather than intuition
@@ -238,9 +234,9 @@
               the repository, so the Week 11-14 results are confirmatory rather than exploratory
 
             [Week 5: Model Zoo Training]
-            - Train the controlled model zoo, varying four axes: training-data distribution (shortest-path,
-              noisy, random-walk), model scale (three sizes), architecture family (transformer, state-space
-              model, LSTM), and seed
+            - Train the controlled model zoo, varying four axes: training-data distribution (three per
+              domain, e.g. shortest-path, noisy, random-walk on navigation), model scale (three sizes),
+              architecture family (transformer, state-space model, LSTM), and seed (three)
             - These are small sequence models trained on synthetic token streams; the zoo is sized in Week 1
               against measured single-A10G throughput and capped so that the full zoo trains within the week
             - Validate every model on held-out next-token accuracy before it is admitted to the diagnostic
@@ -304,7 +300,7 @@
               it is the project's most consequential result, resolving H3
 
             [Week 14: New Domains and Held-Out Check -- H4]
-            - Analyze the interpreter-state and chemical-reaction domains, which this literature has never
+            - Analyze the interpreter-state domain, which this literature has never
               probed, and test whether the Weeks 11-13 conclusions hold there
             - Evaluate the Tier 4 held-out architecture family and domain, kept out of all prior phases
             - Formally state the project's four central hypotheses being tested against the master table:
@@ -320,9 +316,9 @@
                   probed by this literature, and to a held-out architecture family?
 
 
-            PHASE 5: PAPER AND CODE RELEASE (Weeks 15-16)
+            PHASE 5: PAPER AND CODE RELEASE (Weeks 14-15)
 
-            [Week 15: Research Paper Draft]
+            [Weeks 14 and 15: Research Paper Draft, started in parallel with the H4 analysis]
             Paper structure (8-10 pages, NeurIPS/ICML/ICLR world-model or interpretability workshop, or TMLR
             format; Neural Computing & Applications as the journal target):
             1. Abstract: four diagnostics, one model zoo, concordance and predictive-validity findings
@@ -336,12 +332,12 @@
             5. Results: pairwise and overall concordance
             6. Where the Diagnostics Disagree, and Why
             7. Predictive Validity: which diagnostic forecasts downstream fragility
-            8. New Domains: interpreter state and chemical reaction sequences
+            8. New Domain: interpreter state
             9. Practical Guidance: which diagnostic to use, when, and what each one licenses you to claim
             10. Conclusion & Future Work: extension to continuous-state and video world models, and to
                 non-deterministic (probabilistic automaton) settings
 
-            [Week 16: Code Release & Documentation]
+            [Week 15: Code Release & Documentation]
             - Publish the WM-Concord repository: config-driven
               run_diagnostics.py --domain all --model all --diagnostic all
             - A documented plug-in interface so any future world-model diagnostic can be added and compared
@@ -355,7 +351,7 @@
 
             Week 1:    Environment, Tier 1 artifacts downloaded, run_matrix.csv fixed
             Week 2:    Published Vafa (2024) and Othello-GPT probe results reproduced -- REPRODUCTION GATE
-            Week 3:    Six domain generators implemented; per-domain DFA specs and difficulty stats recorded
+            Week 3:    Three domain generators implemented; per-domain DFA specs and difficulty stats recorded
             Week 4:    Downstream fragility suite built and FROZEN; analysis plan pre-registered
             Week 5:    Model zoo trained across distribution x scale x architecture x seed; zoo_registry.csv
             Week 6:    Diagnostic 1: next-token validity baseline across the zoo
@@ -366,11 +362,10 @@
             Week 11:   Cross-diagnostic concordance analysis with bootstrapped CIs -- H1
             Week 12:   Attribution of disagreement to domain/architecture/scale properties -- H2
             Week 13:   Fragility-suite evaluation; which diagnostic predicts downstream failure -- H3
-            Week 14:   New-domain analysis (interpreter, chemistry) and Tier 4 held-out check -- H4
-            Week 15:   Research paper draft
-            Week 16:   WM-Concord code release, plug-in diagnostic interface, notebooks, final presentation
+            Week 14:   New-domain analysis (interpreter) and Tier 4 held-out check -- H4; paper draft started
+            Week 15:   Research paper draft finished; WM-Concord code release, plug-in diagnostic interface, notebooks, final presentation
 
-            TOTAL: 16 weeks (one semester)
+            TOTAL: 15 weeks (one semester)
 
             KEY MILESTONES:
             - Week 2:  Implementation verified against published results before any new claim is made
@@ -380,7 +375,7 @@
             - Week 11: Concordance resolved (H1)
             - Week 13: Predictive validity resolved (H3) -- the project's headline result
             - Week 14: All hypotheses (H1-H4) resolved; new domains and held-out check complete
-            - Week 16: Paper submitted; WM-Concord released
+            - Week 15: Paper submitted; WM-Concord released
 
             STAGE GATES (decision points that change the plan, not status meetings):
             - Week 2:  If published results cannot be reproduced, halt and fix the implementation before
@@ -396,8 +391,8 @@
                        regardless
             - Week 13: Freeze the master table; no new models or diagnostics admitted after this point
 
-            DELIVERABLES BY WEEK 16:
-            - A cross-diagnostic validity study spanning four diagnostic families, six domains, three
+            DELIVERABLES BY WEEK 15:
+            - A cross-diagnostic validity study spanning four diagnostic families, three domains, three
               architecture families, and multiple scales, seeds, and training distributions
             - Quantitative answers to whether world-model diagnostics agree, where they diverge, which one
               predicts downstream fragility, and whether any of this generalizes to new domain classes
@@ -421,7 +416,7 @@
             ROLE DISTRIBUTION FOR 4 STUDENTS:
 
             Student 1: State-Equivalence Metrics & Automata Infrastructure
-            - Responsibilities: DFA specifications for all six domains, the Myhill-Nerode compression and
+            - Responsibilities: DFA specifications for all three domains, the Myhill-Nerode compression and
               distinction metrics, the sampling-estimator design and its variance analysis, per-domain
               difficulty statistics, Diagnostic 1 (next-token validity baseline)
             - Skills: automata theory, algorithms, sampling and estimation, Python
@@ -499,15 +494,14 @@
               the same week. This ordering is a design commitment, not a convention
 
             6. DFA Specification for the New Domains May Be Ambiguous:
-            - ISSUE: Chemical reaction sequences and interpreter state do not come with a canonical automaton;
-              a poorly chosen state abstraction would make results uninterpretable
-            - SOLUTION: The state abstraction for each new domain is specified explicitly, version-controlled,
-              and justified in Week 3, with a deliberately simple and fully deterministic interpreter as the
-              safest of the two new domains; if the chemistry abstraction proves contestable, it is reported
-              as an exploratory arm rather than as a load-bearing result
+            - ISSUE: Interpreter state does not come with a canonical automaton; a poorly chosen state
+              abstraction would make results uninterpretable
+            - SOLUTION: The state abstraction is specified explicitly, version-controlled, and justified in
+              Week 3, using a deliberately simple and fully deterministic interpreter. Chemical reaction
+              sequences were dropped from scope for this reason
 
             7. Model Zoo Size Can Balloon:
-            - ISSUE: Four varying axes plus seeds, times four diagnostics, times six domains, could exceed a
+            - ISSUE: Three varying axes plus seeds, times four diagnostics, times three domains, could exceed a
               single-GPU semester even though individual models are small
             - SOLUTION: run_matrix.csv fixes the total in Week 1 against measured A10G throughput; the Week 5
               gate cuts the scale axis first if needed; and the Week 13 freeze prevents late additions
@@ -522,7 +516,7 @@
               comparison appears mid-semester
 
             9. Library / Version Drift:
-            - ISSUE: TransformerLens, PySR, and RDKit are all actively maintained, and an API change mid-
+            - ISSUE: TransformerLens and PySR are both actively maintained, and an API change mid-
               semester could invalidate earlier diagnostic runs
             - SOLUTION: Pin every dependency in requirements.txt from Week 1 and record the exact library
               versions alongside every diagnostic score in the master table
@@ -536,7 +530,7 @@
                           checkpoint the master table after every diagnostic
             - Weeks 11-13: Trigger the Week 11 null gate if the diagnostics agree; freeze the master table at
                           the end of Week 13
-            - Weeks 14-16: Cross-check new-domain and held-out results against the main findings; 3-day code
+            - Weeks 14-15: Cross-check new-domain and held-out results against the main findings; 3-day code
                           freeze for README, version manifest, and notebook review before release
             
 
