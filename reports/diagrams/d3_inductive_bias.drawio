@@ -1,0 +1,95 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram id="d3-inductive-bias" name="D3 inductive-bias probe">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="&lt;b&gt;&lt;font style=&quot;font-size: 18px&quot;&gt;Diagnostic 3: Inductive-bias probe&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#666666&quot;&gt;Does the pretrained model carry the world model? Give it a new job with almost no data and see what it brings.&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="200" y="20" width="780" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="lblMain" value="&lt;b&gt;&lt;font color=&quot;#888888&quot;&gt;MAIN PATH&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="20" y="140" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="lblBase" value="&lt;b&gt;&lt;font color=&quot;#888888&quot;&gt;BASELINE&lt;/font&gt;&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="20" y="390" width="100" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- 1 Pretrained -->
+        <mxCell id="b1" value="&lt;b&gt;1  Pretrained model&lt;/b&gt;&lt;br&gt;trained on next-move prediction&lt;br&gt;never told the rules" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0fe;strokeColor=#1a56c4;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="170" height="90" as="geometry"/>
+        </mxCell>
+        <!-- 2 New task -->
+        <mxCell id="b2" value="&lt;b&gt;2  New task&lt;/b&gt;&lt;br&gt;&quot;where is the walker now?&quot;&lt;br&gt;only 16 labelled examples" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff4e0;strokeColor=#c47a00;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="270" y="235" width="170" height="90" as="geometry"/>
+        </mxCell>
+        <!-- 3 Adapt -->
+        <mxCell id="b3" value="&lt;b&gt;3  Adapt&lt;/b&gt;&lt;br&gt;fine-tune whole model, gently&lt;br&gt;add a new output head" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0fe;strokeColor=#1a56c4;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="500" y="90" width="170" height="90" as="geometry"/>
+        </mxCell>
+        <!-- 4 Test set -->
+        <mxCell id="b4" value="&lt;b&gt;4  Fresh test set&lt;/b&gt;&lt;br&gt;300 unseen sequences&lt;br&gt;same rules, hit the walls" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff4e0;strokeColor=#c47a00;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="730" y="235" width="170" height="90" as="geometry"/>
+        </mxCell>
+        <!-- 5 Acc A -->
+        <mxCell id="b5" value="&lt;b&gt;5  Accuracy A&lt;/b&gt;&lt;br&gt;0.64" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0fe;strokeColor=#1a56c4;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="960" y="100" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <!-- 6 Untrained -->
+        <mxCell id="b6" value="&lt;b&gt;6  Untrained model&lt;/b&gt;&lt;br&gt;same architecture&lt;br&gt;random weights" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f3f3;strokeColor=#777777;strokeWidth=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="380" width="170" height="90" as="geometry"/>
+        </mxCell>
+        <!-- 7 Adapt baseline -->
+        <mxCell id="b7" value="&lt;b&gt;7  Adapt&lt;/b&gt;&lt;br&gt;same 16 examples&lt;br&gt;same number of steps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f3f3;strokeColor=#777777;strokeWidth=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="380" width="170" height="90" as="geometry"/>
+        </mxCell>
+        <!-- 8 Acc B -->
+        <mxCell id="b8" value="&lt;b&gt;8  Accuracy B&lt;/b&gt;&lt;br&gt;0.39" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f3f3;strokeColor=#777777;strokeWidth=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="390" width="120" height="70" as="geometry"/>
+        </mxCell>
+        <!-- 9 Gap -->
+        <mxCell id="b9" value="&lt;b&gt;9  Gap&lt;/b&gt;&lt;br&gt;A minus B&lt;br&gt;+0.25" style="rhombus;whiteSpace=wrap;html=1;fillColor=#e6f7ea;strokeColor=#1e7d3a;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="225" width="90" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Verdict note -->
+        <mxCell id="note" value="&lt;b&gt;Reading the gap.&lt;/b&gt; Big and positive: pretraining carried the world model into the new task. Near zero: it carried nothing useful.&lt;br&gt;Extra check: if the adapted model matches the no-walls shortcut (0.53) on wall cases, it learned counting, not the world." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f7f7f7;strokeColor=#bbbbbb;align=center;" vertex="1" parent="1">
+          <mxGeometry x="270" y="495" width="630" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e13" value="model weights" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" parent="1" source="b1" target="b3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e67" value="model weights" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" parent="1" source="b6" target="b7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e23" value="16 labelled seqs" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#c47a00;fontColor=#c47a00;strokeWidth=1.5;" edge="1" parent="1" source="b2" target="b3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e27" value="16 labelled seqs" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#c47a00;fontColor=#c47a00;strokeWidth=1.5;" edge="1" parent="1" source="b2" target="b7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e34" value="predictions" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" parent="1" source="b3" target="b4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e74" value="predictions" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" parent="1" source="b7" target="b4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e45" value="vs true labels" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" parent="1" source="b4" target="b5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e48" value="vs true labels" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" parent="1" source="b4" target="b8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e59" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#1e7d3a;strokeWidth=1.5;" edge="1" parent="1" source="b5" target="b9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e89" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#1e7d3a;strokeWidth=1.5;" edge="1" parent="1" source="b8" target="b9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
