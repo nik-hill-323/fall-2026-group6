@@ -1,181 +1,320 @@
-% THIS TEMPLATE IS A WORK IN PROGRESS
-% Adapted from an original template by faculty at Reykjavik University, Iceland
+% WM-Concord capstone report, Fall 2026, Group 6
+% Adapted from the course template (originally by faculty at Reykjavik University, Iceland)
 
-\documentclass{scrartcl}
+\documentclass[11pt]{scrartcl}
 \input{File_Setup.tex}
+\usepackage{lmodern}          % sharp vector fonts in the PDF
 \usepackage{graphicx,epsfig}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
 \hypersetup{
-   colorlinks   = true,                               %Colours links instead of ugly boxes
-   urlcolor     = blue,                               %Colour for external hyper links
-   linkcolor    = blue,                               %Colour of internal links
-   citecolor    = red,                                %Colour of citations
+   colorlinks   = true,
+   urlcolor     = blue,
+   linkcolor    = blue,
+   citecolor    = red,
    setpagesize  = false,
    linktocpage  = true,
 }
 \graphicspath{ {fig/} }
+\addtokomafont{disposition}{\rmfamily}   % section titles in the same font as the text
 
-
+% Placeholder for text that is still to be written. Remove each one as the section is filled in.
+\newcommand{\stub}[1]{\textcolor{gray}{\textit{[To be written: #1]}}}
 
 \renewenvironment{abstract}{
     \centering
     \textbf{Abstract}
-    \vspace{0.5cm}
+    \vspace{0.4cm}
     \par\itshape
-    \begin{minipage}{0.7\linewidth}}{\end{minipage}
+    \begin{minipage}{0.8\linewidth}}{\end{minipage}
     \noindent\ignorespaces
 }
 % ------------------------------------------------------------------------------------------------------------------------
 
 \begin{document}
-%Title of the report, name of coworkers and dates (of experiment and of report).
 \begin{titlepage}
 	\centering
-	\includegraphics[width=0.6\textwidth]{GW_logo.eps}\par
-	\vspace{2cm}
-	%%%% COMMENT OUT irrelevant lines below: Data Science OR Computer Science OR none
+	\includegraphics[width=0.45\textwidth]{GW_logo.eps}\par
+	\vspace{1.5cm}
 	{\scshape\LARGE Data Science Program \par}
+	\vspace{0.8cm}
+	{\scshape\Large Capstone Report, Fall 2026\par}
+	\vspace{1.5cm}
+	{\huge\bfseries WM-Concord: Do World Model Diagnostics Agree?\par}
+	\vspace{0.4cm}
+	{\Large A Cross Diagnostic Validity Study of World Model Diagnostics\par}
+	\vspace{1.5cm}
+	{\Large\itshape Venkatesh Nagarjuna \\ Siddardha Reddy \\ Nikhil Obuleni \\ Viharika Vemparala\par}
 	\vspace{1cm}
-	{\scshape\Large Capstone Report - Spring 2022\par}
-	%{\large \today\par}
-	\vspace{1.5cm}
-	%%%% PROJECT TITLE
-	{\huge\bfseries Our Wonderful Project\par}
-	\vspace{2cm}
-	%%%% AUTHOR(S)
-	{\Large\itshape John John,\\ Mary Han,\\ Jeni Frankenstein\\}\par
-	\vspace{1.5cm}
 	supervised by\par
-	%%%% SUPERVISOR(S)
 	Amir Jafari
-
 	\vfill
 	\begin{abstract}
-	    A strong abstract sums up your work in very few sentences:
-	    (i) state the problem you are addressing;
-	    (ii) say why it’s an interesting problem, and which issues are hard to tackle;
-	    (iii) give your approach towards solving the problem;
-	    (iv) say Why and how well your approach solves the problem.
+	    Sequence models are often said to learn a ``world model'': an internal picture of the state of the
+	    domain they were trained on. The literature tests this claim with four families of diagnostics:
+	    next token validity, state equivalence metrics based on the Myhill Nerode theorem, inductive bias
+	    probes, and representation probing. These diagnostics have never been run on the same models, and on
+	    Othello they already reach opposite conclusions. WM-Concord runs all four diagnostics on one
+	    controlled zoo of small sequence models trained on three domains with a known ground truth automaton
+	    (navigation, Othello, and a program interpreter). We ask whether the diagnostics rank models the same
+	    way, why they disagree when they do, and which one best predicts failure on related but shifted tasks.
+	    % TODO: add one sentence with the main findings once the results exist.
 	\end{abstract}
 	\vfill
-% Bottom of the page
+	{\small George Washington University, Washington DC \quad\textbullet\quad \today\par}
 \end{titlepage}
+
 \tableofcontents
 \newpage
+
 % ------------------------------------------------------------------------------------------------------------------------
 \section{Introduction}
 
-Your introduction briefly explains the problem you address, and what you've achieved towards solving the problem. It's an edited and updated version of your context and objectives from your topic outline document.
+Whether a sequence model trained only to predict the next token builds a coherent internal model of its
+domain is one of the central open questions in current machine learning. Several research groups have built
+diagnostics to answer it, but each group uses its own instrument, on its own models, in its own domain. The
+same Othello models have been reported both as having a world model~\cite{li2023othello, yuan2025revisiting}
+and as lacking a coherent one~\cite{vafa2024evaluating, vafa2025inductive}. This project does not propose a
+new diagnostic. It measures whether the existing ones agree, and which one can be trusted.
+
+\paragraph{Contributions.}
+\begin{itemize}
+    \item The first head to head comparison of four world model diagnostics on the same models and the same
+    ground truth.
+    \item A test of which diagnostic predicts failure on related but shifted tasks, judged against a
+    fragility suite that is frozen before any diagnostic is run.
+    \item An open source benchmark (WM-Concord) with one common interface, so a future diagnostic can be
+    compared against these four on identical ground truth.
+\end{itemize}
+
+\stub{one paragraph summarising what we found, written last}
+
 % ------------------------------------------------------------------------------------------------------------------------
 \section{Problem Statement}
 
-Add problem statement here and challenges of the project. 
+The four diagnostic families studied in this project are:
+\begin{description}
+    \item[D1, next token validity.] The fraction of the model's proposed next tokens that are legal in the
+    true state.
+    \item[D2, state equivalence.] Compression error (two histories that reach the same state are treated
+    differently) and distinction error (two different states are treated the same), following
+    \cite{vafa2024evaluating}.
+    \item[D3, inductive bias probes.] How the model adapts to small synthetic tasks generated from the true
+    world model~\cite{vafa2025inductive}.
+    \item[D4, representation probing.] Whether the true state can be read from the model's internal
+    activations by a probe, checked against a control task and by causal intervention~\cite{li2023othello}.
+\end{description}
+
+We test four hypotheses:
+\begin{description}
+    \item[H1, concordance.] Do the four diagnostics rank the same models in the same order?
+    \item[H2, disagreement.] When they disagree, is the disagreement systematic (tied to domain, architecture,
+    scale, or training data) or just noise?
+    \item[H3, predictive validity.] Which diagnostic best predicts failure on a frozen suite of related but
+    shifted tasks?
+    \item[H4, generalization.] Do the answers hold on a held out domain and a held out architecture?
+\end{description}
+
+\paragraph{Challenges.} The diagnostics measure different things (behaviour, adaptation, and internal
+activations), so their scores are not on a common scale. The state equivalence metrics cannot be computed
+exactly in large domains and must be estimated by sampling. Probes can report structure the model does not
+actually use. The design handles each of these in Section~\ref{sec:method}.
 
 % ------------------------------------------------------------------------------------------------------------------------
-
 \section{Related Work}
+\label{sec:related}
 
-Your related work section positions your problem and your approach with respect to other, maybe similar, projects you've found in the literature.
-It "\textit{should not only explain what research others have done, but in each case should compare and contrast that to your work and also to other related work. After reading this section, a reader should understand the key idea and contribution of each significant piece of related work, how they fit together, and how your work differs.}"\footnote{\href{https://homes.cs.washington.edu/~mernst/advice/write-technical-paper.html\#related-work}{Michael Ernst - How to write a technical paper}}
-%%%% DO NOT write a related work section that is just a laundry list of other papers, with a sentence about each one that was lifted from its abstract, and without any critical analysis nor deep comparison to other work.
+% Instructor Review 2: at least 10 works, each summarised in our own words, each stating how WM-Concord
+% differs. Every cited work goes in references.bib. Draft due October 6, complete by October 20.
+%
+% Done (4): li2023othello, yuan2025revisiting, vafa2024evaluating, vafa2025inductive
+% To add (6), one paragraph each, with the "differs" sentence:
+%   nanda2023emergent     representation probing   (linear probe with mine/theirs labels)
+%   toshniwal2022chess    representation probing   (chess as a state tracking testbed)
+%   hewitt2019control     probing confounds        (control tasks and selectivity)
+%   belinkov2022probing   probing confounds        (survey of probing classifiers)
+%   jacobs2021measurement measurement validity     (construct validity in computational systems)
+%   raji2021benchmark     measurement validity     (limits of benchmarks as general measures)
+% The bib entries for all six are already in references.bib.
 
-It's an edited and updated version of your literature review. Here are a few examples of how to insert citations like~\cite{byzantine-pki}, \cite{atomic-mcast-tcs01}, and also~\cite{sybilattack}, or even~\cite{psn-fail, verisign-fail}.
+\subsection{Representation probing}
+
+Li et al.~\cite{li2023othello} trained a GPT model on Othello move sequences only. The model never sees a
+board or the rules, yet it proposes legal moves almost every time, and probes trained on its internal
+activations recover the board state. They then edited the decoded board inside the model and showed that
+its next move predictions changed to match, which is evidence that the representation is used and not only
+present. Yuan and S{\o}gaard~\cite{yuan2025revisiting} extended this to seven language models fine tuned on
+Othello and found similar board representations across all of them, which they read as support for a real
+world model. Both works use probing as the only instrument. WM-Concord uses probing as one of four
+diagnostics, adds a control task and a causal check, and compares its verdict with the other three on the
+same models.
+
+\stub{Nanda et al. 2023 and Toshniwal et al. 2022, one paragraph each with how WM-Concord differs}
+
+\subsection{State equivalence metrics}
+
+Vafa et al.~\cite{vafa2024evaluating} define the domain as a deterministic finite automaton and derive two
+metrics from the Myhill Nerode theorem. Compression error measures whether the model gives the same
+continuations to two histories that end in the same state; distinction error measures whether it can tell
+apart histories that end in different states. On taxi routes in Manhattan, Othello, and logic puzzles, models
+that looked good on next token accuracy failed these metrics, and a map reconstructed from the navigation
+model contained streets that do not exist. Models trained on random walks built more coherent world models
+than models trained on shortest paths. That work compares its metrics only with next token accuracy.
+WM-Concord uses them as diagnostic D2, adopts their three training distributions, and compares them with all
+three other diagnostics and with an external fragility criterion.
+
+\subsection{Inductive bias probes}
+
+Vafa et al.~\cite{vafa2025inductive} ask a different question: does a model's inductive bias point at the
+true world model? They adapt a pretrained model to small synthetic datasets generated from a postulated world
+model and test whether it extrapolates the way that world model would. A model trained on orbital
+trajectories predicted them well, but symbolic regression on the adapted model recovered force laws that make
+no physical sense. This is our diagnostic D3. WM-Concord applies it to the same zoo as the other diagnostics,
+so its verdict can be compared model by model.
+
+\subsection{Probing confounds}
+
+\stub{Hewitt and Liang 2019 (control tasks and selectivity) and Belinkov 2022 (probing survey), one paragraph
+each, explaining why raw probe accuracy can overstate what a model computes and how WM-Concord guards against it}
+
+\subsection{Measurement validity in ML evaluation}
+
+\stub{Jacobs and Wallach 2021 and Raji et al. 2021, one paragraph each, framing WM-Concord as a construct and
+predictive validity study of existing instruments}
+
+\subsection{How WM-Concord differs}
+
+These papers reach opposite conclusions about the same domain, but they use different instruments on
+different models, so their disagreement cannot be interpreted. WM-Concord runs all four instruments on one
+shared zoo of models with a known ground truth, which turns the disagreement into something that can be
+measured (H1, H2) and judged against an external criterion (H3).
+
 % ------------------------------------------------------------------------------------------------------------------------
+\section{Data and Domains}
+\label{sec:data}
 
-\section{Solution and Methodology}
+All domains are defined by a deterministic finite automaton (DFA), so the true state is known at every step.
+Every domain emits the same triple: token sequence, true state, and the set of legal next tokens.
 
-The solution section covers all of your contributions (architecture, algorithms, formulas, findings).
-It explains in detail each contribution, if possible with figures/schematics.
-
-Don't forget that a figure goes a long way towards helping your reader understand your work. For instance, Figure~\ref{fig:ascent} outlines the layers involved in a distributed certification service, and how they articulate together. Nevertheless, a figure must always come with at least one paragraph of explanation. The rule is that anyone should be able to understand your solution from reading the text in this section, even if they skip the figures.
-
-\begin{figure}[H]
-	\begin{center}
-		\includegraphics[scale=0.7]{ascent-archi.pdf}
-	\end{center}
-	\caption{Architecture of our distributed certification service}
-	\label{fig:ascent}
-\end{figure}
-
-Figure~\ref{fig:log-archi} is a pretty good example of a figure that is completely useless unless it is not accompanied by a textual explanation.
-
-\begin{figure}
-	\begin{center}
-		\includegraphics[scale=0.5]{certificates-log-archi.pdf}
-	\end{center}
-	\caption{Try to guess what this figure illustrates; I double-dare you...}
-	\label{fig:log-archi}
-\end{figure}
-
-% ------------------------------------------------------------------------------------------------------------------------
-\section{Results and Discussion}
-
-The results section details your metrics and experiments for the assessment of your solution. It then provides experimental validation for your approach with visual aids such as data tables and graphs. In particular, it allows you to compare your idea with other approaches you've tested, for example solutions you've mentioned in your related work section.
-
-\subsection{Experimentation protocol}
-
-It is of the utmost importance to describe how you came up with the measurements and results that support your evaluation.
-
-\subsection{Data tables}
-
-Every data table should be numbered, have a brief description as its title, and specify the units used.
-
-As an example, Table~\ref{tab:my_label} compares the average latencies of native application calls to networked services. The experiments were conducted on an Apple MacBook Air 2010 with a CPU speed of 1.4GHz and a bus speed of 800MHz. Each data point is a mean over 20 instances of each call, after discarding both the lowest and the highest measurement.
-
-\begin{table}[ht]
+\begin{table}[H]
     \centering
-    \begin{tabular}{llr}
-\hline
-\multicolumn{2}{c}{Network Applications} \\
-\cline{1-2}
-Service    & Protocol & Latency (\si{\ms}) \\
-\hline
-DNS         & UDP       & \SI{13.65}{\ms}      \\
-            & TCP       & \SI{0.01}{\ms}       \\
-NTP         & UDP       & \SI{92.50}{\ms}      \\
-SMTP        & TCP       & \SI{33.33}{\ms}      \\
-HTTP        & TCP       & \SI{8.99}{\ms}       \\
-\hline
-\end{tabular}
-    \caption{Comparison of latencies between services running on \texttt{localhost}.}
-    \label{tab:my_label}
+    \small
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}p{6.6cm}}
+    \toprule
+    Domain & State & Training distributions \\
+    \midrule
+    Navigation & current intersection on a street graph & shortest paths, noisy shortest paths, random walks \\
+    Othello & board position & synthetic, championship, mixed \\
+    Interpreter (new) & registers and stack of a small machine & random, short structured, long structured \\
+    \bottomrule
+    \end{tabular}
+    \caption{The three domains. Othello and interpreter distributions are tentative until their generators exist.}
+    \label{tab:domains}
 \end{table}
 
-\subsection{Graphs}
+\subsection{Navigation}
+\stub{street graph source, DFA definition, the three samplers, state space size}
 
-Graphs are often the most important information in your report; you should design and plot them with great care. A graph contains a lot of information in a short space. Graphs should be numbered and have a title. Their axes should be labelled, with the quantities and units specified. Make sure that individual data points (your measurements) stand out clearly. And of course, always associate your graph with text that explains your results, and outlines the conclusions you draw from these results.
+\subsection{Othello}
+\stub{game corpus (othello\_world synthetic and championship games), board state, legal moves, DFA size}
 
-\begin{figure}
-	\begin{center}
-		\includegraphics[scale=0.9]{perf-plot-1.pdf}
-	\end{center}
-	\caption{Probability of including [k] faulty/malicious nodes in the service}
-	\label{graph:faulty-proportion-plot}
-\end{figure}
+\subsection{Interpreter}
+\stub{instruction set of the small stack or register machine, what counts as state, how DFA size is tuned}
 
-For example, Figure~\ref{graph:faulty-proportion-plot} compares the efficiency of three different service architectures in eliminating adversarial behaviors. Every data point gives the probability that $k$ faulty/malicious nodes managed to participate in a computation that involves 32 nodes. In the absence of at least one reliable node ($k = 32$), the failure will go undetected ; but the results show that this case is extremely unlikely, regardless of the architecture. The most significant result pertains to $k = 16$: the reliable nodes detect the failure, but cannot reach a majority to recover. The graph shows that the \texttt{CORPS 5\%} architecture is much more resilient than the \texttt{DHT 30\%} architecture, by a magnitude of $10^{11}$.
+\subsection{Reproduction artifacts}
+\stub{released checkpoints used to check our implementations: Vafa et al. 2024 navigation models (three
+splits) and the Othello GPT synthetic model}
 
 % ------------------------------------------------------------------------------------------------------------------------
+\section{Methodology}
+\label{sec:method}
 
+\subsection{Model zoo}
+
+The zoo varies four axes on purpose, so that models differ in quality and the diagnostics have something to
+disagree about: 3 domains $\times$ 3 architectures (transformer, LSTM, state space model) $\times$ 3 scales
+$\times$ 3 training distributions $\times$ 3 seeds, for 243 models and 972 model and diagnostic evaluations.
+
+\stub{scale definitions (layers, width), training budget, validation threshold for admitting a model}
+
+\subsection{The four diagnostics}
+\stub{one subsection each for D1 to D4: what it computes, the exact score written to the master table, and
+the sampling protocol. All four implement one common interface: score(model, domain) returns a dictionary}
+
+\subsection{Fragility suite}
+\stub{per domain task variants (detour routing, altered Othello rule, changed instruction semantics), written
+as explicit DFA changes and frozen with a git tag before any diagnostic is run}
+
+\subsection{Analysis plan}
+\stub{H1: Kendall tau and Spearman per pair and Kendall W overall, with bootstrap intervals. H2: regression of
+disagreement on domain, architecture, scale, and distribution, against the seed noise floor. H3: regression of
+fragility on each diagnostic score. H4: repeat on the held out domain and architecture}
+
+% ------------------------------------------------------------------------------------------------------------------------
+\section{Experimental Setup}
+
+All experiments run on one AWS g5.2xlarge instance (one NVIDIA A10G with 24 GB, 8 vCPUs, 32 GB RAM). Library
+versions are pinned in \texttt{requirements.txt}, every run records its configuration and seed, and every
+result can be traced to the commit that produced it. Code, configurations, and the run matrix are in the
+project repository.
+
+\stub{measured training throughput per model and total compute for the zoo}
+
+% ------------------------------------------------------------------------------------------------------------------------
+\section{Results}
+
+\subsection{Reproduction of published results}
+\stub{our numbers next to the published ones for each reproduced result, with the tolerance chosen before
+comparing}
+
+\subsection{Concordance (H1)}
+\stub{pairwise rank correlation heatmap and overall Kendall W}
+
+\subsection{Disagreement (H2)}
+\stub{where and why the diagnostics disagree, compared with the seed noise floor}
+
+\subsection{Predictive validity (H3)}
+\stub{which diagnostic best predicts fragility, and whether next token validity predicts it at all}
+
+\subsection{Held out domain and architecture (H4)}
+\stub{whether the findings hold on data kept out of development}
+
+% ------------------------------------------------------------------------------------------------------------------------
 \section{Discussion}
-The discussion section focuses on the main challenges/issues you had to overcome during the project. Outline what your approach does better than the ones you mentioned in your related work, and explain why. Do the same with issues where other solutions  outperform your own. Are there limitations to your approach? If so, what would you recommend towards removing/mitigating them? Given the experience you've gathered working on this project, are there other approaches that you feel are worth exploring?
+\stub{what each diagnostic licenses a researcher to claim, and which to use when}
+
+\subsection{Limitations}
+\stub{estimator variance of the state equivalence metrics, choice of state abstraction for the interpreter,
+architectures that could not be patched, single GPU scale}
+
 % ------------------------------------------------------------------------------------------------------------------------
-
-\section{Conclusion}
-
-Give a clear, short, and informative summary of all your important results. Answer the initial question(s) or respond to what you wanted to do, as stated in your introduction. It can be a short table or a list, and possibly one or two short comments or explanations.
-
-Target a reader who may not have time to read the whole report yet, but needs the results or the conclusions immediately. This is a typical situation in real life. Some readers will read your introduction and skip to your conclusion first, and read the whole report only later (if at all).
-
-You may also draw perspectives. What's missing? In what directions could your work be extended?
+\section{Conclusion and Future Work}
+\stub{short answers to H1 to H4, and extensions to continuous state and probabilistic domains}
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 
+% ------------------------------------------------------------------------------------------------------------------------
+\appendix
+\section{Team Roles}
 
-%------ To create Appendix with additional stuff -------%
-%\newpage
-%\appendix
-%\section{Appendix}
-%Put data files, CAD drawings, additional sketches, etc.
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+    \toprule
+    Member & Responsibility \\
+    \midrule
+    Venkatesh Nagarjuna & D2 state equivalence metrics and automata \\
+    Nikhil Obuleni & D3 inductive bias probes \\
+    Siddardha Reddy & D4 representation probing and causal checks \\
+    Viharika Vemparala & D1 next token validity \\
+    \bottomrule
+    \end{tabular}
+    \caption{Diagnostic ownership. Domains, the model zoo, the analysis, and the paper are shared.}
+\end{table}
 
-\end{document} 
+\section{Reproducibility}
+\stub{repository link, the one command that runs everything, and where each figure is generated}
+
+\end{document}
