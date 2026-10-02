@@ -22,3 +22,4 @@ torchaudio==2.11.0+cu130
 torchvision==0.28.0+cu130
 transformer-lens==3.9.0
 transformers==5.14.1
+mambapy==1.2.0
