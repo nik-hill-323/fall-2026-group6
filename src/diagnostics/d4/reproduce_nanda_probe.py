@@ -9,7 +9,7 @@ World Models of Self-Supervised Sequence Models" (arXiv 2309.00941):
 
 What the script does:
   1. Reads games from the othello_world dataset (.bin files, one int8 per move, square 0..63, -1 = padding).
-  2. Replays every game with our own 8x8 Othello rules to get the true board after each move.
+  2. Replays every game with our own 8x8 Othello rules (src/domains/othello.py) to get the true board after each move.
      Any game with an illegal move is counted and dropped (expected: 0).
   3. Runs the synthetic Othello GPT and reads the residual stream after every layer.
   4. Trains one linear probe per layer (all 64 squares x 3 classes at once) on the GPU,
@@ -27,11 +27,12 @@ Usage (on the EC2, from the repo root):
 from __future__ import annotations
 
 import argparse
-import glob
+import importlib.util
 import json
 import logging
 import os
 import time
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -39,115 +40,18 @@ import torch.nn as nn
 
 log = logging.getLogger("d4_repro")
 
-SIZE = 8
-N_SQ = 64
-EMPTY, BLACK, WHITE = 0, 1, 2
-DIRECTIONS = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-CENTER = [27, 28, 35, 36]
-# model token for a square: position in the sorted list of the 60 non center squares, plus 1 (0 = padding)
-PLAYABLE = [s for s in range(N_SQ) if s not in CENTER]
-SQ_TO_TOKEN = {s: i + 1 for i, s in enumerate(PLAYABLE)}
-N_CTX = 59
+ROOT = Path(__file__).resolve().parents[3]
+_spec = importlib.util.spec_from_file_location("othello", ROOT / "src/domains/othello.py")
+oth = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(oth)
+
+N_SQ = oth.N_SQ
+N_CTX = oth.N_CTX
 
 PUBLISHED = {  # Nanda et al. 2023, Table 1, linear probes, accuracy in percent
     "mine_theirs": {0: 90.9, 4: 99.0, 7: 99.5},
     "black_white": {0: 62.2, 4: 75.0, 7: 74.4},
 }
-
-
-# ==========================================================================
-# Step 1 and 2: games and true boards
-# ==========================================================================
-
-def start_board() -> np.ndarray:
-    b = np.zeros(N_SQ, dtype=np.int8)
-    b[27], b[36] = WHITE, WHITE
-    b[28], b[35] = BLACK, BLACK
-    return b
-
-
-def flips_for(board: np.ndarray, sq: int, player: int) -> list[int]:
-    """Squares flipped if `player` plays `sq`. Empty list means the move is illegal."""
-    if board[sq] != EMPTY:
-        return []
-    opp = WHITE if player == BLACK else BLACK
-    r0, c0 = divmod(sq, SIZE)
-    flips: list[int] = []
-    for dr, dc in DIRECTIONS:
-        r, c, line = r0 + dr, c0 + dc, []
-        while 0 <= r < SIZE and 0 <= c < SIZE and board[r * SIZE + c] == opp:
-            line.append(r * SIZE + c)
-            r, c = r + dr, c + dc
-        if line and 0 <= r < SIZE and 0 <= c < SIZE and board[r * SIZE + c] == player:
-            flips.extend(line)
-    return flips
-
-
-def replay(moves: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
-    """Replay one game. Returns boards (T, 64) after each move and the mover of each move,
-    or None if any move is illegal. A player with no legal move passes, so the mover is
-    whichever player can legally make the recorded move, checking the player to move first."""
-    board, player = start_board(), BLACK
-    boards, movers = [], []
-    for sq in moves:
-        sq = int(sq)
-        flips = flips_for(board, sq, player)
-        if not flips:  # current player must have passed
-            player = WHITE if player == BLACK else BLACK
-            flips = flips_for(board, sq, player)
-            if not flips:
-                return None
-        board[flips] = player
-        board[sq] = player
-        boards.append(board.copy())
-        movers.append(player)
-        player = WHITE if player == BLACK else BLACK
-    return np.stack(boards), np.array(movers, dtype=np.int8)
-
-
-def load_games(files: list[str], n_games: int) -> np.ndarray:
-    """First n_games games (each 60 int8 moves, -1 padded) from the given .bin files."""
-    chunks, total = [], 0
-    for f in files:
-        a = np.fromfile(f, dtype=np.int8).reshape(-1, 60)
-        chunks.append(a)
-        total += len(a)
-        if total >= n_games:
-            break
-    games = np.concatenate(chunks)[:n_games]
-    if len(games) < n_games:
-        log.warning("only %d games available, asked for %d", len(games), n_games)
-    return games
-
-
-def build(games: np.ndarray) -> dict[str, np.ndarray]:
-    """Tokens (G, 59), labels (G, 59, 64) for both schemes, and a mask of real positions."""
-    G = len(games)
-    tokens = np.zeros((G, N_CTX), dtype=np.int64)
-    mine = np.zeros((G, N_CTX, N_SQ), dtype=np.int8)
-    color = np.zeros((G, N_CTX, N_SQ), dtype=np.int8)
-    mask = np.zeros((G, N_CTX), dtype=bool)
-    movers_all = np.zeros((G, N_CTX), dtype=np.int8)
-    keep = np.ones(G, dtype=bool)
-    for g in range(G):
-        moves = games[g][games[g] >= 0][:N_CTX]
-        out = replay(moves)
-        if out is None:
-            keep[g] = False
-            continue
-        boards, movers = out
-        T = len(moves)
-        tokens[g, :T] = [SQ_TO_TOKEN[int(s)] for s in moves]
-        color[g, :T] = boards  # 0 empty, 1 black, 2 white
-        rel = np.zeros_like(boards)
-        rel[boards == movers[:, None]] = 1  # mine
-        rel[(boards != movers[:, None]) & (boards != EMPTY)] = 2  # theirs
-        mine[g, :T] = rel
-        movers_all[g, :T] = movers
-        mask[g, :T] = True
-    n_bad = int((~keep).sum())
-    return {"tokens": tokens[keep], "mine_theirs": mine[keep], "black_white": color[keep],
-            "mask": mask[keep], "movers": movers_all[keep], "n_illegal_games": n_bad}
 
 
 # ==========================================================================
@@ -172,31 +76,6 @@ def resid(model, tokens: torch.Tensor) -> torch.Tensor:
     names = [f"blocks.{L}.hook_resid_post" for L in range(8)]
     _, cache = model.run_with_cache(tokens, names_filter=lambda n: n in names)
     return torch.stack([cache[n] for n in names])
-
-
-def legal_moves(board: np.ndarray, player: int) -> list[int]:
-    return [s for s in PLAYABLE if flips_for(board, s, player)]
-
-
-@torch.no_grad()
-def legal_rate(model, data: dict, device: str, batch: int) -> float:
-    """How often the model's top next move is legal (sanity check, Li et al. report about 99.99%)."""
-    ok = total = 0
-    for i in range(0, len(data["tokens"]), batch):
-        tok = torch.tensor(data["tokens"][i:i + batch], device=device)
-        pred = model(tok).argmax(-1).cpu().numpy()  # (B, T)
-        for b in range(len(tok)):
-            g = i + b
-            T = int(data["mask"][g].sum())
-            for t in range(T - 1):
-                board = data["black_white"][g, t]
-                mover = int(data["movers"][g, t])
-                nxt = WHITE if mover == BLACK else BLACK
-                legal = legal_moves(board, nxt) or legal_moves(board, mover)  # pass if no move
-                tok_pred = int(pred[b, t])
-                ok += int(tok_pred > 0 and PLAYABLE[tok_pred - 1] in legal)
-                total += 1
-    return ok / max(total, 1)
 
 
 # ==========================================================================
@@ -251,7 +130,7 @@ def train_and_test(model, train: dict, test: dict, scheme: str, cfg: dict) -> li
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--model", default=os.path.expanduser("~/artifacts/othello_gpt_tl/synthetic_model.pth"))
-    p.add_argument("--data", default=os.path.expanduser("~/artifacts/othello_data/data"))
+    p.add_argument("--data", default=oth.DATA_DIR)
     p.add_argument("--n_train_games", type=int, default=100000)
     p.add_argument("--n_test_games", type=int, default=1000)
     p.add_argument("--epochs", type=int, default=2)
@@ -266,18 +145,14 @@ def main() -> None:
     t0 = time.time()
 
     log.info("Step 1 and 2: loading games and replaying them with the Othello rules")
-    train_files = sorted(glob.glob(os.path.join(cfg["data"], "train", "*.bin")),
-                         key=lambda f: int(f.split("_")[-1].split(".")[0]))
-    test_files = sorted(glob.glob(os.path.join(cfg["data"], "val", "*.bin")),
-                        key=lambda f: int(f.split("_")[-1].split(".")[0]))
-    train = build(load_games(train_files, cfg["n_train_games"]))
-    test = build(load_games(test_files, cfg["n_test_games"]))
+    train = oth.build(oth.load_split(cfg["data"], "train", cfg["n_train_games"]))
+    test = oth.build(oth.load_split(cfg["data"], "val", cfg["n_test_games"]), legal=True)
     log.info("  train games %d, test games %d, illegal games dropped: train %d, test %d",
              len(train["tokens"]), len(test["tokens"]), train["n_illegal_games"], test["n_illegal_games"])
 
     log.info("Step 3: loading Othello GPT (synthetic)")
     model = load_model(cfg["model"], cfg["device"])
-    lr = legal_rate(model, test, cfg["device"], cfg["batch"])
+    lr = oth.legal_rate(model, test, cfg["device"], cfg["batch"])
     log.info("  top predicted move is legal %.2f%% of the time on test games", 100 * lr)
 
     results = {}
