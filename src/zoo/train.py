@@ -20,6 +20,7 @@ Usage (on the EC2, from the repo root):
     python src/zoo/train.py --arch transformer --scale small --steps 300     # throughput
     python src/zoo/train.py --arch transformer --scale small                 # full budget
     python src/zoo/train.py --arch lstm --scale medium --steps 300
+    python src/zoo/train.py --distribution championship --steps 300           # synthetic, championship or mixed
     python src/zoo/train.py --arch mamba --scale large --micro_batch 64      # big model: split each batch of 256 into 4 chunks
 
 Smoke test anywhere, no data needed:
@@ -208,9 +209,10 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--arch", default="transformer", choices=sorted(ARCHS))
     p.add_argument("--scale", default="small", choices=matrix.SCALES)
-    p.add_argument("--distribution", default="synthetic")
+    p.add_argument("--distribution", default="synthetic", choices=rules.DISTRIBUTIONS)
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--data", default=rules.DATA_DIR)
+    p.add_argument("--data", default=rules.DATA_DIR, help="synthetic .bin folder (train/ and val/)")
+    p.add_argument("--championship_data", default=rules.CHAMPIONSHIP_DIR, help="WTHOR .wtb folder")
     p.add_argument("--n_train_games", type=int, default=int(B["n_train_games"]))
     p.add_argument("--n_val_games", type=int, default=1000)
     p.add_argument("--steps", type=int, default=int(B["steps"]),
@@ -244,9 +246,10 @@ def main() -> None:
         train_games, val_games = games[n_val:], games[:n_val]
         log.info("  synthetic: %d train games, %d val games", len(train_games), len(val_games))
     else:
-        train_games = rules.load_split(cfg["data"], "train", cfg["n_train_games"])
-        val_games = rules.load_split(cfg["data"], "val", cfg["n_val_games"])
-        log.info("  %d train games, %d val games from %s", len(train_games), len(val_games), cfg["data"])
+        dirs = {"synthetic_dir": cfg["data"], "championship_dir": cfg["championship_data"]}
+        train_games = rules.load_distribution(cfg["distribution"], "train", cfg["n_train_games"], cfg["seed"], **dirs)
+        val_games = rules.load_distribution(cfg["distribution"], "val", cfg["n_val_games"], cfg["seed"], **dirs)
+        log.info("  %s: %d train games, %d val games", cfg["distribution"], len(train_games), len(val_games))
     tok, _ = rules.to_tokens(train_games)
 
     log.info("2. model %s / %s", cfg["arch"], cfg["scale"])
