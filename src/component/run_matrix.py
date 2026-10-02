@@ -7,10 +7,13 @@ run to perform. Two files:
 Scope as agreed at the Sep 22 session:
     domains        othello, maps, interpreter
     architectures  transformer, lstm, mamba
-    scales         small, medium, large
+    scales         small, medium, large   (defined in SCALE_CONFIG below)
     distributions  3 per domain (see DISTRIBUTIONS)
     seeds          0, 1, 2
     diagnostics    D1, D2, D3, D4
+
+One training budget for every model (TRAINING_BUDGET below), so that scale is
+the only thing that changes between small, medium and large.
 
 Naming (used for configs/, checkpoints/, results/):
     model_id = {domain}_{arch}_{scale}_{distribution}_s{seed}
@@ -35,6 +38,29 @@ SCALES: list[str] = ["small", "medium", "large"]
 SEEDS: list[int] = [0, 1, 2]
 DIAGNOSTICS: list[str] = ["D1", "D2", "D3", "D4"]
 
+# What small / medium / large mean. d_model is the residual width; the LSTM
+# and Mamba variants use the same n_layers and d_model so that parameter
+# counts are comparable across architectures at each scale.
+# "large" matches Othello-GPT (Li et al. 2023): 8 layers, 512 wide, 8 heads.
+SCALE_CONFIG: dict[str, dict[str, int]] = {
+    "small":  {"n_layers": 4, "d_model": 128, "n_heads": 4},
+    "medium": {"n_layers": 6, "d_model": 256, "n_heads": 8},
+    "large":  {"n_layers": 8, "d_model": 512, "n_heads": 8},
+}
+
+# One budget for every model in the zoo. The training-budget axis was cut on
+# Sep 22, so this is fixed, not varied. Throughput numbers in PR #19 are
+# measured against this budget.
+TRAINING_BUDGET: dict[str, float] = {
+    "steps": 5000,          # optimizer steps
+    "batch_games": 256,     # games per step; each game is up to 59 tokens
+    "lr": 3e-4,
+    "warmup_steps": 200,
+    "weight_decay": 0.01,
+    "n_train_games": 200_000,
+    "seq_len": 59,
+}
+
 # Three training distributions per domain. Othello and interpreter are
 # tentative until their generators exist.
 DISTRIBUTIONS: dict[str, list[str]] = {
@@ -43,10 +69,12 @@ DISTRIBUTIONS: dict[str, list[str]] = {
     "interpreter": ["random", "structured_short", "structured_long"],
 }
 
-# H4 hold-outs. Not decided yet; these are the suggested values from the
-# handoff and are flagged in the held_out column so they can be filtered.
-HELD_OUT_DOMAIN = "interpreter"
-HELD_OUT_ARCH = "mamba"
+# H4 hold-outs: one domain and one architecture kept out of development
+# until Week 14. NOT decided yet. Until the team picks them, every row is
+# marked "tbd" so nothing is accidentally excluded. Set these two and
+# regenerate once the choice is made.
+HELD_OUT_DOMAIN: str | None = None
+HELD_OUT_ARCH: str | None = None
 
 DIAG_NAMES = {
     "D1": "next_token",
@@ -56,20 +84,29 @@ DIAG_NAMES = {
 }
 
 
+def held_out_flag(domain: str, arch: str) -> str:
+    if HELD_OUT_DOMAIN is None or HELD_OUT_ARCH is None:
+        return "tbd"
+    return "yes" if (domain == HELD_OUT_DOMAIN or arch == HELD_OUT_ARCH) else "no"
+
+
 def model_rows() -> list[dict]:
     rows = []
     for domain in DOMAINS:
         for arch, scale, dist, seed in itertools.product(ARCHS, SCALES, DISTRIBUTIONS[domain], SEEDS):
             model_id = f"{domain}_{arch}_{scale}_{dist}_s{seed}"
+            cfg = SCALE_CONFIG[scale]
             rows.append(
                 {
                     "model_id": model_id,
                     "domain": domain,
                     "arch": arch,
                     "scale": scale,
+                    "n_layers": cfg["n_layers"],
+                    "d_model": cfg["d_model"],
                     "distribution": dist,
                     "seed": seed,
-                    "held_out": "yes" if (domain == HELD_OUT_DOMAIN or arch == HELD_OUT_ARCH) else "no",
+                    "held_out": held_out_flag(domain, arch),
                     "config": f"configs/runs/{model_id}.yaml",
                     "checkpoint": f"checkpoints/{model_id}/model.pt",
                     "status": "planned",
@@ -118,10 +155,12 @@ def main() -> None:
     write(docs / "run_matrix.csv", evals)
 
     per_domain = {d: sum(1 for m in models if m["domain"] == d) for d in DOMAINS}
-    dev = sum(1 for m in models if m["held_out"] == "no")
-    print(f"models.csv     : {len(models)} models  {per_domain}")
+    per_scale = {s: sum(1 for m in models if m["scale"] == s) for s in SCALES}
+    flags = {f: sum(1 for m in models if m["held_out"] == f) for f in ("no", "yes", "tbd")}
+    print(f"models.csv     : {len(models)} models  by domain {per_domain}  by scale {per_scale}")
     print(f"run_matrix.csv : {len(evals)} evaluations ({len(DIAGNOSTICS)} per model)")
-    print(f"development    : {dev} models   held-out (H4): {len(models) - dev}")
+    print(f"held_out       : {flags}")
+    print(f"budget         : {TRAINING_BUDGET['steps']} steps x {TRAINING_BUDGET['batch_games']} games per model")
 
 
 if __name__ == "__main__":
