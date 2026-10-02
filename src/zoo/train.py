@@ -5,8 +5,8 @@ scored against the simulator) and the throughput measurement Review #2 asks
 for before PR #19 merges.
 
 What it does:
-  1. Loads games from the othello_world .bin files (same loader and rules as
-     src/diagnostics/d4/reproduce_nanda_probe.py, imported from there).
+  1. Loads games from the othello_world .bin files (loader and rules from
+     src/domains/othello.py, shared with every diagnostic).
   2. Builds a model at the requested scale (src/component/run_matrix.py
      SCALE_CONFIG) and trains it to predict the next move.
   3. Times every optimizer step and extrapolates to the fixed zoo budget
@@ -20,6 +20,7 @@ Usage (on the EC2, from the repo root):
     python src/zoo/train.py --arch transformer --scale small --steps 300     # throughput
     python src/zoo/train.py --arch transformer --scale small                 # full budget
     python src/zoo/train.py --arch lstm --scale medium --steps 300
+    python src/zoo/train.py --distribution championship --steps 300           # synthetic, championship or mixed
     python src/zoo/train.py --arch mamba --scale large --micro_batch 64      # big model: split each batch of 256 into 4 chunks
 
 Smoke test anywhere, no data needed:
@@ -29,12 +30,10 @@ Smoke test anywhere, no data needed:
 from __future__ import annotations
 
 import argparse
-import glob
 import importlib.util
 import json
 import logging
 import math
-import os
 import time
 from pathlib import Path
 
@@ -54,54 +53,11 @@ def _load(name: str, rel: str):
     return mod
 
 
-rules = _load("othello_rules", "src/diagnostics/d4/reproduce_nanda_probe.py")
+rules = _load("othello", "src/domains/othello.py")
 matrix = _load("run_matrix", "src/component/run_matrix.py")
 
-VOCAB = 61          # 0 = pad, 1..60 = the playable squares
+VOCAB = rules.VOCAB  # 0 = pad, 1..60 = the playable squares
 N_CTX = rules.N_CTX  # 59 moves per game at most
-
-
-# ==========================================================================
-# Data
-# ==========================================================================
-
-def play_random_game(rng: np.random.Generator) -> np.ndarray:
-    """One random legal 8x8 game as 60 int8 squares, -1 padded. For smoke tests."""
-    board, player = rules.start_board(), rules.BLACK
-    moves: list[int] = []
-    while len(moves) < 60:
-        legal = rules.legal_moves(board, player)
-        if not legal:
-            player = rules.WHITE if player == rules.BLACK else rules.BLACK
-            legal = rules.legal_moves(board, player)
-            if not legal:
-                break
-        sq = int(rng.choice(legal))
-        board[rules.flips_for(board, sq, player)] = player
-        board[sq] = player
-        moves.append(sq)
-        player = rules.WHITE if player == rules.BLACK else rules.BLACK
-    out = np.full(60, -1, dtype=np.int8)
-    out[: len(moves)] = moves
-    return out
-
-
-def load_split(data_dir: str, split: str, n_games: int) -> np.ndarray:
-    files = sorted(glob.glob(os.path.join(data_dir, split, "*.bin")),
-                   key=lambda f: int(f.split("_")[-1].split(".")[0]))
-    if not files:
-        raise FileNotFoundError(f"no .bin files under {data_dir}/{split}")
-    return rules.load_games(files, n_games)
-
-
-def to_tokens(games: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """(G, 59) int64 tokens with 0 padding, and a bool mask of real positions."""
-    G = len(games)
-    tok = np.zeros((G, N_CTX), dtype=np.int64)
-    for g in range(G):
-        mv = games[g][games[g] >= 0][:N_CTX]
-        tok[g, : len(mv)] = [rules.SQ_TO_TOKEN[int(s)] for s in mv]
-    return tok, tok > 0
 
 
 # ==========================================================================
@@ -231,7 +187,7 @@ def evaluate(model: nn.Module, games: np.ndarray, cfg: dict) -> dict:
     dev = cfg["device"]
     model.eval()
     bs = cfg["micro_batch"] or cfg["batch"]  # same chunk size as training, so big models fit
-    data = rules.build(games)  # tokens, mask, black_white boards, movers
+    data = rules.build(games, legal=True)  # tokens, mask, boards, movers, legal next moves
     tok = torch.tensor(data["tokens"], device=dev)
     mask = torch.tensor(data["mask"], device=dev)
     correct = total = 0
@@ -253,9 +209,10 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--arch", default="transformer", choices=sorted(ARCHS))
     p.add_argument("--scale", default="small", choices=matrix.SCALES)
-    p.add_argument("--distribution", default="synthetic")
+    p.add_argument("--distribution", default="synthetic", choices=rules.DISTRIBUTIONS)
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--data", default=os.path.expanduser("~/artifacts/othello_data/data"))
+    p.add_argument("--data", default=rules.DATA_DIR, help="synthetic .bin folder (train/ and val/)")
+    p.add_argument("--championship_data", default=rules.CHAMPIONSHIP_DIR, help="WTHOR .wtb folder")
     p.add_argument("--n_train_games", type=int, default=int(B["n_train_games"]))
     p.add_argument("--n_val_games", type=int, default=1000)
     p.add_argument("--steps", type=int, default=int(B["steps"]),
@@ -284,15 +241,16 @@ def main() -> None:
     log.info("1. data")
     if cfg["synthetic"]:
         rng = np.random.default_rng(cfg["seed"])
-        games = np.stack([play_random_game(rng) for _ in range(cfg["synthetic"])])
+        games = np.stack([rules.play_random_game(rng) for _ in range(cfg["synthetic"])])
         n_val = max(10, cfg["synthetic"] // 10)
         train_games, val_games = games[n_val:], games[:n_val]
         log.info("  synthetic: %d train games, %d val games", len(train_games), len(val_games))
     else:
-        train_games = load_split(cfg["data"], "train", cfg["n_train_games"])
-        val_games = load_split(cfg["data"], "val", cfg["n_val_games"])
-        log.info("  %d train games, %d val games from %s", len(train_games), len(val_games), cfg["data"])
-    tok, _ = to_tokens(train_games)
+        dirs = {"synthetic_dir": cfg["data"], "championship_dir": cfg["championship_data"]}
+        train_games = rules.load_distribution(cfg["distribution"], "train", cfg["n_train_games"], cfg["seed"], **dirs)
+        val_games = rules.load_distribution(cfg["distribution"], "val", cfg["n_val_games"], cfg["seed"], **dirs)
+        log.info("  %s: %d train games, %d val games", cfg["distribution"], len(train_games), len(val_games))
+    tok, _ = rules.to_tokens(train_games)
 
     log.info("2. model %s / %s", cfg["arch"], cfg["scale"])
     model = build_model(cfg["arch"], cfg["scale"])
