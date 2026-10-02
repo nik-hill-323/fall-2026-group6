@@ -19,9 +19,9 @@ mkdir -p outputs/zoo
 {
   echo "Measured on $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null || echo cpu), $(date -u +%F)."
   echo "Each run: ${STEPS} timed steps, batch 256 games, ${N_GAMES} training games loaded."
-  echo "min/model is extrapolated to the full budget in run_matrix.TRAINING_BUDGET; 81 models per scale in the matrix."
+  echo "min/model is extrapolated to the full budget in run_matrix.TRAINING_BUDGET; 27 models per arch and scale (3 domains x 3 distributions x 3 seeds)."
   echo
-  echo "| arch | scale | params | steps timed | s/step | min/model (full) | h / 81 models | legal rate | next-tok acc |"
+  echo "| arch | scale | params | steps timed | s/step | min/model (full) | h / 27 models | legal rate | next-tok acc |"
   echo "|---|---|---|---|---|---|---|---|---|"
 } > "$OUT"
 

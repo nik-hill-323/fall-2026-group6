@@ -20,6 +20,7 @@ Usage (on the EC2, from the repo root):
     python src/zoo/train.py --arch transformer --scale small --steps 300     # throughput
     python src/zoo/train.py --arch transformer --scale small                 # full budget
     python src/zoo/train.py --arch lstm --scale medium --steps 300
+    python src/zoo/train.py --arch mamba --scale large --micro_batch 64      # big model: split each batch of 256 into 4 chunks
 
 Smoke test anywhere, no data needed:
     python src/zoo/train.py --synthetic 200 --steps 20 --batch 16 --device cpu
@@ -142,24 +143,20 @@ class LSTM(nn.Module):
 
 
 class Mamba(nn.Module):
+    """Mamba in plain PyTorch (mambapy). mamba_ssm does not build on this EC2:
+    the Ubuntu 26.04 math headers clash with CUDA 13.1 (rsqrt declaration)."""
+
     def __init__(self, n_layers: int, d_model: int, **_: int) -> None:
         super().__init__()
-        try:
-            from mamba_ssm import Mamba as MambaBlock  # type: ignore
-        except ImportError as e:  # pragma: no cover
-            raise ImportError("pip install mamba-ssm causal-conv1d (needs the CUDA instance)") from e
+        from mambapy.mamba import Mamba as MambaStack, MambaConfig
         self.tok = nn.Embedding(VOCAB, d_model)
-        self.layers = nn.ModuleList([MambaBlock(d_model=d_model, d_state=16, d_conv=4, expand=2)
-                                     for _ in range(n_layers)])
-        self.norms = nn.ModuleList([nn.LayerNorm(d_model) for _ in range(n_layers)])
+        cfg = MambaConfig(d_model=d_model, n_layers=n_layers, d_state=16, d_conv=4, expand_factor=2)
+        self.backbone = MambaStack(cfg)  # backbone.layers: one residual block per layer
         self.norm = nn.LayerNorm(d_model)
         self.head = nn.Linear(d_model, VOCAB)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h = self.tok(x)
-        for norm, layer in zip(self.norms, self.layers):
-            h = h + layer(norm(h))
-        return self.head(self.norm(h))
+        return self.head(self.norm(self.backbone(self.tok(x))))
 
 
 ARCHS = {"transformer": GPT, "lstm": LSTM, "mamba": Mamba}
@@ -188,6 +185,10 @@ def train(model: nn.Module, tok: np.ndarray, cfg: dict) -> dict:
     loss_fn = nn.CrossEntropyLoss(ignore_index=0)  # pad targets are 0
     rng = np.random.default_rng(cfg["seed"])
     G = len(tok)
+    # Split each batch into chunks of this size when the model is too big for GPU memory.
+    # Gradients add up across chunks, so one optimizer step still uses the full batch.
+    mb = cfg["micro_batch"] or cfg["batch"]
+    n_chunks = math.ceil(cfg["batch"] / mb)
     step_times: list[float] = []
     losses: list[float] = []
     t_start = time.time()
@@ -199,18 +200,22 @@ def train(model: nn.Module, tok: np.ndarray, cfg: dict) -> dict:
         if dev.startswith("cuda"):
             torch.cuda.synchronize()
         t0 = time.time()
-        logits = model(x[:, :-1])
-        loss = loss_fn(logits.reshape(-1, VOCAB), x[:, 1:].reshape(-1))
         opt.zero_grad(set_to_none=True)
-        loss.backward()
+        step_loss = 0.0
+        for c in range(0, cfg["batch"], mb):
+            xc = x[c:c + mb]
+            logits = model(xc[:, :-1])
+            loss = loss_fn(logits.reshape(-1, VOCAB), xc[:, 1:].reshape(-1)) / n_chunks
+            loss.backward()
+            step_loss += loss.item()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         opt.step()
         if dev.startswith("cuda"):
             torch.cuda.synchronize()
         step_times.append(time.time() - t0)
-        losses.append(loss.item())
+        losses.append(step_loss)
         if (step + 1) % cfg["log_every"] == 0 or step == 0:
-            log.info("  step %5d  loss %.4f  %.3f s/step", step + 1, loss.item(), step_times[-1])
+            log.info("  step %5d  loss %.4f  %.3f s/step", step + 1, step_loss, step_times[-1])
     timed = step_times[10:] if len(step_times) > 20 else step_times  # drop warm-up jitter
     return {
         "steps_run": cfg["steps"],
@@ -225,17 +230,18 @@ def evaluate(model: nn.Module, games: np.ndarray, cfg: dict) -> dict:
     """Next-token accuracy and legal-move rate (D1) on held-out games."""
     dev = cfg["device"]
     model.eval()
+    bs = cfg["micro_batch"] or cfg["batch"]  # same chunk size as training, so big models fit
     data = rules.build(games)  # tokens, mask, black_white boards, movers
     tok = torch.tensor(data["tokens"], device=dev)
     mask = torch.tensor(data["mask"], device=dev)
     correct = total = 0
-    for i in range(0, len(tok), cfg["batch"]):
-        x, m = tok[i:i + cfg["batch"]], mask[i:i + cfg["batch"]]
+    for i in range(0, len(tok), bs):
+        x, m = tok[i:i + bs], mask[i:i + bs]
         pred = model(x[:, :-1]).argmax(-1)
         tgt, mm = x[:, 1:], m[:, 1:]
         correct += int(((pred == tgt) & mm).sum())
         total += int(mm.sum())
-    legal = rules.legal_rate(model, data, dev, cfg["batch"])
+    legal = rules.legal_rate(model, data, dev, bs)
     return {"next_token_acc": correct / max(total, 1), "legal_move_rate": legal,
             "n_eval_games": len(data["tokens"]), "illegal_games_dropped": data["n_illegal_games"]}
 
@@ -255,6 +261,8 @@ def main() -> None:
     p.add_argument("--steps", type=int, default=int(B["steps"]),
                    help="steps to actually run; throughput is extrapolated to the full budget")
     p.add_argument("--batch", type=int, default=int(B["batch_games"]))
+    p.add_argument("--micro_batch", type=int, default=0,
+                   help="split each batch into chunks of this size to fit GPU memory (0 = no split)")
     p.add_argument("--lr", type=float, default=B["lr"])
     p.add_argument("--warmup_steps", type=int, default=int(B["warmup_steps"]))
     p.add_argument("--weight_decay", type=float, default=B["weight_decay"])
@@ -291,22 +299,24 @@ def main() -> None:
     n_params = sum(p.numel() for p in model.parameters())
     log.info("  %s  %.2fM params", matrix.SCALE_CONFIG[cfg["scale"]], n_params / 1e6)
 
-    log.info("3. train %d steps, batch %d games, device %s", cfg["steps"], cfg["batch"], cfg["device"])
+    log.info("3. train %d steps, batch %d games (chunks of %d), device %s",
+             cfg["steps"], cfg["batch"], cfg["micro_batch"] or cfg["batch"], cfg["device"])
     tr = train(model, tok, cfg)
 
     log.info("4. evaluate on %d held-out games", len(val_games))
     ev = evaluate(model, val_games, cfg)
 
     full_min = tr["sec_per_step"] * cfg["budget_steps"] / 60
-    per_scale_h = full_min * 81 / 60          # 81 models per scale in the matrix
+    per_scale_h = full_min * 27 / 60          # 27 models per arch and scale (3 domains x 3 distributions x 3 seeds)
     res = {
         "model_id": model_id, "arch": cfg["arch"], "scale": cfg["scale"],
         "scale_config": matrix.SCALE_CONFIG[cfg["scale"]], "n_params": n_params,
         "train": tr, "eval": ev,
         "throughput": {"sec_per_step": tr["sec_per_step"],
                        "min_per_model_full_budget": full_min,
-                       "hours_per_81_models": per_scale_h,
-                       "budget": {k: B[k] for k in ("steps", "batch_games")}},
+                       "hours_per_27_models": per_scale_h,
+                       "budget": {k: B[k] for k in ("steps", "batch_games")},
+                       "micro_batch": cfg["micro_batch"]},
         "device": cfg["device"], "gpu": torch.cuda.get_device_name(0) if cfg["device"].startswith("cuda") else "cpu",
         "config": cfg,
     }
@@ -316,12 +326,12 @@ def main() -> None:
 
     log.info("\nnext-token acc %.3f   legal-move rate %.4f   final loss %.3f",
              ev["next_token_acc"], ev["legal_move_rate"], tr["final_loss"])
-    log.info("throughput: %.3f s/step  ->  %.1f min per model at %d steps  ->  %.1f h for 81 models",
+    log.info("throughput: %.3f s/step  ->  %.1f min per model at %d steps  ->  %.1f h for 27 models",
              tr["sec_per_step"], full_min, cfg["budget_steps"], per_scale_h)
     row = (f"| {cfg['arch']} | {cfg['scale']} | {n_params/1e6:.2f}M | {cfg['steps']} | "
            f"{tr['sec_per_step']:.3f} | {full_min:.1f} | {per_scale_h:.1f} | "
            f"{ev['legal_move_rate']:.4f} | {ev['next_token_acc']:.3f} |")
-    log.info("\n| arch | scale | params | steps timed | s/step | min/model (full) | h / 81 models | legal rate | next-tok acc |")
+    log.info("\n| arch | scale | params | steps timed | s/step | min/model (full) | h / 27 models | legal rate | next-tok acc |")
     log.info("|---|---|---|---|---|---|---|---|---|")
     log.info("%s", row)
     (out / "row.md").write_text(row + "\n")
