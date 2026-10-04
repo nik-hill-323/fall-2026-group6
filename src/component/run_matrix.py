@@ -57,7 +57,9 @@ TRAINING_BUDGET: dict[str, float] = {
     "lr": 3e-4,
     "warmup_steps": 200,
     "weight_decay": 0.01,
-    "n_train_games": 200_000,
+    # steps x batch_games = 1.28M games seen. Load at least that many so no game
+    # repeats within a run (200k meant each game was seen about 6 times).
+    "n_train_games": 1_280_000,
     "seq_len": 59,
 }
 
@@ -107,8 +109,9 @@ def model_rows() -> list[dict]:
                     "distribution": dist,
                     "seed": seed,
                     "held_out": held_out_flag(domain, arch),
-                    "config": f"configs/runs/{model_id}.yaml",
-                    "checkpoint": f"checkpoints/{model_id}/model.pt",
+                    # where src/zoo/train.py writes them (outputs/ is not in git)
+                    "config": f"outputs/zoo/{model_id}/config.json",
+                    "checkpoint": f"outputs/zoo/{model_id}/model.pt",
                     "status": "planned",
                     "notes": "",
                 }
