@@ -22,6 +22,19 @@ SCALE="${SCALE:-small}"
 ARCHS="${ARCHS:-transformer lstm mamba}"
 SEED="${SEED:-0}"
 DOC=src/docs/zoo_first_models.md
+
+# Use whichever interpreter the active environment provides.
+PY="$(command -v python || command -v python3)"
+
+# This is a GPU job. Stop early on a machine without one, so a laptop run cannot
+# write a table of failures into src/docs. Set ALLOW_CPU=1 to override.
+if ! "$PY" -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)" 2>/dev/null; then
+  if [ "${ALLOW_CPU:-0}" != 1 ]; then
+    echo "No CUDA GPU found. Run this on the EC2 instance (or set ALLOW_CPU=1)." >&2
+    exit 1
+  fi
+fi
+
 mkdir -p results/D1_next_token
 
 {
@@ -41,10 +54,10 @@ for arch in $ARCHS; do
   if [ "$arch" = mamba ] && [ "$SCALE" = large ]; then extra+=(--micro_batch 64); fi
   if [ -n "${N_GAMES:-}" ]; then extra+=(--n_train_games "$N_GAMES"); fi
   echo "=== $id ==="
-  if python src/zoo/train.py --arch "$arch" --scale "$SCALE" --distribution synthetic \
+  if "$PY" src/zoo/train.py --arch "$arch" --scale "$SCALE" --distribution synthetic \
         --seed "$SEED" --log_every 500 ${extra[@]+"${extra[@]}"}; then
     cp "outputs/zoo/$id/results.json" "results/D1_next_token/$id.json"
-    python - "$id" >> "$DOC" <<'PY'
+    "$PY" - "$id" >> "$DOC" <<'PY'
 import json, sys
 r = json.load(open(f"results/D1_next_token/{sys.argv[1]}.json"))
 print(f"| {r['model_id']} | {r['n_params'] / 1e6:.2f}M | {r['train']['steps_run']} | "
