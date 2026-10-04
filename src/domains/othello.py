@@ -15,10 +15,19 @@ Board and tokens
     tokens    1 to 60 = the 60 squares that are not the 4 start squares, in order; 0 = padding
               (same vocabulary as Othello GPT, Li et al. 2023)
 
-Data (othello_world synthetic corpus, repackaged as .bin by alexandretl/othello)
-    one byte per move, square 0 to 63, 60 bytes per game, 255 pads games shorter than 60
-    moves (read as int8 it becomes -1). Default folder: ~/artifacts/othello_data/data,
-    with train/ and val/ inside. Set WMC_OTHELLO_DATA to use another folder.
+Data: three training distributions (load_distribution)
+    synthetic     othello_world synthetic corpus (Li et al. 2023), random legal moves,
+                  repackaged as .bin by alexandretl/othello: one byte per move, square 0 to 63,
+                  60 bytes per game, 255 pads games shorter than 60 moves (read as int8: -1).
+                  Folder ~/artifacts/othello_data/data with train/ and val/ (WMC_OTHELLO_DATA).
+                  Split test = the last SYNTHETIC_TEST_FILES files of val/, split val = the rest.
+    championship  WTHOR tournament archive (French Othello Federation), human games 1977 to 2025,
+                  one WTH_YYYY.wtb file per year in ~/artifacts/othello_championship
+                  (WMC_CHAMPIONSHIP_DATA). Duplicates removed, seeded 80 / 10 / 10 train / val / test split.
+    mixed         50% synthetic, 50% championship, shuffled together (same ratio in every split).
+    Splits: train = model training only; val = checks during training and diagnostic fitting
+    (probe training, D3 adaptation); test = final diagnostic scores only.
+    Download everything with src/shellscripts/fetch_othello_data.sh.
 
 Import it like the rest of src (no package install needed):
     spec = importlib.util.spec_from_file_location("othello", ROOT / "src/domains/othello.py")
@@ -52,6 +61,13 @@ MAX_MOVES = 60
 N_CTX = 59   # Othello GPT reads the first 59 moves and predicts the next one at each position
 
 DATA_DIR = os.environ.get("WMC_OTHELLO_DATA", os.path.expanduser("~/artifacts/othello_data/data"))
+CHAMPIONSHIP_DIR = os.environ.get("WMC_CHAMPIONSHIP_DATA", os.path.expanduser("~/artifacts/othello_championship"))
+DISTRIBUTIONS = ["synthetic", "championship", "mixed"]
+SPLITS = ["train", "val", "test"]
+CHAMPIONSHIP_SPLIT = {"train": 0.8, "val": 0.1, "test": 0.1}
+SPLIT_SEED = 0       # fixed: the championship split never changes
+SYNTHETIC_TEST_FILES = 10  # last 10 of the 48 synthetic val files are the synthetic test split
+MIXED_SYNTHETIC_SHARE = 0.5
 
 
 def other(player: int) -> int:
@@ -152,9 +168,16 @@ def random_games(n: int, seed: int) -> np.ndarray:
 # ==========================================================================
 
 def list_files(data_dir: str, split: str) -> list[str]:
-    """The .bin files of one split (train or val), in number order."""
-    return sorted(glob.glob(os.path.join(data_dir, split, "*.bin")),
-                  key=lambda f: int(f.split("_")[-1].split(".")[0]))
+    """The synthetic .bin files of one split, in number order. train = train/ folder;
+    val and test share the val/ folder: test is its last SYNTHETIC_TEST_FILES files."""
+    folder = "train" if split == "train" else "val"
+    files = sorted(glob.glob(os.path.join(data_dir, folder, "*.bin")),
+                   key=lambda f: int(f.split("_")[-1].split(".")[0]))
+    if split == "val":
+        return files[:-SYNTHETIC_TEST_FILES]
+    if split == "test":
+        return files[-SYNTHETIC_TEST_FILES:]
+    return files
 
 
 def load_games(files: list[str], n_games: int) -> np.ndarray:
@@ -177,6 +200,89 @@ def load_split(data_dir: str, split: str, n_games: int) -> np.ndarray:
     if not files:
         raise FileNotFoundError(f"no .bin files under {data_dir}/{split}")
     return load_games(files, n_games)
+
+
+# ==========================================================================
+# Championship games (WTHOR) and the three training distributions
+# ==========================================================================
+
+WTHOR_HEADER = 16   # bytes: date, number of games (int32 at offset 4), year, board size, ...
+WTHOR_RECORD = 68   # bytes per game: tournament, black id, white id, 2 scores (8 bytes), then 60 moves
+
+
+def read_wtb(path: str) -> np.ndarray:
+    """One WTHOR .wtb file as (G, 60) int8 squares, -1 padded. WTHOR writes a move as
+    10 * row + column with row and column 1 to 8 (11 = A1, 88 = H8) and 0 for no move."""
+    raw = np.fromfile(path, dtype=np.uint8)
+    n = int(raw[4:8].view("<i4")[0])
+    body = raw[WTHOR_HEADER:]
+    if len(body) != n * WTHOR_RECORD:
+        raise ValueError(f"{path}: header says {n} games but the file holds {len(body) / WTHOR_RECORD}")
+    mv = body.reshape(n, WTHOR_RECORD)[:, 8:].astype(np.int16)
+    sq = np.where(mv > 0, (mv // 10 - 1) * SIZE + (mv % 10 - 1), -1)
+    if ((sq < -1) | (sq > 63)).any():
+        raise ValueError(f"{path}: move byte outside 11 to 88")
+    return sq.astype(np.int8)
+
+
+def _keep_legal(games: np.ndarray) -> np.ndarray:
+    ok = np.array([replay(g[g >= 0]) is not None for g in games], dtype=bool)
+    return games[ok]
+
+
+def load_championship(data_dir: str = CHAMPIONSHIP_DIR) -> dict[str, np.ndarray | dict]:
+    """All WTHOR games, cleaned and split once, then cached in data_dir/championship_split.npz.
+    Cleaning: exact duplicate games removed, games with an illegal move removed.
+    Split: seeded shuffle, then CHAMPIONSHIP_SPLIT (80 / 10 / 10) into train, val, test."""
+    cache = os.path.join(data_dir, "championship_split.npz")
+    if os.path.exists(cache):
+        z = np.load(cache, allow_pickle=False)
+        return {"train": z["train"], "val": z["val"], "test": z["test"],
+                "counts": {k: int(z[k]) for k in ("n_raw", "n_duplicates", "n_illegal")}}
+    files = sorted(glob.glob(os.path.join(data_dir, "WTH_*.wtb")))
+    if not files:
+        raise FileNotFoundError(f"no WTH_*.wtb files under {data_dir}")
+    raw = np.concatenate([read_wtb(f) for f in files])
+    uniq = np.unique(raw, axis=0)  # also sorts, so the shuffle below is what sets the order
+    legal = _keep_legal(uniq)
+    rng = np.random.default_rng(SPLIT_SEED)
+    legal = legal[rng.permutation(len(legal))]
+    n_val = int(round(CHAMPIONSHIP_SPLIT["val"] * len(legal)))
+    n_test = int(round(CHAMPIONSHIP_SPLIT["test"] * len(legal)))
+    out = {"val": legal[:n_val], "test": legal[n_val:n_val + n_test], "train": legal[n_val + n_test:],
+           "counts": {"n_raw": len(raw), "n_duplicates": len(raw) - len(uniq), "n_illegal": len(uniq) - len(legal)}}
+    np.savez(cache, train=out["train"], val=out["val"], test=out["test"], **out["counts"])
+    log.info("championship: %d raw games, %d duplicates, %d illegal, %d train, %d val, %d test (cached in %s)",
+             len(raw), out["counts"]["n_duplicates"], out["counts"]["n_illegal"],
+             len(out["train"]), len(out["val"]), len(out["test"]), cache)
+    return out
+
+
+def load_distribution(name: str, split: str, n_games: int, seed: int = 0,
+                      synthetic_dir: str = DATA_DIR, championship_dir: str = CHAMPIONSHIP_DIR) -> np.ndarray:
+    """(n_games, 60) int8 games from one training distribution and split (train, val or test).
+    synthetic     first n_games of the othello_world files (as before)
+    championship  n_games drawn from the WTHOR split; if fewer exist, all of them (with a warning)
+    mixed         MIXED_SYNTHETIC_SHARE synthetic + the rest championship, shuffled with `seed`"""
+    if name not in DISTRIBUTIONS:
+        raise ValueError(f"unknown distribution {name!r}, expected one of {DISTRIBUTIONS}")
+    if split not in SPLITS:
+        raise ValueError(f"split must be one of {SPLITS}, not {split!r}")
+    rng = np.random.default_rng(seed)
+    if name == "synthetic":
+        return load_split(synthetic_dir, split, n_games)
+    champ = load_championship(championship_dir)[split]
+    if name == "championship":
+        if n_games >= len(champ):
+            if n_games > len(champ):
+                log.warning("championship %s has %d games, asked for %d: using all", split, len(champ), n_games)
+            return champ
+        return champ[rng.choice(len(champ), n_games, replace=False)]
+    n_syn = int(round(MIXED_SYNTHETIC_SHARE * n_games))
+    n_ch = min(n_games - n_syn, len(champ))
+    games = np.concatenate([load_split(synthetic_dir, split, n_syn),
+                            champ[rng.choice(len(champ), n_ch, replace=False)]])
+    return games[rng.permutation(len(games))]
 
 
 # ==========================================================================
