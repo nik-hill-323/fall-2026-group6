@@ -70,8 +70,8 @@ a diagnostic (see the split rules in `src/domains/othello.py`).
 The proposal lists "altered legal move rules" for the game domains. The model only sees move tokens,
 so nothing in its input says the rules changed; it could only follow a new rule after being adapted
 to it. Adaptation with little data is exactly what D3 measures. Putting it in the criterion would make
-H3 partly "does D3 predict D3". So version 1 keeps the rules fixed and shifts the states. This is a
-choice the team should confirm when approving the PR.
+H3 partly "does D3 predict D3". So version 1 keeps the rules fixed and shifts the states.
+Team decision, 2026-10-05: accepted. The proposal is updated to match in PR #47.
 
 ## Checks
 
