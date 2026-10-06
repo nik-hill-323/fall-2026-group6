@@ -8,7 +8,7 @@
 #
 # About 20 minutes at scale small (transformer 1.5, LSTM 0.6, Mamba 17.7).
 # Writes, and these two are meant to be committed:
-#     results/D1_next_token/{model_id}.json     full result of each run
+#     results/zoo_training/{model_id}.json      full training record of each run
 #     src/docs/zoo_first_models.md              one table row per model
 # Checkpoints stay in outputs/zoo/{model_id}/ (not in git).
 #
@@ -35,7 +35,7 @@ if ! "$PY" -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1
   fi
 fi
 
-mkdir -p results/D1_next_token
+mkdir -p results/zoo_training
 
 {
   echo "# First zoo models: synthetic Othello, scale ${SCALE}, seed ${SEED}"
@@ -56,10 +56,10 @@ for arch in $ARCHS; do
   echo "=== $id ==="
   if "$PY" src/zoo/train.py --arch "$arch" --scale "$SCALE" --distribution synthetic \
         --seed "$SEED" --log_every 500 ${extra[@]+"${extra[@]}"}; then
-    cp "outputs/zoo/$id/results.json" "results/D1_next_token/$id.json"
+    cp "outputs/zoo/$id/results.json" "results/zoo_training/$id.json"
     "$PY" - "$id" >> "$DOC" <<'PY'
 import json, sys
-r = json.load(open(f"results/D1_next_token/{sys.argv[1]}.json"))
+r = json.load(open(f"results/zoo_training/{sys.argv[1]}.json"))
 print(f"| {r['model_id']} | {r['n_params'] / 1e6:.2f}M | {r['train']['steps_run']} | "
       f"{r['train']['final_loss']:.3f} | {r['eval']['next_token_acc']:.3f} | "
       f"{r['eval']['legal_move_rate']:.4f} | {r['train']['wall_sec'] / 60:.1f} |")
@@ -72,4 +72,4 @@ done
 echo
 cat "$DOC"
 echo
-echo "Next: git add results/D1_next_token src/docs/zoo_first_models.md, commit on a branch, open a PR."
+echo "Next: git add results/zoo_training src/docs/zoo_first_models.md, commit on a branch, open a PR."

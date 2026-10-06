@@ -2,7 +2,9 @@
 
 Trained with `src/zoo/train.py` at the full budget in `src/component/run_matrix.py`
 on NVIDIA A10G, 2026-10-04, commit eb09a86.
-Legal move rate is Diagnostic 1: the share of the model's top next moves that the rules allow, on 1,000 validation games.
+Legal move rate: the share of the model's top next moves that the rules allow, on 1,000 validation games.
+This is a training check. The full training records are in `results/zoo_training/`. Diagnostic D1 itself is
+scored on the test split and written in the results schema to `results/D1_next_token/` (see `src/docs/results_schema.md`).
 
 | model_id | params | steps | final loss | next token acc | legal move rate (D1) | train minutes |
 |---|---|---|---|---|---|---|
