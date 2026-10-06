@@ -30,6 +30,9 @@ Smoke test anywhere, no data needed:
 from __future__ import annotations
 
 import argparse
+import hashlib
+import platform
+import subprocess
 import importlib.util
 import json
 import logging
@@ -62,6 +65,10 @@ N_CTX = rules.N_CTX  # 59 moves per game at most
 
 # ==========================================================================
 # Models. All take (B, T) tokens and return (B, T, VOCAB) logits.
+# Every model also has layer_outputs(x): the vector after each layer, (B, T, d_model) per
+# layer, which is what Diagnostic 4 probes, and readout(h): last layer vector -> logits.
+# forward(x) is readout(layer_outputs(x)[-1]), so the probed vectors are exactly the ones
+# the model uses to predict.
 # ==========================================================================
 
 class GPT(nn.Module):
@@ -77,25 +84,50 @@ class GPT(nn.Module):
         self.norm = nn.LayerNorm(d_model)
         self.head = nn.Linear(d_model, VOCAB)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def layer_outputs(self, x: torch.Tensor) -> list[torch.Tensor]:
+        """Residual stream after each transformer block."""
         T = x.shape[1]
         mask = nn.Transformer.generate_square_subsequent_mask(T, device=x.device)
         h = self.tok(x) + self.pos(torch.arange(T, device=x.device))
+        out = []
         for layer in self.layers:
             h = layer(h, src_mask=mask, is_causal=True)
+            out.append(h)
+        return out
+
+    def readout(self, h: torch.Tensor) -> torch.Tensor:
         return self.head(self.norm(h))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.readout(self.layer_outputs(x)[-1])
 
 
 class LSTM(nn.Module):
+    """A stack of single layer LSTMs. Same parameters and computation as one nn.LSTM with
+    num_layers=n_layers, but the hidden state after every layer is reachable, so Diagnostic 4
+    can probe each layer (one multi layer nn.LSTM only returns the last layer)."""
+
     def __init__(self, n_layers: int, d_model: int, **_: int) -> None:
         super().__init__()
         self.tok = nn.Embedding(VOCAB, d_model)
-        self.rnn = nn.LSTM(d_model, d_model, num_layers=n_layers, batch_first=True)
+        self.layers = nn.ModuleList([nn.LSTM(d_model, d_model, num_layers=1, batch_first=True)
+                                     for _ in range(n_layers)])
         self.head = nn.Linear(d_model, VOCAB)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h, _ = self.rnn(self.tok(x))
+    def layer_outputs(self, x: torch.Tensor) -> list[torch.Tensor]:
+        """Hidden state after each LSTM layer."""
+        h = self.tok(x)
+        out = []
+        for layer in self.layers:
+            h, _ = layer(h)
+            out.append(h)
+        return out
+
+    def readout(self, h: torch.Tensor) -> torch.Tensor:
         return self.head(h)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.readout(self.layer_outputs(x)[-1])
 
 
 class Mamba(nn.Module):
@@ -111,8 +143,20 @@ class Mamba(nn.Module):
         self.norm = nn.LayerNorm(d_model)
         self.head = nn.Linear(d_model, VOCAB)
 
+    def layer_outputs(self, x: torch.Tensor) -> list[torch.Tensor]:
+        """Residual stream after each Mamba block (backbone.layers, as in mambapy's forward)."""
+        h = self.tok(x)
+        out = []
+        for layer in self.backbone.layers:
+            h = layer(h)
+            out.append(h)
+        return out
+
+    def readout(self, h: torch.Tensor) -> torch.Tensor:
+        return self.head(self.norm(h))
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.head(self.norm(self.backbone(self.tok(x))))
+        return self.readout(self.layer_outputs(x)[-1])
 
 
 ARCHS = {"transformer": GPT, "lstm": LSTM, "mamba": Mamba}
@@ -294,6 +338,26 @@ def main() -> None:
     log.info("%s", row)
     (out / "row.md").write_text(row + "\n")
     log.info("\nsaved to %s", out)
+
+    # Training record for the zoo registry: only for full budget runs on real data, so smoke
+    # tests and throughput runs never enter the registry. Small JSON, committed to git;
+    # the checkpoint itself stays out of git (outputs/, later S3).
+    if not cfg["synthetic"] and cfg["steps"] == cfg["budget_steps"]:
+        ckpt = (out / "model.pt").resolve()
+        try:
+            commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
+                                    capture_output=True, text=True, timeout=5).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            commit = "unknown"
+        record = {**res, "domain": "othello", "distribution": cfg["distribution"], "seed": cfg["seed"],
+                  "checkpoint": str(ckpt.relative_to(ROOT)) if ckpt.is_relative_to(ROOT) else str(ckpt),
+                  "checkpoint_sha256": hashlib.sha256(ckpt.read_bytes()).hexdigest(),
+                  "git_commit": commit, "host": platform.node(),
+                  "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        rec_dir = ROOT / "results" / "zoo_training"
+        rec_dir.mkdir(parents=True, exist_ok=True)
+        (rec_dir / f"{model_id}.json").write_text(json.dumps(record, indent=2) + "\n")
+        log.info("training record: %s", rec_dir / f"{model_id}.json")
 
 
 if __name__ == "__main__":

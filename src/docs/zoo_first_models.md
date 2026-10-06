@@ -11,3 +11,7 @@ scored on the test split and written in the results schema to `results/D1_next_t
 | othello_transformer_small_synthetic_s0 | 0.82M | 5000 | 2.641 | 0.131 | 0.8372 | 1.6 |
 | othello_lstm_small_synthetic_s0 | 0.54M | 5000 | 3.472 | 0.085 | 0.5660 | 0.7 |
 | othello_mamba_small_synthetic_s0 | 0.48M | 5000 | 2.719 | 0.129 | 0.8424 | 17.9 |
+
+Note (2026-10-06): the LSTM row above was trained with the old LSTM class (one multi layer `nn.LSTM`).
+The LSTM is now a stack of single layer LSTMs so every layer can be probed, so this checkpoint no longer
+loads; its training record was removed and the model is retrained with the Othello zoo.

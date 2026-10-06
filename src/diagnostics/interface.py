@@ -5,8 +5,8 @@ Three pieces
                     architecture details:
                         logits(tokens)       (batch, positions, 61) next move scores
                         activations(tokens)  (layers, batch, positions, width) the vector after
-                                             each layer: residual stream for transformers,
-                                             hidden state for LSTM and Mamba
+                                             each layer: residual stream for transformers
+                                             and Mamba, hidden state for LSTM
     the contract    every diagnostic module defines
                         DIAGNOSTIC = "D1" (or D2, D3, D4)
                         def score(model: ZooModel, split: str, n_games: int, data_seed: int,
@@ -19,8 +19,7 @@ Three pieces
 
 Models available now
     TransformerLensModel    the reference Othello GPT (TransformerLens weights)
-    TrainPyModel            a model built by src/zoo/train.py; the transformer works now,
-                            LSTM and Mamba activations come in A7
+    TrainPyModel            a model built by src/zoo/train.py: transformer, LSTM or Mamba
     othello_gpt()           loads a reference Othello GPT
     from_checkpoint()       loads a zoo model from outputs/zoo/{model_id}/model.pt
 
@@ -138,17 +137,9 @@ class TrainPyModel(ZooModel):
         return self.module(tokens)
 
     def _activations(self, tokens: torch.Tensor) -> torch.Tensor:
-        if self.arch == "transformer":
-            m = self.module
-            T = tokens.shape[1]
-            mask = nn.Transformer.generate_square_subsequent_mask(T, device=tokens.device)
-            h = m.tok(tokens) + m.pos(torch.arange(T, device=tokens.device))
-            out = []
-            for layer in m.layers:
-                h = layer(h, src_mask=mask, is_causal=True)
-                out.append(h)
-            return torch.stack(out)
-        raise NotImplementedError(f"activations for {self.arch} come in A7 (activation hooks)")
+        # every train.py model (GPT, LSTM, Mamba) exposes layer_outputs: residual stream after
+        # each block for GPT and Mamba, hidden state after each layer for the LSTM
+        return torch.stack(self.module.layer_outputs(tokens))
 
 
 # ==========================================================================

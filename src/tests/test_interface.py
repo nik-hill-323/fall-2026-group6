@@ -48,14 +48,6 @@ def test_shapes() -> None:
     assert m.activations(tok).shape == (2, 3, oth.N_CTX, 16)
 
 
-def test_last_activation_gives_the_logits() -> None:
-    # the last layer's vector, through the final norm and head, must equal the model's logits:
-    # proves activations() reads the same computation the model runs
-    m, tok = tiny(), tokens(2)
-    last = m.activations(tok)[-1]
-    assert torch.allclose(m.module.head(m.module.norm(last)), m.logits(tok), atol=1e-5)
-
-
 def test_callable_works_with_legal_rate() -> None:
     m = tiny()
     data = oth.build(oth.random_games(5, seed=2), legal=True)
@@ -63,11 +55,25 @@ def test_callable_works_with_legal_rate() -> None:
     assert 0.0 <= rate <= 1.0
 
 
-def test_lstm_and_mamba_activations_wait_for_a7() -> None:
-    m = tiny("lstm", "othello_lstm_small_synthetic_s0")
-    assert m.logits(tokens(1)).shape == (1, oth.N_CTX, oth.VOCAB)
-    with pytest.raises(NotImplementedError, match="A7"):
-        m.activations(tokens(1))
+@pytest.mark.parametrize("arch", ["transformer", "lstm", "mamba"])
+def test_every_architecture_has_layer_activations(arch: str) -> None:
+    if arch == "mamba":
+        pytest.importorskip("mambapy")
+    m, tok = tiny(arch, f"othello_{arch}_small_synthetic_s0"), tokens(2)
+    acts = m.activations(tok)
+    assert acts.shape == (2, 2, oth.N_CTX, 16)
+    # the last layer through the readout gives exactly the logits, for every architecture
+    assert torch.allclose(m.module.readout(acts[-1]), m.logits(tok), atol=1e-5)
+    # layers differ from each other (each layer is really a different vector)
+    assert not torch.allclose(acts[0], acts[1])
+
+
+def test_lstm_is_a_stack_of_single_layers() -> None:
+    m = tiny("lstm", "othello_lstm_small_synthetic_s0").module
+    assert len(m.layers) == 2 and all(layer.num_layers == 1 for layer in m.layers)
+    # same parameter count as one 2 layer nn.LSTM
+    ref = torch.nn.LSTM(16, 16, num_layers=2, batch_first=True)
+    assert sum(p.numel() for p in m.layers.parameters()) == sum(p.numel() for p in ref.parameters())
 
 
 # ==========================================================================
