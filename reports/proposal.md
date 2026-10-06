@@ -82,6 +82,9 @@
             2. Othello-GPT community game corpora and reference checkpoints, the standard testbed for
                representation probing of world models (Li et al., 2023; Nanda et al., 2023):
                https://github.com/likenneth/othello_world
+               The othello_world championship links are no longer available, so the championship
+               distribution uses the WTHOR tournament archive (French Othello Federation, 137,548 games,
+               1977 to 2025), cleaned and split 80 / 10 / 10 into train, val and test.
 
             TIER 2 -- DOMAIN GENERATORS FOR THE MODEL ZOO (ground-truth world model known by construction):
             3. Navigation / street networks: OpenStreetMap street graphs via OSMnx, from which shortest-path
@@ -100,16 +103,20 @@
             3 seeds = 243 models and 972 (model x diagnostic) evaluations.
 
             TIER 3 -- DOWNSTREAM FRAGILITY SUITE (the predictive-validity criterion, H3):
-            6. Per-domain held-out task variants that are structurally related but subtly different from the
-               training task -- detour-constrained routing on the navigation graphs, altered legal-move rules
-               on Othello, and modified instruction semantics on the interpreter domain. Each variant is specified as an
-               explicit DFA modification so that "correct behavior" is unambiguous, and each is constructed
-               in Weeks 3-4 and frozen before any diagnostic is run, so no diagnostic can be tuned against it
+            6. Per domain fragility suites that keep the rules fixed and shift the situations the model is
+               tested on, so the correct answer always comes from the true rules. Othello (version 1,
+               frozen with the git tag fragility-v1): other training distributions, positions right after a
+               pass, board symmetries, and forced detours during self play. Navigation: detour constrained
+               routing. Interpreter: inputs outside the training range. Changed rules are not used, because a
+               model can only follow a new rule after being adapted to it, and adaptation is what D3
+               measures; using it here would make H3 partly D3 predicting D3. Each suite is frozen and
+               tagged before any model of its domain is scored.
 
             TIER 4 -- HELD-OUT GENERALIZATION (evaluation only, not used for development):
-            7. One architecture family and one domain held out of Weeks 3-12 entirely, used in Week 14 only,
-               to test whether the concordance and predictive-validity findings generalize beyond the models
-               and domains used to develop the analysis
+            7. One domain, the interpreter, held out: its models are trained and scored only after the
+               H1 to H3 analysis is fixed on Othello and navigation, to test whether the findings generalize
+               to a domain never used to develop the analysis. No architecture family is held out: with three
+               families, holding one out would remove a third of the models from every H1 to H3 analysis.
 
             DATASET / PIPELINE PREPARATION:
             - Every domain is exposed behind a common generator interface emitting (token sequence, ground-
@@ -302,7 +309,7 @@
             [Week 14: New Domains and Held-Out Check -- H4]
             - Analyze the interpreter-state domain, which this literature has never
               probed, and test whether the Weeks 11-13 conclusions hold there
-            - Evaluate the Tier 4 held-out architecture family and domain, kept out of all prior phases
+            - Evaluate the Tier 4 held out domain (the interpreter), kept out of all prior analysis
             - Formally state the project's four central hypotheses being tested against the master table:
               H1: Do the four diagnostic families induce concordant rankings over models, or does concordance
                   break down -- and between which specific pairs of diagnostics?
@@ -312,8 +319,8 @@
               H3: Which diagnostic best predicts downstream failure on related-but-shifted tasks -- the
                   fragility that motivates this literature -- and does the weak next-token baseline predict
                   it at all?
-              H4: Do the concordance and predictive-validity findings generalize to domain classes never
-                  probed by this literature, and to a held-out architecture family?
+              H4: Do the concordance and predictive validity findings generalize to a held out domain
+                  (the interpreter) that this literature has never probed?
 
 
             PHASE 5: PAPER AND CODE RELEASE (Weeks 14-15)
@@ -349,21 +356,22 @@
 
 ## 5 Timeline:  
 
-            Week 1:    Environment, Tier 1 artifacts downloaded, run_matrix.csv fixed
-            Week 2:    Published Vafa (2024) and Othello-GPT probe results reproduced -- REPRODUCTION GATE
-            Week 3:    Three domain generators implemented; per-domain DFA specs and difficulty stats recorded
-            Week 4:    Downstream fragility suite built and FROZEN; analysis plan pre-registered
-            Week 5:    Model zoo trained across distribution x scale x architecture x seed; zoo_registry.csv
-            Week 6:    Diagnostic 1: next-token validity baseline across the zoo
-            Week 7:    Diagnostic 2: Myhill-Nerode compression/distinction metrics with sampling estimators
-            Week 8:    Diagnostic 3: inductive-bias probes plus symbolic-regression law recovery
-            Week 9:    Diagnostic 4: layer-wise linear/nonlinear probing with control tasks
-            Week 10:   Intervention-based causal validation of the probing results
-            Week 11:   Cross-diagnostic concordance analysis with bootstrapped CIs -- H1
-            Week 12:   Attribution of disagreement to domain/architecture/scale properties -- H2
-            Week 13:   Fragility-suite evaluation; which diagnostic predicts downstream failure -- H3
-            Week 14:   New-domain analysis (interpreter) and Tier 4 held-out check -- H4; paper draft started
-            Week 15:   Research paper draft finished; WM-Concord code release, plug-in diagnostic interface, notebooks, final presentation
+            Weeks 1 to 6:   Environment, Tier 1 artifacts, run_matrix.csv; reproduction gate (Othello GPT
+                            probe within 1 point of Nanda et al. 2023); Othello domain module and the three
+                            Othello distributions; zoo trainer and measured throughput (111 GPU hours)
+            Week 7:         Othello fragility suite FROZEN (tag fragility-v1); analysis plan pre-registered;
+                            Othello zoo (81 models) training starts on the four instances
+            Week 8:         Othello zoo trained and validated, zoo_registry.csv; D1 and D4 (with control task
+                            and occupancy baseline) on all Othello models
+            Week 9:         PRELIMINARY PRESENTATION (Oct 20): first D1 vs D4 concordance table on the Othello zoo
+            Weeks 9 to 10:  D2 and D3 on the Othello zoo; causal check of the D4 probes; navigation generator,
+                            DFA spec and fragility suite frozen; Vafa et al. 2024 navigation metrics reproduced
+            Week 11:        Navigation zoo (81 models) trained; all four diagnostics on navigation
+            Week 12:        H1 and H2 on Othello and navigation; interpreter generator and fragility suite
+                            frozen; interpreter zoo trained but not analyzed (held out for H4)
+            Week 13:        H3 on Othello and navigation; master table frozen for the development domains
+            Week 14:        H4: all four diagnostics on the interpreter, H1 to H3 rechecked there; paper draft
+            Week 15:        Paper finished; WM-Concord code release; final presentation (Dec 8)
 
             TOTAL: 15 weeks (one semester)
 
@@ -380,9 +388,9 @@
             STAGE GATES (decision points that change the plan, not status meetings):
             - Week 2:  If published results cannot be reproduced, halt and fix the implementation before
                        building the zoo
-            - Week 5:  If the full model zoo will not train within the week on one A10G, cut the scale axis
-                       first (keep distribution, architecture, and seed), since scale is the least
-                       informative axis for separating diagnostics
+            - Week 7:  Training is split across four instances by the measured throughput. If the Othello
+                       zoo is not trained by the end of Week 8, the team decides and writes down any cut
+                       before scoring the affected models; Mamba large is kept unless the team decides otherwise
             - Week 7:  If the Myhill-Nerode sampling estimators have variance too large to rank models,
                        reduce the number of domains rather than the number of diagnostics -- the
                        cross-diagnostic comparison is the contribution and cannot be narrowed

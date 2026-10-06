@@ -71,12 +71,12 @@ DISTRIBUTIONS: dict[str, list[str]] = {
     "interpreter": ["random", "structured_short", "structured_long"],
 }
 
-# H4 hold-outs: one domain and one architecture kept out of development
-# until Week 14. NOT decided yet. Until the team picks them, every row is
-# marked "tbd" so nothing is accidentally excluded. Set these two and
-# regenerate once the choice is made.
-HELD_OUT_DOMAIN: str | None = None
-HELD_OUT_ARCH: str | None = None
+# H4 hold-out, decided by the team on 2026-10-05: the interpreter domain is
+# held out (trained and scored only after H1 to H3 are fixed on Othello and
+# navigation). No architecture is held out, since with three families that
+# would remove a third of the models from every H1 to H3 analysis.
+HELD_OUT_DOMAIN: str | None = "interpreter"   # H4, decided 2026-10-05
+HELD_OUT_ARCH: str | None = None              # no architecture held out, decided 2026-10-05
 
 DIAG_NAMES = {
     "D1": "next_token",
@@ -87,7 +87,7 @@ DIAG_NAMES = {
 
 
 def held_out_flag(domain: str, arch: str) -> str:
-    if HELD_OUT_DOMAIN is None or HELD_OUT_ARCH is None:
+    if HELD_OUT_DOMAIN is None and HELD_OUT_ARCH is None:
         return "tbd"
     return "yes" if (domain == HELD_OUT_DOMAIN or arch == HELD_OUT_ARCH) else "no"
 
