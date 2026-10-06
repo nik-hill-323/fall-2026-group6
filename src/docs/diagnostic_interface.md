@@ -17,8 +17,8 @@ A diagnostic therefore never needs to know which architecture it is scoring.
 | `model.model_id`, `model.arch`, `model.n_layers`, `model.d_model`, `model.device` | | |
 
 `tokens` are `(batch, 59)` ints: 1 to 60 are squares, 0 is padding (see `src/domains/othello.py`).
-Activations are the residual stream after each block for transformers, and the hidden state after
-each layer for LSTM and Mamba (LSTM and Mamba are added in A7).
+Activations are the residual stream after each block for transformers and Mamba, and the hidden state
+after each layer for the LSTM.
 
 Load models with:
 
