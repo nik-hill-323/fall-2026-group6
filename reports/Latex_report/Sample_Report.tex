@@ -253,7 +253,9 @@ Every domain emits the same triple: token sequence, true state, and the set of l
 \stub{street graph source, DFA definition, the three samplers, state space size}
 
 \subsection{Othello}
-\stub{game corpus (othello\_world synthetic and championship games), board state, legal moves, DFA size}
+The Othello state consists of the $8\times8$ board together with the player to move. Following the vocabulary used by Othello-GPT~\cite{li2023othello}, tokens 1--60 represent the 60 board squares other than the four fixed starting squares, while token 0 is used for padding. We use three training distributions. The synthetic distribution is the \texttt{othello\_world} corpus from Li et al.~\cite{li2023othello}, containing approximately 19 million training games generated from random legal moves. The championship distribution is drawn from the WTHOR tournament archive and contains 137,548 human games from 1977 through 2025. After removing 41 duplicate games, no illegal games remain, and the data are split into 110,005 training games, 13,751 validation games, and 13,751 test games. The mixed distribution combines 50\% synthetic and 50\% championship games.
+
+The three splits have fixed roles throughout the project. The training split is used only for model training, the validation split is used for checks during training and for fitting diagnostics, and the test split is reserved exclusively for final diagnostic scores.
 
 \subsection{Interpreter}
 \stub{instruction set of the small stack or register machine, what counts as state, how DFA size is tuned}
