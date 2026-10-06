@@ -57,7 +57,9 @@ TRAINING_BUDGET: dict[str, float] = {
     "lr": 3e-4,
     "warmup_steps": 200,
     "weight_decay": 0.01,
-    "n_train_games": 200_000,
+    # steps x batch_games = 1.28M games seen. Load at least that many so no game
+    # repeats within a run (200k meant each game was seen about 6 times).
+    "n_train_games": 1_280_000,
     "seq_len": 59,
 }
 
@@ -69,12 +71,12 @@ DISTRIBUTIONS: dict[str, list[str]] = {
     "interpreter": ["random", "structured_short", "structured_long"],
 }
 
-# H4 hold-outs: one domain and one architecture kept out of development
-# until Week 14. NOT decided yet. Until the team picks them, every row is
-# marked "tbd" so nothing is accidentally excluded. Set these two and
-# regenerate once the choice is made.
-HELD_OUT_DOMAIN: str | None = None
-HELD_OUT_ARCH: str | None = None
+# H4 hold-out, decided by the team on 2026-10-05: the interpreter domain is
+# held out (trained and scored only after H1 to H3 are fixed on Othello and
+# navigation). No architecture is held out, since with three families that
+# would remove a third of the models from every H1 to H3 analysis.
+HELD_OUT_DOMAIN: str | None = "interpreter"   # H4, decided 2026-10-05
+HELD_OUT_ARCH: str | None = None              # no architecture held out, decided 2026-10-05
 
 DIAG_NAMES = {
     "D1": "next_token",
@@ -85,7 +87,7 @@ DIAG_NAMES = {
 
 
 def held_out_flag(domain: str, arch: str) -> str:
-    if HELD_OUT_DOMAIN is None or HELD_OUT_ARCH is None:
+    if HELD_OUT_DOMAIN is None and HELD_OUT_ARCH is None:
         return "tbd"
     return "yes" if (domain == HELD_OUT_DOMAIN or arch == HELD_OUT_ARCH) else "no"
 
@@ -107,8 +109,9 @@ def model_rows() -> list[dict]:
                     "distribution": dist,
                     "seed": seed,
                     "held_out": held_out_flag(domain, arch),
-                    "config": f"configs/runs/{model_id}.yaml",
-                    "checkpoint": f"checkpoints/{model_id}/model.pt",
+                    # where src/zoo/train.py writes them (outputs/ is not in git)
+                    "config": f"outputs/zoo/{model_id}/config.json",
+                    "checkpoint": f"outputs/zoo/{model_id}/model.pt",
                     "status": "planned",
                     "notes": "",
                 }
