@@ -10,8 +10,8 @@ The registry table src/docs/zoo_registry.csv is rebuilt from those records:
 Loading a model for a diagnostic:
     model = load_model("othello_transformer_large_synthetic_s0")    # a ZooModel
 
-Admission (H1 to H3 use only admitted models) is decided by the threshold in the preregistration.
-Until that threshold is fixed, `admitted` is "tbd" for every model.
+Admission (H1 to H3 use only admitted models): legal move rate on validation games at least 0.50,
+fixed in reports/preregistration.md.
 """
 
 import csv
@@ -26,9 +26,9 @@ ROOT = Path(__file__).resolve().parents[2]
 RECORDS_DIR = ROOT / "results" / "zoo_training"
 REGISTRY_CSV = ROOT / "src" / "docs" / "zoo_registry.csv"
 
-# Minimum legal move rate (validation split) for a model to count in H1 to H3. None until the
-# preregistration fixes it; then every row gets admitted yes or no.
-ADMISSION_MIN_LEGAL_RATE: float | None = None
+# Minimum legal move rate (validation split) for a model to count in H1 to H3.
+# Fixed by the preregistration (reports/preregistration.md, section 2, tag prereg-v1).
+ADMISSION_MIN_LEGAL_RATE: float | None = 0.50
 
 COLUMNS = ["model_id", "domain", "arch", "scale", "distribution", "seed", "n_params", "steps",
            "final_loss", "val_legal_rate", "val_next_token_acc", "train_minutes", "gpu", "host",
