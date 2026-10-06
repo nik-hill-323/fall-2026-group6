@@ -75,25 +75,31 @@ Note: Use Markdown Cheat Sheet download in the directory as needed.
 - Action Items:
 
 * [x] Diagram naming standard, one bib file, proposal fit to 15 weeks and 3 domains (PR #25, closes #24)
-* [ ] Reproduction gate: Othello GPT linear probe accuracy next to the published value
-* [ ] Measure training throughput for one zoo model and add it to PR #19
-* [ ] D4 toy probe: Hewitt and Liang control task, layer 0 baseline, test for the Othello rules
-* [ ] D2 explainer (#7) and D1 toy script (#6)
-* [ ] LaTeX report skeleton in Sample_Report.tex and literature review with 10+ works (due October 6)
+* [x] Reproduction gate: Othello GPT linear probe within 1 point of Nanda et al. 2023 on 5 of 6 values (PR #31)
+* [x] Throughput measured for all 3 architectures and 3 scales, Mamba via mambapy (PR #19)
+* [x] D4 toy probe: Hewitt and Liang control task, layer 0 baseline, Othello rules test (PR #29)
+* [x] LaTeX report skeleton in Sample_Report.tex (PR #36)
+* [x] pytest and a GitHub Action (PR #33)
+* [x] Shared Othello domain module (PR #38) and three Othello distributions with WTHOR championship games (PR #40)
+* [ ] D2 explainer (#7) (moved to Week 6)
+* [ ] Literature review with 10+ works, 4 of 10 written (moved to Week 6, due October 6)
 ---
-## Date: Week 6 - Month Day Year 
+## Date: Week 6 - October 6, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #3 (#41): about 2 weeks behind (was 3), trend up; reproduction gate accepted
+    - Scope decision written down before any model is scored: full 243 model matrix with Mamba large, Othello first (81 models, D1 and D4 by October 20), navigation and the interpreter after October 20, interpreter held out for H4, no architecture held out (PR #47)
+    - Fragility suite v1 for Othello: rules kept fixed, situations shifted; frozen with tag fragility-v1 before any scoring (PR #43)
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [ ] Literature review to 10+ works and 6 new references.bib entries
+* [ ] First zoo models: one transformer, LSTM and Mamba on synthetic Othello with legal move rate (PR #47)
+* [ ] Freeze and tag the fragility suite (PR #43)
+* [ ] Results schema, common diagnostic interface, model registry, activation hooks for all 3 architectures
+* [ ] Preregistration of the H1 to H4 analysis
+* [ ] Othello zoo training split across the 4 instances
+* [ ] Occupancy only baseline for the black/white probe
+* [ ] D2 explainer (#7)
 ---
 ## Date: Week 7 - Month Day Year 
 - Topics of discussion
