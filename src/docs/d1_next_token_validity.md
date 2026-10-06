@@ -12,14 +12,14 @@ If instead the model proposes a move such as C3, which is not in the legal set, 
 
 The primary D1 score is the share of evaluated positions where the model's top predicted move is legal (argmax). This is the `legal_rate` computed in `src/domains/othello.py`.
 
-As a secondary score, at each evaluated position, sample 10 moves at temperature 1.0 and report the share of sampled moves that are legal.
+As a secondary score, at each evaluated position, sample 10 moves at temperature 1.0 using sampling seed 0 and report the share of sampled moves that are legal. This sampled score is stored as an extra field and is not the master D1 score.
 
 Evaluation uses 1,000 games from the TEST split of the model's own training distribution, with data seed 0. Every position that has a recorded next move is evaluated.
 
-As sanity checks, an untrained model scores about 0.15, while Othello GPT scores about 0.999.
+As sanity checks, an untrained model is expected to score about 0.15, while Othello GPT scores about 0.999. The untrained baseline will be confirmed when the D1 module runs.
 
 Each model produces one JSON result file at:
 
 `results/D1_next_token/{model_id}.json`
 
-The JSON format is defined by the results schema PR.
+The JSON format follows `src/docs/results_schema.md`. The master D1 score is the argmax legal rate.
