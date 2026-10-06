@@ -62,10 +62,11 @@ def test_registry_rows(tmp_path: Path) -> None:
     assert len(rows) == 1 and list(rows[0]) == reg.COLUMNS
     r = rows[0]
     assert (r["model_id"], r["arch"], r["val_legal_rate"], r["train_minutes"]) == (MID, "lstm", 0.81, 1.0)
-    assert r["admitted"] == "tbd"
+    assert r["admitted"] == "yes"  # 0.81 >= the preregistered 0.50
 
 
 def test_admission_threshold() -> None:
+    assert reg.ADMISSION_MIN_LEGAL_RATE == 0.50  # reports/preregistration.md, section 2
     assert reg.admitted(0.81, None) == "tbd"
     assert reg.admitted(0.81, 0.5) == "yes" and reg.admitted(0.3, 0.5) == "no"
 
