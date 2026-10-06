@@ -1,0 +1,57 @@
+{
+  "config": {
+    "model": "/home/ubuntu/artifacts/othello_gpt_tl/synthetic_model.pth",
+    "data": "/home/ubuntu/artifacts/othello_data/data",
+    "n_train_games": 100000,
+    "n_test_games": 1000,
+    "epochs": 2,
+    "batch": 256,
+    "lr": 0.001,
+    "wd": 0.01,
+    "seed": 0,
+    "device": "cuda",
+    "out_dir": "outputs/d4_repro"
+  },
+  "legal_move_rate": 0.9992752372735116,
+  "probe_acc_by_layer": {
+    "mine_theirs": [
+      90.46,
+      94.52,
+      96.89,
+      97.99,
+      98.71,
+      99.09,
+      99.1,
+      98.94
+    ],
+    "black_white": [
+      75.85,
+      75.99,
+      76.01,
+      75.98,
+      75.93,
+      75.75,
+      75.42,
+      75.19
+    ]
+  },
+  "published": {
+    "mine_theirs": {
+      "0": 90.9,
+      "4": 99.0,
+      "7": 99.5
+    },
+    "black_white": {
+      "0": 62.2,
+      "4": 75.0,
+      "7": 74.4
+    }
+  },
+  "n_train_games": 100000,
+  "n_test_games": 1000,
+  "illegal_games_dropped": {
+    "train": 0,
+    "test": 0
+  },
+  "runtime_sec": 213.1
+}
