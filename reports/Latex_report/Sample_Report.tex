@@ -128,15 +128,10 @@ actually use. The design handles each of these in Section~\ref{sec:method}.
 % Instructor Review 2: at least 10 works, each summarised in our own words, each stating how WM-Concord
 % differs. Every cited work goes in references.bib. Draft due October 6, complete by October 20.
 %
-% Done (4): li2023othello, yuan2025revisiting, vafa2024evaluating, vafa2025inductive
-% To add (6), one paragraph each, with the "differs" sentence:
-%   nanda2023emergent     representation probing   (linear probe with mine/theirs labels)
-%   toshniwal2022chess    representation probing   (chess as a state tracking testbed)
-%   hewitt2019control     probing confounds        (control tasks and selectivity)
-%   belinkov2022probing   probing confounds        (survey of probing classifiers)
-%   jacobs2021measurement measurement validity     (construct validity in computational systems)
-%   raji2021benchmark     measurement validity     (limits of benchmarks as general measures)
-% The bib entries for all six are already in references.bib.
+% Done (10): li2023othello, yuan2025revisiting, nanda2023emergent, toshniwal2022chess,
+%   vafa2024evaluating, vafa2025inductive, hewitt2019control, belinkov2022probing,
+%   jacobs2021measurement, raji2021benchmark. All ten are in references.bib.
+% For October 20, consider adding Gurnee and Tegmark 2024 and a recent Othello GPT follow up (Review 3).
 
 \subsection{Representation probing}
 
@@ -150,7 +145,22 @@ world model. Both works use probing as the only instrument. WM-Concord uses prob
 diagnostics, adds a control task and a causal check, and compares its verdict with the other three on the
 same models.
 
-\stub{Nanda et al. 2023 and Toshniwal et al. 2022, one paragraph each with how WM-Concord differs}
+Nanda et al.~\cite{nanda2023emergent} returned to the same Othello model and showed that the board is in
+fact linearly represented, but relative to the player whose turn it is (``mine'' and ``theirs'') rather than
+in absolute colours. With these labels a single linear layer reads the board almost perfectly, and adding or
+subtracting a probe direction inside the model flips its view of a square and changes its next move
+predictions accordingly. Our reproduction gate uses this result: our linear probes match their published
+accuracies within one percentage point on five of six values. WM-Concord takes their mine and theirs labels
+as the default for diagnostic D4, and asks whether a model that passes this probe also passes the three
+diagnostics that do not look inside the model.
+
+Toshniwal et al.~\cite{toshniwal2022chess} used chess as a testbed for state tracking in language models.
+They trained transformers on games written as move sequences and tested state tracking with prompts that ask
+for the starting or ending square of a piece at a given point in the game, so the board is read from the
+model's own predictions rather than from its activations. They found that state tracking improves with more
+training data and when some training positions include the type of the piece that moved. Their evaluation is
+a behavioural one, close in spirit to next token validity. WM-Concord keeps such behavioural tests (D1) and
+places them next to internal (D4) and structural (D2, D3) tests on the same models.
 
 \subsection{State equivalence metrics}
 
@@ -175,13 +185,39 @@ so its verdict can be compared model by model.
 
 \subsection{Probing confounds}
 
-\stub{Hewitt and Liang 2019 (control tasks and selectivity) and Belinkov 2022 (probing survey), one paragraph
-each, explaining why raw probe accuracy can overstate what a model computes and how WM-Concord guards against it}
+Hewitt and Liang~\cite{hewitt2019control} pointed out that a high probe accuracy does not show that the
+model encodes a property, because an expressive probe can learn the task by itself. They proposed control
+tasks: the same inputs with labels assigned at random to each input type, so the labels carry no structure
+from the model. Selectivity, the probe's accuracy on the real task minus its accuracy on the control task,
+measures how much of the accuracy comes from the model rather than from the probe. They found that larger
+probes, such as multilayer perceptrons, often reach high accuracy with low selectivity. WM-Concord reports
+selectivity, not raw accuracy, for every D4 probe, using their control task construction, and adds a layer 0
+baseline because the token embedding alone already reads part of the Othello board.
+
+Belinkov~\cite{belinkov2022probing} reviewed the probing classifier method and its limits. A probe shows that
+information can be decoded from a representation, not that the model uses it; results depend on the choice of
+probe and on the baseline it is compared with; and the correlation between probe accuracy and model behaviour
+is not a causal link. The review points to controls, simpler probes, and interventions on the representation
+as ways to close these gaps. WM-Concord follows this advice for D4 with a control task, a linear probe as the
+default, and a causal check, and records models whose state is decodable but not used as a separate outcome.
 
 \subsection{Measurement validity in ML evaluation}
 
-\stub{Jacobs and Wallach 2021 and Raji et al. 2021, one paragraph each, framing WM-Concord as a construct and
-predictive validity study of existing instruments}
+Jacobs and Wallach~\cite{jacobs2021measurement} brought measurement modelling from the social sciences to
+computational systems. An unobservable theoretical construct, such as fairness, is only ever measured through
+an operationalization, and every operationalization makes assumptions that must be checked. They describe how
+to do so through reliability and several kinds of validity, including convergent validity (do different
+measures of the same construct agree?) and predictive validity (does the measure predict outcomes it should
+predict?). WM-Concord treats ``world model'' as such a construct and the four diagnostics as its competing
+operationalizations: H1 and H2 test their convergent validity, and H3 tests their predictive validity against
+the fragility suite.
+
+Raji et al.~\cite{raji2021benchmark} argued that popular machine learning benchmarks are often presented as
+measures of general ability while they test narrow, specific tasks, so a high score is read as evidence for a
+broad capability that the benchmark cannot establish. They call for benchmarks to state clearly what they
+measure and to be validated against that claim. World model diagnostics face the same risk: each paper takes
+a pass on its own diagnostic as evidence that the model has a world model. WM-Concord asks whether these
+diagnostics measure the same thing at all, and which of them is backed by an external outcome.
 
 \subsection{How WM-Concord differs}
 
