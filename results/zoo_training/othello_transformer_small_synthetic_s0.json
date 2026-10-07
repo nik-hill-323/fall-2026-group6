@@ -10,9 +10,9 @@
   "n_params": 816573,
   "train": {
     "steps_run": 5000,
-    "final_loss": 2.640774405002594,
-    "sec_per_step": 0.01877509286265096,
-    "wall_sec": 96.36250257492065
+    "final_loss": 2.6407743811607363,
+    "sec_per_step": 0.018753519755804946,
+    "wall_sec": 94.85505032539368
   },
   "eval": {
     "next_token_acc": 0.1310267471958585,
@@ -21,9 +21,9 @@
     "illegal_games_dropped": 0
   },
   "throughput": {
-    "sec_per_step": 0.01877509286265096,
-    "min_per_model_full_budget": 1.5645910718875802,
-    "hours_per_27_models": 0.7040659823494111,
+    "sec_per_step": 0.018753519755804946,
+    "min_per_model_full_budget": 1.5627933129837457,
+    "hours_per_27_models": 0.7032569908426856,
     "budget": {
       "steps": 5000,
       "batch_games": 256
@@ -49,8 +49,16 @@
     "weight_decay": 0.01,
     "synthetic": 0,
     "device": "cuda",
-    "log_every": 500,
+    "log_every": 50,
     "out_dir": "outputs/zoo",
     "budget_steps": 5000
-  }
+  },
+  "domain": "othello",
+  "distribution": "synthetic",
+  "seed": 0,
+  "checkpoint": "outputs/zoo/othello_transformer_small_synthetic_s0/model.pt",
+  "checkpoint_sha256": "0690169b8f44b5235e0098de95bf27d3b45f845c3a28270a98a8575f03b27998",
+  "git_commit": "10ecd35",
+  "host": "ip-10-0-2-159",
+  "time_utc": "2026-10-06T21:02:28Z"
 }
