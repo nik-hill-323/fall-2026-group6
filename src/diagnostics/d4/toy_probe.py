@@ -304,7 +304,7 @@ def main() -> None:
     pred_lab = np.array([probes[s].predict(feats_te[L][t:t + 1])[0] for s in range(N_SQ)])
     log.info(f"\nOne test game, after move {t + 1}, decoded from layer {L}  (X = mine, O = theirs, . = empty)")
     log.info("  true    decoded")
-    for a, b in zip(show_board(true_lab), show_board(pred_lab)):
+    for a, b in zip(show_board(true_lab), show_board(pred_lab), strict=True):
         log.info(f"  {a}    {b}")
     log.info(f"  {int((true_lab == pred_lab).sum())} of {N_SQ} squares correct")
 

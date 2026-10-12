@@ -40,7 +40,7 @@ def test_random_games_are_legal() -> None:
         moves, boards, movers, legal_sets = tp.play_random_game(rng)
         assert len(moves) == len(boards) == len(movers) == len(legal_sets)
         before = tp.start_board()
-        for sq, after, mover, legal in zip(moves, boards, movers, legal_sets):
+        for sq, after, mover, legal in zip(moves, boards, movers, legal_sets, strict=True):
             # the move was legal for the player who made it
             assert sq in legal
             assert sorted(legal) == tp.legal_moves(before, mover)
