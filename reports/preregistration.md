@@ -141,4 +141,112 @@ Approval is given on the pull request. After merge: `git tag prereg-v1 && git pu
 
 ## Amendments
 
-None yet.
+### Amendment 1 (prereg-v1.1), 2026-10-12
+
+Written after Instructor Review #4 (#70, critiques 1 and 2) and before any zoo model is scored by
+D1, D2, D3, D4 or the fragility suite. At this point only training records exist (legal move rate on
+validation games). Frozen with the git tag `prereg-v1.1`. Sections 1 to 5 above stay in force except
+where this amendment says otherwise.
+
+**Why.** Every diagnostic is likely to score a better trained model higher. Across a zoo whose
+validation legal move rate runs from 0.50 to about 0.97, the four diagnostics could agree only
+because they all follow competence, not because they measure the same world model. And D1 is the
+legal move rate while fragility is a drop in legal move rate, so D1 and the H3 outcome partly
+measure the same thing. A1 to A5 handle both before any data exists.
+
+**Competence** below always means a model's validation legal move rate on 1,000 validation games,
+the `val_legal_rate` column of `src/docs/zoo_registry.csv`. It is fixed before any diagnostic runs,
+so no diagnostic score enters it.
+
+#### A1. H1 is also reported with competence controlled
+
+* For each of the 6 pairs of diagnostics, next to Kendall tau (Section 4), we report the **partial
+  Kendall tau** controlling for competence:
+  tau(x, y | c) = (tau(x, y) minus tau(x, c) times tau(y, c)) divided by the square root of
+  ((1 minus tau(x, c) squared) times (1 minus tau(y, c) squared)).
+  Intervals: the same bootstrap as Section 4 (95%, 2,000 resamples over models, seed 0), with the
+  partial tau recomputed in every resample.
+* The partial tau gets the same categories as the raw tau (agree, partial, disagree, same
+  thresholds).
+* A pair whose raw tau is **agree** and whose partial tau is **disagree** is reported as
+  **agreement through competence**.
+* Kendall W is reported on the raw scores (as in Section 4) and also on the residual ranks: each
+  diagnostic's scores are ranked, the competence ranks are regressed out by least squares, and W is
+  computed on the residuals.
+* The H1 conclusion in the paper states both results. If they differ, the partial result is the one
+  used to say whether the diagnostics measure the same thing.
+
+#### A2. H3: fragility relative to each model's own baseline, D1 as the reference
+
+* **Outcome.** Relative fragility = `fragility` divided by `in_distribution_legal_rate`, both taken
+  from the output of `score_model` in the frozen suite (`src/fragility/othello.py`, `fragility-v1`).
+  The frozen code is not changed; the division is done in the analysis. Raw `fragility` is still
+  reported as a secondary result.
+* **D1 is the reference, not a competitor.** We report the Spearman correlation between D1 and
+  relative fragility, with its bootstrap interval, as the baseline any other diagnostic has to beat.
+* **The contest is among D2, D3 and D4.** For each of them:
+  1. the partial Spearman correlation with relative fragility, controlling for D1;
+  2. a least squares regression of relative fragility on D1, the diagnostic, architecture and scale
+     (categorical), reporting the diagnostic's coefficient and its 95% interval.
+* **Decision rule (replaces the H3 best predictor rule in Section 4).** A diagnostic among D2, D3
+  and D4 is the **best predictor** if its partial correlation (step 1) is the strongest in the
+  expected negative direction and the bootstrap interval of each difference to the other two
+  excludes 0. A diagnostic **adds to D1** if its partial correlation interval excludes 0. Otherwise
+  we report that no diagnostic adds predictive value beyond the legal move rate, which is itself a
+  finding.
+* The Section 4 analysis (raw correlations, all four diagnostics) is still reported, labelled
+  secondary.
+
+#### A3. Sensitivity: the competence range of the admitted zoo
+
+* We report the distribution of competence for admitted models (a histogram, plus the count, mean
+  and range for each architecture and scale).
+* **Sensitivity run.** H1 (raw and partial tau, Kendall W) is repeated on admitted models with
+  competence of at least **0.90**. It is run only if at least 10 models qualify; otherwise we report
+  how many qualified. This is a sensitivity analysis and does not replace the main H1 result.
+
+#### A4. D2 protocol (state equivalence)
+
+Fixed here as Section 3 requires, before the first D2 score. It follows the compression and
+distinction errors of Vafa et al. (2024), using the next move as the continuation.
+
+* **Data.** Test games of the model's own training distribution, 1,000 games, data seed 0
+  (Section 3). Every prefix of length 1 to 59 is a history. Its true state is the board and the
+  player to move, from `src/domains/othello.py` (`replay`). Histories with no legal move for the
+  player to move are left out.
+* **Accepted moves.** For a history h, the model's accepted set A(h) is its k highest scoring
+  squares at the last position of h (token 0, padding, excluded), where k is the number of truly
+  legal moves L(h). No threshold is tuned.
+* **Same state pairs.** Two histories with the same true state but different move sequences. Up to
+  2,000 pairs, sampled uniformly at random from all such pairs with seed 0. If fewer than 500 exist,
+  the number of test games is raised in steps of 1,000, up to 5,000, and the number used is
+  reported.
+* **Different state pairs.** Two histories of the same length whose true legal move sets differ.
+  Up to 2,000 pairs, sampled uniformly at random with seed 0.
+* **Compression error** of a same state pair (h, g): the share of accepted moves that are accepted
+  after one history but not after the other, |A(h) symmetric difference A(g)| divided by
+  |A(h) union A(g)|. The model should treat the two histories the same, so 0 is best.
+* **Distinction error** of a different state pair (h, g): the boundary is every move legal after
+  exactly one of them (L(h) symmetric difference L(g)). A boundary move m that is legal after h only
+  is separated correctly if m is in A(h) and not in A(g) (and the mirror case for g). The error is
+  the share of boundary moves not separated correctly. 0 is best.
+* **Score.** `score` = 1 minus the mean of the mean compression error and the mean distinction
+  error. `details` holds both mean errors, their standard errors over pairs, the number of pairs of
+  each kind and the number of games.
+* **Check before the zoo.** D2 is run first on the two reference Othello GPTs only (Section 3).
+  Nothing in this protocol is changed after any zoo model is scored.
+* **Limitation, stated in the paper.** Vafa et al. (2024) also use longer continuations; we use the
+  next move only, which keeps D2 cheap enough for 81 models per domain and uses the same ground
+  truth as the rest of the study.
+
+#### A5. Pairs that include D1
+
+D1 is the legal move rate on test games, so it is nearly the same quantity as competence. For the 3
+H1 pairs that include D1, the partial tau is still reported, but if tau(D1, competence) is at least
+0.90 it is marked **not interpretable** and the competence controlled conclusion rests on the 3 pairs
+among D2, D3 and D4.
+
+#### Still to come, each before its first zoo score
+
+* D3 protocol (owner: Nikhil), as Amendment 2.
+* D4 causal check pass rule (owner: Siddu), before the causal check in Weeks 9 to 10.
