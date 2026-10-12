@@ -246,7 +246,40 @@ H1 pairs that include D1, the partial tau is still reported, but if tau(D1, comp
 0.90 it is marked **not interpretable** and the competence controlled conclusion rests on the 3 pairs
 among D2, D3 and D4.
 
+#### A6. D4 protocol (representation probing) and D1
+
+Fixed here before the first D4 zoo score. Section 3 (score = selectivity at the layer with the
+highest selectivity on val games, measured on test games) is unchanged; this fixes the rest.
+
+* **Data.** Games of the model's own training distribution, data seed 0:
+  * probe fitting: the first 10,000 of 11,000 val games;
+  * layer choice: the last 1,000 of those 11,000 val games (never used for fitting);
+  * score: 1,000 test games.
+* **Layers.** `ZooModel.activations`: the residual stream after each block (transformer, Mamba) or
+  the hidden state after each layer (LSTM). Layer 0 is the output of the first block. Every real
+  position of every game is used.
+* **Labels.** Mine, theirs or empty for each of the 64 squares, relative to the player who just
+  moved (`mine_theirs` in `src/domains/othello.py`).
+* **Probe.** One linear map per layer from the activation to 64 squares x 3 classes, cross entropy,
+  AdamW (learning rate 1e-3, weight decay 0.01), 2 epochs, batches of 256 games, seed 0.
+* **Control task (Hewitt and Liang 2019).** The input type of a position is (square just played,
+  position in the game). For each type and each square, a fixed random label is drawn once from
+  that square's class frequencies in the probe fitting games (seed 0). The control probe has the
+  same form and training as the real probe, on these labels.
+* **Selectivity** of a layer = probe accuracy minus control accuracy (all 64 squares). The best
+  layer is the one with the highest selectivity on the layer choice games. `score` = selectivity of
+  that layer on the test games.
+* **Details, per layer, on test games:** probe accuracy, control accuracy, selectivity, gain over
+  layer 0 (probe accuracy minus layer 0 probe accuracy), and probe accuracy on occupied squares
+  only (whose disc is on each square, which the move list alone does not give away). Also the
+  best layer, its depth as a share of the layers, and the **occupancy only baseline**: the accuracy
+  of a rule that knows only which squares are occupied (empty squares are called empty, occupied
+  squares get that square's most common disc class in the probe fitting games), with each layer's
+  gain over it.
+* **D1** follows `src/docs/d1_next_token_validity.md` (PR #62) unchanged: nothing is fitted, the score
+  is the argmax legal move rate on 1,000 test games of the model's own training distribution.
+
 #### Still to come, each before its first zoo score
 
-* D3 protocol (owner: Nikhil), as Amendment 2.
+* A7, D3 protocol (owner: Nikhil): number of tasks, adaptation steps, learning rate, seeds.
 * D4 causal check pass rule (owner: Siddu), before the causal check in Weeks 9 to 10.
