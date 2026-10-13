@@ -1,0 +1,188 @@
+{
+  "model_id": "othello_gpt_synthetic",
+  "diagnostic": "D3",
+  "method": "inductive bias probe (Vafa et al. 2025): balanced accuracy of the adapted model minus that of a random weight model of the same architecture, 4 'is square X mine' tasks, higher is better",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.13969290583606553,
+  "score_std": 0.009491872077101502,
+  "score_ci": null,
+  "details": {
+    "gap_by_seed": [
+      0.13120953448836278,
+      0.1499445784866741,
+      0.1379246045331597
+    ],
+    "gap_by_task": {
+      "is C4 mine": 0.15355857028216968,
+      "is F5 mine": 0.11440808751317788,
+      "is C3 mine": 0.15187798092209856,
+      "is F6 mine": 0.138926984626816
+    },
+    "pretrained_balanced_accuracy": 0.6987572610580935,
+    "random_balanced_accuracy": 0.5590643552220281,
+    "positive_rate_adapt": [
+      0.4375,
+      0.5312,
+      0.4219,
+      0.3594
+    ],
+    "positive_rate_test": [
+      0.436,
+      0.477,
+      0.408,
+      0.407
+    ],
+    "cells": [
+      {
+        "task": "is C4 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.677199232220704,
+        "random_balanced_accuracy": 0.5727357017372634,
+        "pretrained_accuracy": 0.699,
+        "random_accuracy": 0.575,
+        "gap": 0.10446353048344059
+      },
+      {
+        "task": "is F5 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.747896549097891,
+        "random_balanced_accuracy": 0.5926480432595371,
+        "pretrained_accuracy": 0.739,
+        "random_accuracy": 0.585,
+        "gap": 0.15524850583835392
+      },
+      {
+        "task": "is C3 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.6898184949655538,
+        "random_balanced_accuracy": 0.6003577106518283,
+        "pretrained_accuracy": 0.727,
+        "random_accuracy": 0.608,
+        "gap": 0.0894607843137255
+      },
+      {
+        "task": "is F6 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.6974945204287532,
+        "random_balanced_accuracy": 0.521829203110822,
+        "pretrained_accuracy": 0.734,
+        "random_accuracy": 0.538,
+        "gap": 0.1756653173179311
+      },
+      {
+        "task": "is C4 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.7097403864922897,
+        "random_balanced_accuracy": 0.5293610514672392,
+        "pretrained_accuracy": 0.704,
+        "random_accuracy": 0.534,
+        "gap": 0.18037933502505044
+      },
+      {
+        "task": "is F5 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.6384489579951177,
+        "random_balanced_accuracy": 0.5881545349960516,
+        "pretrained_accuracy": 0.625,
+        "random_accuracy": 0.583,
+        "gap": 0.05029442299906606
+      },
+      {
+        "task": "is C3 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.7345488871224165,
+        "random_balanced_accuracy": 0.5494336248012719,
+        "pretrained_accuracy": 0.752,
+        "random_accuracy": 0.568,
+        "gap": 0.1851152623211446
+      },
+      {
+        "task": "is F6 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.7090316592846104,
+        "random_balanced_accuracy": 0.5250423656831751,
+        "pretrained_accuracy": 0.739,
+        "random_accuracy": 0.577,
+        "gap": 0.18398929360143534
+      },
+      {
+        "task": "is C4 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.7020625935324354,
+        "random_balanced_accuracy": 0.5262297481944174,
+        "pretrained_accuracy": 0.688,
+        "random_accuracy": 0.561,
+        "gap": 0.17583284533801802
+      },
+      {
+        "task": "is F5 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.7284033013857323,
+        "random_balanced_accuracy": 0.5907219676836186,
+        "pretrained_accuracy": 0.727,
+        "random_accuracy": 0.588,
+        "gap": 0.13768133370211366
+      },
+      {
+        "task": "is C3 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.7585949920508743,
+        "random_balanced_accuracy": 0.5775370959194488,
+        "pretrained_accuracy": 0.771,
+        "random_accuracy": 0.59,
+        "gap": 0.18105789613142553
+      },
+      {
+        "task": "is F6 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.5918475581207453,
+        "random_balanced_accuracy": 0.5347212151596638,
+        "pretrained_accuracy": 0.664,
+        "random_accuracy": 0.567,
+        "gap": 0.057126342961081544
+      }
+    ],
+    "distribution": "synthetic",
+    "tasks": [
+      "is C4 mine",
+      "is F5 mine",
+      "is C3 mine",
+      "is F6 mine"
+    ],
+    "n_adapt_games": 64,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "protocol": {
+      "steps": 300,
+      "batch": 16,
+      "head_lr": 0.001,
+      "body_lr": 0.0001,
+      "weight_decay": 0.01,
+      "position_seed": 0
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "transformer",
+  "scale": "othello_gpt",
+  "distribution": "synthetic",
+  "seed": 0,
+  "run_id": "othello_gpt_synthetic_D3",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "7769d0a",
+    "time_utc": "2026-10-13T13:51:02Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-123",
+    "runtime_sec": 265.3,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
