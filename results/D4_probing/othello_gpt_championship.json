@@ -1,0 +1,115 @@
+{
+  "model_id": "othello_gpt_championship",
+  "diagnostic": "D4",
+  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.27199193007337463,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 3,
+    "best_layer_depth": 0.5,
+    "n_layers": 8,
+    "probe_acc_by_layer": [
+      0.87878,
+      0.89359,
+      0.89898,
+      0.89891,
+      0.89492,
+      0.88899,
+      0.88193,
+      0.87473
+    ],
+    "control_acc_by_layer": [
+      0.63625,
+      0.63232,
+      0.62896,
+      0.62692,
+      0.62516,
+      0.62393,
+      0.62291,
+      0.62256
+    ],
+    "selectivity_by_layer": [
+      0.24253,
+      0.26128,
+      0.27001,
+      0.27199,
+      0.26976,
+      0.26506,
+      0.25902,
+      0.25216
+    ],
+    "selectivity_by_layer_choose": [
+      0.24287,
+      0.26181,
+      0.27055,
+      0.2729,
+      0.27067,
+      0.26592,
+      0.26043,
+      0.25348
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.01481,
+      0.02019,
+      0.02013,
+      0.01614,
+      0.01021,
+      0.00315,
+      -0.00405
+    ],
+    "probe_acc_occupied_by_layer": [
+      0.77706,
+      0.80191,
+      0.81269,
+      0.8148,
+      0.81089,
+      0.80395,
+      0.79478,
+      0.78637
+    ],
+    "occupancy_baseline_acc": 0.75695,
+    "gain_over_occupancy_by_layer": [
+      0.12183,
+      0.13664,
+      0.14202,
+      0.14196,
+      0.13797,
+      0.13204,
+      0.12497,
+      0.11777
+    ],
+    "distribution": "championship",
+    "n_fit_games": 10000,
+    "n_choose_games": 1000,
+    "n_test_games": 1000,
+    "illegal_games_dropped": {
+      "fit": 0,
+      "choose": 0,
+      "test": 0
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "transformer",
+  "scale": "othello_gpt",
+  "distribution": "championship",
+  "seed": 0,
+  "run_id": "othello_gpt_championship_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "cf42f9f",
+    "time_utc": "2026-10-13T00:09:13Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 22.3,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
