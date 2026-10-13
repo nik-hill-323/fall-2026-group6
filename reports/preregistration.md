@@ -284,7 +284,63 @@ highest selectivity on val games, measured on test games) is unchanged; this fix
 * **D1** follows `src/docs/d1_next_token_validity.md` (PR #62) unchanged: nothing is fitted, the score
   is the argmax legal move rate on 1,000 test games of the model's own training distribution.
 
+#### A7. D3 protocol (inductive bias)
+
+Fixed here before the first D3 zoo score, as Section 3 requires. It follows the inductive bias
+probe of Vafa et al. (2025): adapt the model to a small task whose labels come from the true
+board, and compare with a model of the same architecture and size that has random weights.
+Code: `src/diagnostics/d3/inductive_bias.py`.
+
+* **Tasks.** Four binary questions about one square right after a move: "is square X mine?", for
+  X = C4, F5, C3 and F6, where mine means the disc belongs to the player who just moved (the
+  `mine_theirs` board of `src/domains/othello.py`). Occupancy tasks ("is X occupied?") are not
+  used: on 2,000 synthetic validation games, whether a square is occupied equals whether its token
+  appears in the move list in 100% of cases, so it can be answered without any board. Whose disc it
+  is depends on the flips and cannot be read off the move list. The positive rate of the four tasks
+  is 0.41 to 0.45 on the same games.
+* **Labelled data for adaptation.** 64 validation games of the model's own training distribution,
+  data seed 0, one uniformly random position per game (position seed 0). The same 64 examples are
+  used for all four tasks.
+* **What is adapted.** A deep copy of the whole model, plus a new linear head (d_model to 2) on the
+  vector after the last layer at that position. Head learning rate 1e-3, rest of the model 1e-4,
+  AdamW, weight decay 0.01, 300 steps of 16 examples drawn with replacement, cross entropy. The
+  original model is never changed.
+* **How the learning rates were chosen.** On the synthetic reference Othello GPT only, never on a
+  zoo model, as Section 3 allows, with everything else as in this amendment (2026-10-13):
+
+  | head lr | body lr | score | sd over seeds | pretrained | random |
+  |---|---|---|---|---|---|
+  | 1e-3 | 1e-5 | 0.103 | 0.003 | 0.666 | 0.563 |
+  | **1e-3** | **1e-4** | **0.140** | 0.010 | 0.699 | 0.559 |
+  | 1e-2 | 1e-5 | 0.094 | 0.006 | 0.653 | 0.559 |
+  | 1e-2 | 1e-4 | 0.132 | 0.003 | 0.682 | 0.550 |
+
+  A body learning rate of 1e-5 was not chosen for a second reason: it leaves the model almost
+  frozen, so D3 would become a linear probe on the last layer, close to D4 by construction, and
+  their agreement under H1 would be partly built in.
+* **Baseline.** A model of the same architecture and scale with random weights
+  (`src/zoo/train.py` `build_model` for zoo models, a freshly initialised 8 layer TransformerLens
+  model for the reference Othello GPTs), adapted in exactly the same way. One random model per seed.
+* **Seeds.** 3 adaptation seeds (0, 1, 2). The seed sets the head initialisation, the batch draws
+  and the random baseline's weights. The toy version showed a gap between 0.12 and 0.33 across seeds,
+  so one seed is not enough.
+* **Scored on.** 1,000 test games of the model's own training distribution, data seed 0, one
+  uniformly random position per game (position seed 0).
+* **Task score.** Balanced accuracy: the mean of the hit rate on "mine" and on "not mine", so a
+  model that always answers the more common class scores 0.5, not 0.55 to 0.59.
+* **Score.** `score` = the mean over the 4 tasks and 3 seeds of (adapted pretrained balanced
+  accuracy minus adapted random balanced accuracy). Higher is more world model like. `score_std`
+  is the standard deviation of the per seed mean gap across the 3 seeds.
+* **Details, per task and seed:** both balanced accuracies, both plain accuracies and the gap. Also
+  the mean gap per task and per seed, the mean balanced accuracy of each model, and the positive
+  rate of every task in the adaptation and test data.
+* **Check before the zoo.** D3 is run first on the two reference Othello GPTs only. Nothing in this
+  protocol is changed after any zoo model is scored.
+* **Limitation, stated in the paper.** A model whose last layer already holds the board reaches
+  only about 0.8 balanced accuracy from 64 examples (tested with a model whose last layer is the
+  true board), because many features fit 64 points. D3 therefore measures how much the pretrained
+  model helps, not how close it gets to a perfect answer.
+
 #### Still to come, each before its first zoo score
 
-* A7, D3 protocol (owner: Nikhil): number of tasks, adaptation steps, learning rate, seeds.
 * D4 causal check pass rule (owner: Siddu), before the causal check in Weeks 9 to 10.
