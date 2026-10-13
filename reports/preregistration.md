@@ -261,7 +261,12 @@ highest selectivity on val games, measured on test games) is unchanged; this fix
 * **Labels.** Mine, theirs or empty for each of the 64 squares, relative to the player who just
   moved (`mine_theirs` in `src/domains/othello.py`).
 * **Probe.** One linear map per layer from the activation to 64 squares x 3 classes, cross entropy,
-  AdamW (learning rate 1e-3, weight decay 0.01), 2 epochs, batches of 256 games, seed 0.
+  AdamW (learning rate 1e-3, weight decay 0.01), 2 epochs, seed 0. Activations are computed 256
+  games at a time and the probe takes one step per 1,024 positions (about 1,100 steps for 10,000
+  games). Each activation feature is first standardized with its mean and standard deviation over
+  the probe fitting games, so the same learning rate is fair to every architecture (LSTM hidden
+  states lie between minus 1 and 1, residual streams are much larger). Checked on a model whose
+  layer holds the true board: the probe reads it at 0.9999 with these settings.
 * **Control task (Hewitt and Liang 2019).** The input type of a position is (square just played,
   position in the game). For each type and each square, a fixed random label is drawn once from
   that square's class frequencies in the probe fitting games (seed 0). The control probe has the
