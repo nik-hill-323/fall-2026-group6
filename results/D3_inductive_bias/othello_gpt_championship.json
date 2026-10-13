@@ -176,11 +176,11 @@
   "run_id": "othello_gpt_championship_D3",
   "schema_version": 1,
   "provenance": {
-    "git_commit": "7769d0a",
-    "time_utc": "2026-10-13T13:55:27Z",
+    "git_commit": "188dd57",
+    "time_utc": "2026-10-13T14:45:02Z",
     "python": "3.13.14",
     "host": "ip-10-0-2-123",
-    "runtime_sec": 264.9,
+    "runtime_sec": 265.2,
     "torch": "2.13.0+cu130",
     "gpu": "NVIDIA A10G",
     "numpy": "2.4.4"
