@@ -24,3 +24,4 @@ transformer-lens==3.9.0
 transformers==5.14.1
 mambapy==1.2.0
 pytest==9.1.1
+streamlit==1.56.0
