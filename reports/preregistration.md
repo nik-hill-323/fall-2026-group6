@@ -141,4 +141,206 @@ Approval is given on the pull request. After merge: `git tag prereg-v1 && git pu
 
 ## Amendments
 
-None yet.
+### Amendment 1 (prereg-v1.1), 2026-10-12
+
+Written after Instructor Review #4 (#70, critiques 1 and 2) and before any zoo model is scored by
+D1, D2, D3, D4 or the fragility suite. At this point only training records exist (legal move rate on
+validation games). Frozen with the git tag `prereg-v1.1`. Sections 1 to 5 above stay in force except
+where this amendment says otherwise.
+
+**Why.** Every diagnostic is likely to score a better trained model higher. Across a zoo whose
+validation legal move rate runs from 0.50 to about 0.97, the four diagnostics could agree only
+because they all follow competence, not because they measure the same world model. And D1 is the
+legal move rate while fragility is a drop in legal move rate, so D1 and the H3 outcome partly
+measure the same thing. A1 to A5 handle both before any data exists.
+
+**Competence** below always means a model's validation legal move rate on 1,000 validation games,
+the `val_legal_rate` column of `src/docs/zoo_registry.csv`. It is fixed before any diagnostic runs,
+so no diagnostic score enters it.
+
+#### A1. H1 is also reported with competence controlled
+
+* For each of the 6 pairs of diagnostics, next to Kendall tau (Section 4), we report the **partial
+  Kendall tau** controlling for competence:
+  tau(x, y | c) = (tau(x, y) minus tau(x, c) times tau(y, c)) divided by the square root of
+  ((1 minus tau(x, c) squared) times (1 minus tau(y, c) squared)).
+  Intervals: the same bootstrap as Section 4 (95%, 2,000 resamples over models, seed 0), with the
+  partial tau recomputed in every resample.
+* The partial tau gets the same categories as the raw tau (agree, partial, disagree, same
+  thresholds).
+* A pair whose raw tau is **agree** and whose partial tau is **disagree** is reported as
+  **agreement through competence**.
+* Kendall W is reported on the raw scores (as in Section 4) and also on the residual ranks: each
+  diagnostic's scores are ranked, the competence ranks are regressed out by least squares, and W is
+  computed on the residuals.
+* The H1 conclusion in the paper states both results. If they differ, the partial result is the one
+  used to say whether the diagnostics measure the same thing.
+
+#### A2. H3: fragility relative to each model's own baseline, D1 as the reference
+
+* **Outcome.** Relative fragility = `fragility` divided by `in_distribution_legal_rate`, both taken
+  from the output of `score_model` in the frozen suite (`src/fragility/othello.py`, `fragility-v1`).
+  The frozen code is not changed; the division is done in the analysis. Raw `fragility` is still
+  reported as a secondary result.
+* **D1 is the reference, not a competitor.** We report the Spearman correlation between D1 and
+  relative fragility, with its bootstrap interval, as the baseline any other diagnostic has to beat.
+* **The contest is among D2, D3 and D4.** For each of them:
+  1. the partial Spearman correlation with relative fragility, controlling for D1;
+  2. a least squares regression of relative fragility on D1, the diagnostic, architecture and scale
+     (categorical), reporting the diagnostic's coefficient and its 95% interval.
+* **Decision rule (replaces the H3 best predictor rule in Section 4).** A diagnostic among D2, D3
+  and D4 is the **best predictor** if its partial correlation (step 1) is the strongest in the
+  expected negative direction and the bootstrap interval of each difference to the other two
+  excludes 0. A diagnostic **adds to D1** if its partial correlation interval excludes 0. Otherwise
+  we report that no diagnostic adds predictive value beyond the legal move rate, which is itself a
+  finding.
+* The Section 4 analysis (raw correlations, all four diagnostics) is still reported, labelled
+  secondary.
+
+#### A3. Sensitivity: the competence range of the admitted zoo
+
+* We report the distribution of competence for admitted models (a histogram, plus the count, mean
+  and range for each architecture and scale).
+* **Sensitivity run.** H1 (raw and partial tau, Kendall W) is repeated on admitted models with
+  competence of at least **0.90**. It is run only if at least 10 models qualify; otherwise we report
+  how many qualified. This is a sensitivity analysis and does not replace the main H1 result.
+
+#### A4. D2 protocol (state equivalence)
+
+Fixed here as Section 3 requires, before the first D2 score. It follows the compression and
+distinction errors of Vafa et al. (2024), using the next move as the continuation.
+
+* **Data.** Test games of the model's own training distribution, 1,000 games, data seed 0
+  (Section 3). Every prefix of length 1 to 59 is a history. Its true state is the board and the
+  player to move, from `src/domains/othello.py` (`replay`). Histories with no legal move for the
+  player to move are left out.
+* **Accepted moves.** For a history h, the model's accepted set A(h) is its k highest scoring
+  squares at the last position of h (token 0, padding, excluded), where k is the number of truly
+  legal moves L(h). No threshold is tuned.
+* **Same state pairs.** Two histories with the same true state but different move sequences. Up to
+  2,000 pairs, sampled uniformly at random from all such pairs with seed 0. If fewer than 500 exist,
+  the number of test games is raised in steps of 1,000, up to 5,000, and the number used is
+  reported.
+* **Different state pairs.** Two histories of the same length whose true legal move sets differ.
+  Up to 2,000 pairs, sampled uniformly at random with seed 0.
+* **Compression error** of a same state pair (h, g): the share of accepted moves that are accepted
+  after one history but not after the other, |A(h) symmetric difference A(g)| divided by
+  |A(h) union A(g)|. The model should treat the two histories the same, so 0 is best.
+* **Distinction error** of a different state pair (h, g): the boundary is every move legal after
+  exactly one of them (L(h) symmetric difference L(g)). A boundary move m that is legal after h only
+  is separated correctly if m is in A(h) and not in A(g) (and the mirror case for g). The error is
+  the share of boundary moves not separated correctly. 0 is best.
+* **Score.** `score` = 1 minus the mean of the mean compression error and the mean distinction
+  error. `details` holds both mean errors, their standard errors over pairs, the number of pairs of
+  each kind and the number of games.
+* **Check before the zoo.** D2 is run first on the two reference Othello GPTs only (Section 3).
+  Nothing in this protocol is changed after any zoo model is scored.
+* **Limitation, stated in the paper.** Vafa et al. (2024) also use longer continuations; we use the
+  next move only, which keeps D2 cheap enough for 81 models per domain and uses the same ground
+  truth as the rest of the study.
+
+#### A5. Pairs that include D1
+
+D1 is the legal move rate on test games, so it is nearly the same quantity as competence. For the 3
+H1 pairs that include D1, the partial tau is still reported, but if tau(D1, competence) is at least
+0.90 it is marked **not interpretable** and the competence controlled conclusion rests on the 3 pairs
+among D2, D3 and D4.
+
+#### A6. D4 protocol (representation probing) and D1
+
+Fixed here before the first D4 zoo score. Section 3 (score = selectivity at the layer with the
+highest selectivity on val games, measured on test games) is unchanged; this fixes the rest.
+
+* **Data.** Games of the model's own training distribution, data seed 0:
+  * probe fitting: the first 10,000 of 11,000 val games;
+  * layer choice: the last 1,000 of those 11,000 val games (never used for fitting);
+  * score: 1,000 test games.
+* **Layers.** `ZooModel.activations`: the residual stream after each block (transformer, Mamba) or
+  the hidden state after each layer (LSTM). Layer 0 is the output of the first block. Every real
+  position of every game is used.
+* **Labels.** Mine, theirs or empty for each of the 64 squares, relative to the player who just
+  moved (`mine_theirs` in `src/domains/othello.py`).
+* **Probe.** One linear map per layer from the activation to 64 squares x 3 classes, cross entropy,
+  AdamW (learning rate 1e-3, weight decay 0.01), 2 epochs, seed 0. Activations are computed 256
+  games at a time and the probe takes one step per 1,024 positions (about 1,100 steps for 10,000
+  games). Each activation feature is first standardized with its mean and standard deviation over
+  the probe fitting games, so the same learning rate is fair to every architecture (LSTM hidden
+  states lie between minus 1 and 1, residual streams are much larger). Checked on a model whose
+  layer holds the true board: the probe reads it at 0.9999 with these settings.
+* **Control task (Hewitt and Liang 2019).** The input type of a position is (square just played,
+  position in the game). For each type and each square, a fixed random label is drawn once from
+  that square's class frequencies in the probe fitting games (seed 0). The control probe has the
+  same form and training as the real probe, on these labels.
+* **Selectivity** of a layer = probe accuracy minus control accuracy (all 64 squares). The best
+  layer is the one with the highest selectivity on the layer choice games. `score` = selectivity of
+  that layer on the test games.
+* **Details, per layer, on test games:** probe accuracy, control accuracy, selectivity, gain over
+  layer 0 (probe accuracy minus layer 0 probe accuracy), and probe accuracy on occupied squares
+  only (whose disc is on each square, which the move list alone does not give away). Also the
+  best layer, its depth as a share of the layers, and the **occupancy only baseline**: the accuracy
+  of a rule that knows only which squares are occupied (empty squares are called empty, occupied
+  squares get that square's most common disc class in the probe fitting games), with each layer's
+  gain over it.
+* **D1** follows `src/docs/d1_next_token_validity.md` (PR #62) unchanged: nothing is fitted, the score
+  is the argmax legal move rate on 1,000 test games of the model's own training distribution.
+
+#### A7. D3 protocol (inductive bias)
+
+Fixed here before the first D3 zoo score, as Section 3 requires. It follows the inductive bias
+probe of Vafa et al. (2025): adapt the model to a small task whose labels come from the true
+board, and compare with a model of the same architecture and size that has random weights.
+Code: `src/diagnostics/d3/inductive_bias.py`.
+
+* **Tasks.** Four binary questions about one square right after a move: "is square X mine?", for
+  X = C4, F5, C3 and F6, where mine means the disc belongs to the player who just moved (the
+  `mine_theirs` board of `src/domains/othello.py`). Occupancy tasks ("is X occupied?") are not
+  used: on 2,000 synthetic validation games, whether a square is occupied equals whether its token
+  appears in the move list in 100% of cases, so it can be answered without any board. Whose disc it
+  is depends on the flips and cannot be read off the move list. The positive rate of the four tasks
+  is 0.41 to 0.45 on the same games.
+* **Labelled data for adaptation.** 64 validation games of the model's own training distribution,
+  data seed 0, one uniformly random position per game (position seed 0). The same 64 examples are
+  used for all four tasks.
+* **What is adapted.** A deep copy of the whole model, plus a new linear head (d_model to 2) on the
+  vector after the last layer at that position. Head learning rate 1e-3, rest of the model 1e-4,
+  AdamW, weight decay 0.01, 300 steps of 16 examples drawn with replacement, cross entropy. The
+  original model is never changed.
+* **How the learning rates were chosen.** On the synthetic reference Othello GPT only, never on a
+  zoo model, as Section 3 allows, with everything else as in this amendment (2026-10-13):
+
+  | head lr | body lr | score | sd over seeds | pretrained | random |
+  |---|---|---|---|---|---|
+  | 1e-3 | 1e-5 | 0.103 | 0.003 | 0.666 | 0.563 |
+  | **1e-3** | **1e-4** | **0.140** | 0.010 | 0.699 | 0.559 |
+  | 1e-2 | 1e-5 | 0.094 | 0.006 | 0.653 | 0.559 |
+  | 1e-2 | 1e-4 | 0.132 | 0.003 | 0.682 | 0.550 |
+
+  A body learning rate of 1e-5 was not chosen for a second reason: it leaves the model almost
+  frozen, so D3 would become a linear probe on the last layer, close to D4 by construction, and
+  their agreement under H1 would be partly built in.
+* **Baseline.** A model of the same architecture and scale with random weights
+  (`src/zoo/train.py` `build_model` for zoo models, a freshly initialised 8 layer TransformerLens
+  model for the reference Othello GPTs), adapted in exactly the same way. One random model per seed.
+* **Seeds.** 3 adaptation seeds (0, 1, 2). The seed sets the head initialisation, the batch draws
+  and the random baseline's weights. The toy version showed a gap between 0.12 and 0.33 across seeds,
+  so one seed is not enough.
+* **Scored on.** 1,000 test games of the model's own training distribution, data seed 0, one
+  uniformly random position per game (position seed 0).
+* **Task score.** Balanced accuracy: the mean of the hit rate on "mine" and on "not mine", so a
+  model that always answers the more common class scores 0.5, not 0.55 to 0.59.
+* **Score.** `score` = the mean over the 4 tasks and 3 seeds of (adapted pretrained balanced
+  accuracy minus adapted random balanced accuracy). Higher is more world model like. `score_std`
+  is the standard deviation of the per seed mean gap across the 3 seeds.
+* **Details, per task and seed:** both balanced accuracies, both plain accuracies and the gap. Also
+  the mean gap per task and per seed, the mean balanced accuracy of each model, and the positive
+  rate of every task in the adaptation and test data.
+* **Check before the zoo.** D3 is run first on the two reference Othello GPTs only. Nothing in this
+  protocol is changed after any zoo model is scored.
+* **Limitation, stated in the paper.** A model whose last layer already holds the board reaches
+  only about 0.8 balanced accuracy from 64 examples (tested with a model whose last layer is the
+  true board), because many features fit 64 points. D3 therefore measures how much the pretrained
+  model helps, not how close it gets to a perfect answer.
+
+#### Still to come, each before its first zoo score
+
+* D4 causal check pass rule (owner: Siddu), before the causal check in Weeks 9 to 10.
