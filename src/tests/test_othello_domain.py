@@ -62,7 +62,7 @@ def test_random_games_replay_legally() -> None:
         assert out is not None, "a generated game must replay without illegal moves"
         boards, movers = out
         before = oth.start_board()
-        for t, (sq, after, mover) in enumerate(zip(moves, boards, movers)):
+        for t, (sq, after, mover) in enumerate(zip(moves, boards, movers, strict=True)):
             flips = oth.flips_for(before, int(sq), int(mover))
             assert flips, "every move must flip at least one stone"
             expected = before.copy()
