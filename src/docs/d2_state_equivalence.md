@@ -70,6 +70,28 @@ For each model, on the test games of its own training distribution (1,000 games,
 Both errors, their standard errors, the number of pairs of each kind and the number of games go
 into `details` of `results/D2_state_equiv/{model_id}.json` (format: `src/docs/results_schema.md`).
 
+## Why 2,000 pairs is enough (sample size)
+
+The full set of pairs is far too large to enumerate, so both errors are sampling estimates. Each
+error is a mean over pairs of a number between 0 and 1, and the standard error of such a mean is at
+most 0.5 / sqrt(n), whatever the model:
+
+| Pairs (n) | Largest possible standard error |
+|---|---|
+| 500 (the minimum before more games are added) | 0.022 |
+| 2,000 (the cap) | 0.011 |
+
+On the reference Othello GPTs the measured standard errors are much smaller:
+
+| Anchor | Compression error (pairs, SE) | Distinction error (pairs, SE) |
+|---|---|---|
+| Othello GPT synthetic | 0.000 (615, 0.000) | 0.001 (2,000, 0.0003) |
+| Othello GPT championship | 0.145 (768, 0.005) | 0.322 (2,000, 0.004) |
+
+So a D2 score is known to about plus or minus 0.01, well below the differences between models that
+H1 compares. Every result stores both standard errors and pair counts, so this can be checked for
+every zoo model. Fixed in `reports/preregistration.md`, Amendment 2, D.
+
 ## Sanity checks (from the tests)
 
 | Model | Score | Compression error | Distinction error |

@@ -36,6 +36,6 @@ python -m pytest src/tests/test_d4_representation_probe.py -q
 python src/diagnostics/d4/representation_probe.py --models othello_gpt_synthetic othello_gpt_championship
 ```
 
-Zoo models (`--models <model_id> ... --save`) are refused until the git tag `prereg-v1.1` exists.
-The causal check (editing the activation so one square flips) comes in Weeks 9 to 10, with its pass
-rule added to the preregistration first.
+Zoo models (`--models <model_id> ... --save`) are refused until the git tag `prereg-v1.2` exists.
+The nonlinear probe and the causal check (editing the activation so one square flips) are fixed in
+Amendment 2 (B1, B2) and saved in `details["mlp"]` and `details["causal"]`.

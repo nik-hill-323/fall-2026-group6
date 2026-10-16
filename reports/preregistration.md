@@ -343,4 +343,160 @@ Code: `src/diagnostics/d3/inductive_bias.py`.
 
 #### Still to come, each before its first zoo score
 
-* D4 causal check pass rule (owner: Siddu), before the causal check in Weeks 9 to 10.
+* D4 causal check pass rule (owner: Siddu): done in Amendment 2, B2, before any zoo model was scored.
+
+### Amendment 2 (prereg-v1.2), 2026-10-15
+
+Written and tagged before any zoo model is scored by any diagnostic: when it was written, `results/`
+held only the two reference Othello GPTs for D1 to D4. It completes D2, D3 and D4 as the proposal
+describes them, so that no part of a diagnostic is added after zoo scores exist. Nothing in Sections 1
+to 5 or Amendment 1 changes: every master table `score` is computed exactly as before (the D3 and D4
+anchor scores were rerun with this code and reproduce to every digit; each anchor file records the
+commit that holds the code). All choices below were made on the two reference Othello GPTs only, never
+on a zoo model, as Section 3 allows. D3 and D4 refuse zoo models until the git tag `prereg-v1.2`
+exists. D1 and D2 keep their prereg-v1.1 gate: their code is unchanged by this amendment, and no zoo
+model is to be scored by any diagnostic before `prereg-v1.2` exists.
+After merge: `git tag prereg-v1.2 && git push origin prereg-v1.2`.
+
+#### B1. D4 nonlinear probe (proposal, Week 9: "linear and nonlinear probes")
+
+* **Probe.** Per layer, one hidden layer of 256 units with ReLU, then 64 squares x 3 classes.
+* **Control.** Its own Hewitt and Liang control probe of the same form, on the A6 control labels.
+* **Data and training.** Exactly as A6: same fitting, layer choice and test games, same standardized
+  activations, AdamW (learning rate 1e-3, weight decay 0.01), 2 epochs, one step per 1,024
+  positions, seed 0. The MLP probes are created after the linear probes and have their own
+  optimizer, so the linear probes, and therefore `score`, are unchanged.
+* **Reported in `details["mlp"]`:** per layer probe accuracy, control accuracy, selectivity and
+  probe accuracy on occupied squares; its own best layer (highest selectivity on the layer choice
+  games) and selectivity there; per layer gain over the linear probe.
+* **Not the score.** The D4 score stays the linear selectivity (A6). Hewitt and Liang (2019) show that
+  a more expressive probe also raises control accuracy, so the linear probe is the cleaner measure of
+  what the model itself makes readable. The anchors show exactly this:
+
+  | Anchor (test) | linear: layer, probe, control, selectivity | MLP: layer, probe, control, selectivity |
+  |---|---|---|
+  | Othello GPT synthetic | 6, 0.9903, 0.5557, **0.4345** | 7, 0.9898, 0.5740, 0.4157 |
+  | Othello GPT championship | 3, 0.8989, 0.6269, **0.2720** | 4, 0.9018, 0.6722, 0.2297 |
+
+#### B2. D4 causal check and its pass rule (Section 3, "Causal check (D4)"; proposal, Week 10)
+
+* **Cases.** One per test game (the same 1,000 test games as the score). In each game, positions that
+  have a recorded next move are tried in a random order (seed 0); at each, occupied squares are tried
+  in a random order. The first (position, square) where flipping that disc (mine to theirs or theirs
+  to mine) changes the set of legal next moves, and leaves at least one, is the case.
+* **Edited layers.** Every layer from the middle one (n_layers // 2, or the linear best layer of A6 if
+  that is earlier) to the last, each with its own linear probe from A6. The edits run during one
+  forward pass in layer order, so each later layer sees the earlier edits
+  (`ZooModel.logits_edited`).
+* **Edit at a layer.** In the standardized activation space, the vector at the case's position moves
+  along the normalized gradient of that layer's probe cross entropy for the edited board (all 64
+  squares), step length 0.05 x sqrt(width), until the probe reads the whole edited board and gives the
+  flipped square's new class a probability of at least **0.99**, at most 100 steps.
+* **Control edit.** At every edited layer, a random direction (seed 0) with exactly the same length as
+  the probe edit there.
+* **Boundary accuracy** of a case: the model accepts its k best moves, k = the number of legal moves
+  after the flip. Boundary moves are those legal before or after the flip but not both. A move that
+  becomes legal is right if accepted, a move that stops being legal is right if not accepted. Boundary
+  accuracy is the share of boundary moves that are right (the same idea as the D2 distinction error).
+* **Causal score** = mean over cases of (boundary accuracy with the probe edit minus boundary accuracy
+  with the random edit), with a 95% bootstrap interval over cases (2,000 resamples, seed 0). Also
+  reported: boundary accuracy with no edit, the share of cases where every layer's probe reached the
+  edited board, and per layer the edit success, flipped square reading, steps and edit size.
+* **Pass rule and label.**
+  * selectivity below 0.10: **not decodable** (the causal check is still reported);
+  * selectivity at least 0.10, causal score at least **0.20** and the interval above 0:
+    **decodable and causal**;
+  * otherwise: **decodable but not causal**.
+* **Why 0.20.** It asks the probe edit to get at least one boundary move in five more right than a
+  random edit of the same size. It was written down before the comparison below was run and was not
+  changed after it.
+* **How the edited layers and the confidence were chosen.** On the reference Othello GPTs only. The
+  synthetic Othello GPT is the positive control: Li et al. (2023) and Nanda et al. (2023) show that
+  editing its board changes its moves. The setting with the largest causal score on it was taken.
+
+  | Edited layers | confidence | synthetic: causal score [95% CI] | championship: causal score [95% CI] |
+  |---|---|---|---|
+  | best only | 0.9 | 0.047 [0.030, 0.063] | 0.079 [0.056, 0.101] |
+  | best only | 0.99 | 0.076 [0.057, 0.097] | 0.130 [0.105, 0.156] |
+  | best to last | 0.9 | 0.070 [0.051, 0.087] | 0.122 [0.098, 0.146] |
+  | best to last | 0.99 | 0.115 [0.093, 0.137] | 0.151 [0.122, 0.180] |
+  | middle to last | 0.9 | 0.652 [0.622, 0.679] | 0.122 [0.098, 0.146] |
+  | **middle to last** | **0.99** | **0.693 [0.665, 0.719]** | **0.151 [0.122, 0.180]** |
+  | all layers | 0.9 | 0.578 [0.546, 0.607] | 0.152 [0.128, 0.178] |
+  | all layers | 0.99 | 0.529 [0.498, 0.559] | 0.180 [0.152, 0.211] |
+
+  Editing only from the best layer (6 of 8 on synthetic) comes too late: the later layers still attend
+  to earlier positions that hold the unedited board, and the synthetic model builds its board around
+  layer 4 (Nanda et al. 2023). Editing from layer 0 adds noise where no board is held yet (the random
+  edit's boundary accuracy rises from about 0.18 to 0.24 to 0.29). The probe edit reached its target
+  in 100% of cases in every setting.
+* **Anchors (test split), with the chosen setting:**
+
+  | Anchor | edited layers | causal score [95% CI] | boundary acc: probe edit, random edit, no edit | label |
+  |---|---|---|---|---|
+  | Othello GPT synthetic | 4 to 7 | 0.6927 [0.6647, 0.7192] | 0.8719, 0.1792, 0.1975 | decodable and causal |
+  | Othello GPT championship | 3 to 7 | 0.1510 [0.1220, 0.1803] | 0.5440, 0.3930, 0.3868 | decodable but not causal |
+
+* **Use.** The label and the causal score go in `details["causal"]`. H3 uses the label as Section 4
+  says (reported separately, and whether it adds predictive power beyond D4 selectivity).
+
+#### C. D3 symbolic regression arm (proposal, Week 8)
+
+* **What is fitted.** After every adaptation in A7 (pretrained and random weight model, 4 tasks,
+  3 seeds), the adapted model's margin, logit("mine") minus logit("not mine"), on the 1,000 test
+  positions.
+* **Inputs.** The 64 squares of the true board at that position: +1 mine, -1 theirs, 0 empty (named
+  `sq_A1` to `sq_H8` for PySR, since some bare square names are sympy functions).
+* **Search.** PySR 2.4.0: operators +, - and x, no unary operators, at most 15 nodes, the 10 most
+  relevant squares kept first (`select_k_features`), 40 iterations, 15 populations, deterministic,
+  serial, `random_state` = the adaptation seed, best equation by PySR's `model_selection="best"`.
+* **How a formula is read.** For every square j, on the 1,000 test boards: the **contrast** = mean
+  |f(board with j mine) - f(board with j theirs)| (how much the formula tells mine from theirs on j),
+  the **signed contrast** = the mean of f(j mine) - f(j theirs) (positive when mine raises the margin),
+  and the **occupancy effect** = mean |(f(j mine) + f(j theirs)) / 2 - f(j empty)| (how much the
+  formula reacts to j being occupied at all).
+* **Law recovered** for a (model, task, seed): the task's own square has the largest contrast, its
+  signed contrast is positive, and the formula's sign beats chance against the true rule
+  (`law_agreement`, balanced accuracy, above 0.5). A formula such as a x sq_X x sq_X + b is 1 for mine
+  and for theirs alike, so it has zero contrast and is never counted as recovered.
+* **Occupancy shortcut** for a (model, task, seed): the formula reacts to the task's own square being
+  occupied but has zero contrast on it. Occupancy can be read off the move list, which is why A7 does
+  not use occupancy tasks; this flag shows when an adapted model answers "is X mine" through it.
+* **Reported in `details["symbolic_regression"]`:** every formula with its complexity, top contrast
+  square, squares used, own square contrast, signed contrast, contrast share and occupancy effect, the
+  occupancy shortcut flag, R squared against the model's margin, and `law_agreement`; the recovery and
+  occupancy shortcut rates of the pretrained and of the random weight models, overall and per task;
+  stability per task = the mean Jaccard overlap of the squares used across the 3 seeds; mean R squared.
+* **Reference fit.** Next to each formula, the R squared of a least squares fit of the same margin on
+  128 indicator columns (mine and theirs for each square) plus an intercept. Indicators, not the
+  signed squares, so that the reference can also express occupancy. It has 129 free parameters while a
+  formula has at most 15 nodes over 10 squares, so the reference is an upper guide for an additive
+  board formula, not a target the short formulas are expected to reach.
+* **Not the score.** The D3 score stays the adaptation gap of A7. As the proposal's risk 4 says, "the
+  probe's primary score is the adaptation based measure, with symbolic recovery reported as a
+  qualitative, stability annotated companion result rather than a load bearing number".
+* **Anchors (test split).** The D3 scores reproduce A7 to every digit (0.13969 and 0.05930).
+
+  | Anchor | law recovered: pretrained, random | occupancy shortcut: pretrained, random | stability per task (C4, F5, C3, F6) | R squared: formula, 128 indicator reference |
+  |---|---|---|---|---|
+  | Othello GPT synthetic | 2/12, 1/12 | 7/12, 1/12 | 0.67, 0.33, 1.00, 0.33 | 0.139, 0.374 |
+  | Othello GPT championship | 0/12, 0/12 | 6/12, 0/12 | 0.33, 1.00, 1.00, 0.33 | 0.345, 0.690 |
+
+  On both reference models, the short formulas almost never recover the "is X mine" law (the 2
+  synthetic recoveries are both on C4). What they find instead, in about half the searches and almost
+  never for the random weight models, is the occupancy shortcut: once adapted to "is X mine", the
+  pretrained models' answers largely follow whether X is occupied. The formulas explain less of the
+  margin than the 128 indicator reference, as expected from their size, so these results describe the
+  dominant short structure of the answers, not all of it.
+* **What this means for D3 (stated in the paper).** Part of the pretrained advantage that the D3 score
+  measures on these tasks may come from occupancy, which the move list gives away, rather than from
+  whose disc is on the square. The D3 score is unchanged (A7); the occupancy shortcut rate is reported
+  next to it for every zoo model, so the analysis can show how much of D3 it accounts for.
+
+#### D. D2 sample size (proposal, Week 7: "explicit sample size justification")
+
+Each D2 error is a mean over pairs of a number between 0 and 1, so its standard error is at most
+0.5 / sqrt(n): at most 0.022 at the 500 pair minimum of A4 and at most 0.011 at 2,000 pairs. On the
+reference Othello GPTs the largest standard error was 0.005 (championship compression error, 768
+pairs) and every other was below 0.004, so a D2 score is known to about plus or minus 0.01, well
+below the spread between models that H1 compares. The protocol of A4 is unchanged.
