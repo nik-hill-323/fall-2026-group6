@@ -25,23 +25,43 @@ Protocol (fixed in reports/preregistration.md, Amendment 1, A7)
     score            mean over tasks and seeds of (pretrained minus random balanced accuracy);
                      higher = more world model like
 
+Symbolic regression arm (Amendment 2, C; descriptive, the score above is unchanged)
+    after each adaptation (pretrained and random, every task and seed), PySR searches for a short
+    formula (+, -, *, at most 15 nodes, 10 squares kept) that reproduces the adapted model's
+    margin, logit(mine) - logit(not mine), on the test positions from the 64 true squares (+1
+    mine, -1 theirs, 0 empty). Law recovered = the task's own square has the largest mine vs theirs
+    contrast in the formula, mine raises the margin, and the formula's sign beats chance against
+    the true rule. A formula that only sees whether the square is occupied (x squared) is counted
+    as the occupancy shortcut, not as recovered. Reported: recovery and occupancy shortcut rates
+    (pretrained vs random), per task, stability across the 3 seeds (mean Jaccard of the squares
+    used), fit R squared next to a least squares reference on 128 mine / theirs indicators, and
+    every formula (details["symbolic_regression"])
+
 The original model is never trained: adaptation always runs on a deep copy, so other diagnostics
 see the original weights.
 
 Run on the EC2 (repo root):
     python src/diagnostics/d3/inductive_bias.py --models othello_gpt_synthetic othello_gpt_championship
     python src/diagnostics/d3/inductive_bias.py --models othello_gpt_synthetic --save
-Zoo models are refused until the git tag prereg-v1.1 exists (the protocol must be frozen first).
+Zoo models are refused until the git tag prereg-v1.2 exists (the protocol must be frozen first).
 """
 
 from __future__ import annotations
+
+try:  # PySR (Julia) must be imported before torch, or it can crash (see requirements notes)
+    import pysr
+except ImportError:  # CI and laptops: the symbolic regression arm then needs a regressor passed in
+    pysr = None
 
 import argparse
 import copy
 import importlib.util
 import logging
+import inspect
+import itertools
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -84,7 +104,18 @@ BODY_LR = 1e-4
 WEIGHT_DECAY = 0.01
 ADAPT_SEEDS = (0, 1, 2)
 POSITION_SEED = 0       # picks the one position per game, for adaptation and scoring data alike
-PREREG_TAG = "prereg-v1.1"
+PREREG_TAG = "prereg-v1.2"   # Amendment 2 fixes the symbolic regression arm
+
+# Symbolic regression arm (Amendment 2, C). Descriptive: reported in details, the score is unchanged.
+# Inputs: the 64 squares of the true board right after the move, +1 mine, -1 theirs, 0 empty.
+# Target: the adapted model's answer as a margin, logit("mine") - logit("not mine"), on the test positions.
+SR_BINARY = ["+", "-", "*"]
+SR_UNARY: list[str] = []
+SR_MAXSIZE = 15
+SR_NITERATIONS = 40
+SR_POPULATIONS = 15
+SR_SELECT_K = 10        # PySR keeps the 10 most relevant squares (random forest) before the search
+SR_SEEDS = ADAPT_SEEDS  # one search per adaptation seed, random_state = that seed
 
 _CACHE: dict[tuple, dict[str, np.ndarray]] = {}
 
@@ -108,7 +139,7 @@ def examples(games: np.ndarray, seed: int = POSITION_SEED) -> dict[str, np.ndarr
     g = np.arange(len(T))
     board = data["mine_theirs"][g, pos]                                   # (G, 64) 0 empty, 1 mine, 2 theirs
     labels = np.stack([(board[:, square(s)] == 1) for s in TASK_SQUARES], axis=1).astype(np.int64)
-    return {"tokens": data["tokens"], "pos": pos, "labels": labels}
+    return {"tokens": data["tokens"], "pos": pos, "labels": labels, "board": board}
 
 
 def prepare(distribution: str, split: str, n_games: int, data_seed: int) -> dict[str, np.ndarray]:
@@ -183,16 +214,174 @@ def adapt_and_score(body: nn.Module, d_model: int, train: dict[str, np.ndarray],
         loss.backward()
         opt.step()
     body.eval()
-    preds = []
+    preds, margins = [], []
     with torch.no_grad():
         for i in range(0, len(test["tokens"]), 256):
             t = torch.as_tensor(test["tokens"][i:i + 256], device=device)
             p = torch.as_tensor(test["pos"][i:i + 256], device=device)
             h = last_layer(body, t)[torch.arange(len(t), device=device), p]
-            preds.append(head(h).argmax(-1).cpu().numpy())
+            out = head(h)
+            preds.append(out.argmax(-1).cpu().numpy())
+            margins.append((out[:, 1] - out[:, 0]).float().cpu().numpy())
     pred = np.concatenate(preds)
     yt = test["labels"][:, task]
-    return {"balanced_accuracy": balanced_accuracy(pred, yt), "accuracy": float((pred == yt).mean())}
+    return {"balanced_accuracy": balanced_accuracy(pred, yt), "accuracy": float((pred == yt).mean()),
+            "margin": np.concatenate(margins)}
+
+
+# ==========================================================================
+# Symbolic regression arm (Amendment 2, C; Vafa et al. 2025)
+#
+# Plain words: after adaptation, the model answers "is square X mine?" for 1,000 test positions.
+# Symbolic regression searches for a short formula that reproduces those answers from the true
+# board. If the formula mainly uses square X itself, the adapted model has learned the true rule
+# (the law is recovered); if it leans on other squares, the model answers through a shortcut.
+# The random weight model, adapted the same way, is the null. Searches are stochastic, so each
+# (task, seed) has its own search and stability across seeds is reported.
+# ==========================================================================
+
+def square_name(sq: int) -> str:
+    """Square index 0..63 -> 'A1'..'H8' (inverse of square())."""
+    return "ABCDEFGH"[sq % oth.SIZE] + str(sq // oth.SIZE + 1)
+
+
+SQUARE_NAMES = [square_name(s) for s in range(oth.N_SQ)]
+# Names PySR sees. A bare square name can clash with a sympy function (E1 is the exponential
+# integral), which PySR refuses, so every variable gets a prefix: sq_C4.
+SR_VARIABLE_NAMES = [f"sq_{n}" for n in SQUARE_NAMES]
+
+
+def board_features(board: np.ndarray) -> np.ndarray:
+    """(N, 64) mine / theirs / empty codes (1, 2, 0) -> +1 mine, -1 theirs, 0 empty."""
+    return np.where(board == 1, 1.0, np.where(board == 2, -1.0, 0.0))
+
+
+def pysr_fit(X: np.ndarray, y: np.ndarray, seed: int) -> tuple[Callable[[np.ndarray], np.ndarray], str, int]:
+    """Fit one PySR search with the Amendment 2 settings. Returns (predict, equation, complexity)."""
+    if pysr is None:
+        raise ImportError("pysr is not installed: install requirements.txt (EC2) or pass regressor=")
+    kwargs = dict(binary_operators=SR_BINARY, unary_operators=SR_UNARY, maxsize=SR_MAXSIZE,
+                  niterations=SR_NITERATIONS, populations=SR_POPULATIONS, select_k_features=SR_SELECT_K,
+                  deterministic=True, parallelism="serial", random_state=seed, progress=False,
+                  verbosity=0, model_selection="best")
+    params = inspect.signature(pysr.PySRRegressor.__init__).parameters
+    with tempfile.TemporaryDirectory(prefix="d3_sr_") as tmp:   # removed after the fit
+        if "output_directory" in params:      # PySR 1.x+ writes its hall of fame files here, not in the repo
+            kwargs["output_directory"] = tmp
+        elif "tempdir" in params:
+            kwargs.update(tempdir=tmp, temp_equation_file=True)
+        reg = pysr.PySRRegressor(**kwargs)
+        reg.fit(X, y, variable_names=SR_VARIABLE_NAMES)
+        best = reg.get_best()
+    return reg.predict, str(best["equation"]), int(best["complexity"])
+
+
+def r_squared(pred: np.ndarray, y: np.ndarray) -> float:
+    ss = float(((y - y.mean()) ** 2).sum())
+    return float(1.0 - ((y - pred) ** 2).sum() / ss) if ss > 0 else 0.0
+
+
+def linear_r2(X: np.ndarray, y: np.ndarray) -> float:
+    """R squared of an ordinary least squares fit of y on 128 indicator columns (mine_j and
+    theirs_j for every square) plus an intercept: the reference for how much of the model's margin
+    any additive board formula can explain. Indicators, not the signed squares, so the reference can
+    also express occupancy (x squared), which a formula with * can build."""
+    A = np.c_[(X == 1).astype(np.float64), (X == -1).astype(np.float64), np.ones(len(X))]
+    coef = np.linalg.lstsq(A, y, rcond=None)[0]
+    return r_squared(A @ coef, y)
+
+
+def _set(X: np.ndarray, j: int, value: float) -> np.ndarray:
+    out = X.copy()
+    out[:, j] = value
+    return out
+
+
+def describe_law(predict: Callable[[np.ndarray], np.ndarray], X: np.ndarray, y_model: np.ndarray,
+                 y_true: np.ndarray, task_sq: int) -> dict[str, Any]:
+    """How a fitted formula behaves, square by square, on the test boards.
+        contrast importance of square j = mean |f(X, j mine) - f(X, j theirs)|: how much the formula
+                             tells mine from theirs on that square (what "is X mine" needs);
+        signed contrast    = mean of f(X, j mine) - f(X, j theirs): positive when mine raises the margin;
+        occupancy effect   = mean |(f(X, j mine) + f(X, j theirs)) / 2 - f(X, j empty)|: how much the
+                             formula reacts to the square being occupied at all.
+    Law recovered (Amendment 2, C): the task's own square has the largest contrast importance, its
+    signed contrast is positive, and the formula's sign beats chance against the true rule
+    (law_agreement above 0.5). A formula in x squared (occupancy) has zero contrast and is counted
+    as the occupancy shortcut, never as recovered. linear_r2 is the reference fit."""
+    base = np.asarray(predict(X), dtype=np.float64)
+    contrast, signed, occupancy = np.zeros(oth.N_SQ), np.zeros(oth.N_SQ), np.zeros(oth.N_SQ)
+    for j in range(oth.N_SQ):
+        f_mine = np.asarray(predict(_set(X, j, 1.0)), dtype=np.float64)
+        f_theirs = np.asarray(predict(_set(X, j, -1.0)), dtype=np.float64)
+        f_empty = np.asarray(predict(_set(X, j, 0.0)), dtype=np.float64)
+        contrast[j] = float(np.abs(f_mine - f_theirs).mean())
+        signed[j] = float((f_mine - f_theirs).mean())
+        occupancy[j] = float(np.abs((f_mine + f_theirs) / 2 - f_empty).mean())
+    eps = 1e-9
+    used = [SQUARE_NAMES[j] for j in np.flatnonzero((contrast > eps) | (occupancy > eps))]
+    top = int(np.argmax(contrast))
+    agreement = balanced_accuracy((base > 0).astype(np.int64), y_true)
+    recovered = bool(contrast[top] > eps and top == task_sq and signed[task_sq] > 0 and agreement > 0.5)
+    return {"top_square": SQUARE_NAMES[top] if contrast[top] > eps else None,
+            "recovered": recovered,
+            "own_square_contrast": round(float(contrast[task_sq]), 4),
+            "own_square_signed_contrast": round(float(signed[task_sq]), 4),
+            "own_square_contrast_share": round(float(contrast[task_sq] / contrast.sum()) if contrast.sum() > eps else 0.0, 4),
+            "own_square_occupancy_effect": round(float(occupancy[task_sq]), 4),
+            "occupancy_shortcut": bool(occupancy[task_sq] > eps and contrast[task_sq] <= eps),
+            "squares_used": used,
+            "fit_r2": round(r_squared(base, y_model), 4),
+            "linear_r2": round(linear_r2(X, y_model), 4),
+            "law_agreement": round(agreement, 4)}
+
+
+def jaccard(a: list[str], b: list[str]) -> float:
+    sa, sb = set(a), set(b)
+    return len(sa & sb) / len(sa | sb) if sa | sb else 1.0
+
+
+def symbolic_arm(test: dict[str, np.ndarray], margins: dict[tuple[str, int, int], np.ndarray],
+                 seeds, regressor: Callable = pysr_fit) -> dict[str, Any]:
+    """One search per (model kind, task, seed) on the adapted model's test margins."""
+    X = board_features(test["board"])
+    cells = []
+    for kind in ("pretrained", "random"):
+        for k, sq in enumerate(TASK_SQUARES):
+            for seed in seeds:
+                predict, eq, complexity = regressor(X, margins[(kind, k, seed)], seed)
+                d = describe_law(predict, X, margins[(kind, k, seed)], test["labels"][:, k], square(sq))
+                cells.append({"model": kind, "task": f"is {sq} mine", "seed": seed, "equation": eq,
+                              "complexity": complexity, **d})
+
+    def rate(kind, task=None, key="recovered"):
+        c = [x for x in cells if x["model"] == kind and (task is None or x["task"] == task)]
+        return round(float(np.mean([x[key] for x in c])), 4)
+
+    tasks = [f"is {sq} mine" for sq in TASK_SQUARES]
+    stability = {}
+    for t in tasks:
+        used = [x["squares_used"] for x in cells if x["model"] == "pretrained" and x["task"] == t]
+        pairs = list(itertools.combinations(used, 2))
+        stability[t] = round(float(np.mean([jaccard(a, b) for a, b in pairs])), 4) if pairs else None
+    return {
+        "recovery_rate_pretrained": rate("pretrained"), "recovery_rate_random": rate("random"),
+        "occupancy_shortcut_rate_pretrained": rate("pretrained", key="occupancy_shortcut"),
+        "occupancy_shortcut_rate_random": rate("random", key="occupancy_shortcut"),
+        "recovery_by_task_pretrained": {t: rate("pretrained", t) for t in tasks},
+        "recovery_by_task_random": {t: rate("random", t) for t in tasks},
+        "stability_by_task_pretrained": stability,
+        "mean_fit_r2_pretrained": round(float(np.mean([x["fit_r2"] for x in cells if x["model"] == "pretrained"])), 4),
+        "mean_linear_r2_pretrained": round(float(np.mean([x["linear_r2"] for x in cells if x["model"] == "pretrained"])), 4),
+        "mean_fit_r2_random": round(float(np.mean([x["fit_r2"] for x in cells if x["model"] == "random"])), 4),
+        "mean_linear_r2_random": round(float(np.mean([x["linear_r2"] for x in cells if x["model"] == "random"])), 4),
+        "settings": {"binary_operators": SR_BINARY, "unary_operators": SR_UNARY, "maxsize": SR_MAXSIZE,
+                     "niterations": SR_NITERATIONS, "populations": SR_POPULATIONS,
+                     "select_k_features": SR_SELECT_K, "seeds": list(seeds), "deterministic": True,
+                     "inputs": "64 squares, +1 mine, -1 theirs, 0 empty",
+                     "target": "adapted model margin logit(mine) - logit(not mine)"},
+        "cells": cells,
+    }
 
 
 # ==========================================================================
@@ -206,9 +395,12 @@ def training_distribution(model) -> str:
 
 
 def evaluate(model, train: dict[str, np.ndarray], test: dict[str, np.ndarray], seeds=ADAPT_SEEDS,
-             make_random: Callable[[Any, int], nn.Module] = random_like, **adapt: Any) -> dict[str, Any]:
-    """Every (task, seed): adapt a copy of the model and a random weight model, score both."""
+             make_random: Callable[[Any, int], nn.Module] = random_like, symbolic: bool = True,
+             regressor: Callable | None = None, **adapt: Any) -> dict[str, Any]:
+    """Every (task, seed): adapt a copy of the model and a random weight model, score both. Then
+    (symbolic=True) the symbolic regression arm on the adapted models' test margins."""
     cells = []
+    margins: dict[tuple[str, int, int], np.ndarray] = {}
     for seed in seeds:
         random_body = make_random(model, 1000 + seed)          # one random model per seed, reused across tasks
         for k, sq in enumerate(TASK_SQUARES):
@@ -216,6 +408,7 @@ def evaluate(model, train: dict[str, np.ndarray], test: dict[str, np.ndarray], s
                                   model.device, **adapt)
             rnd = adapt_and_score(copy.deepcopy(random_body), model.d_model, train, test, k, seed,
                                   model.device, **adapt)
+            margins[("pretrained", k, seed)], margins[("random", k, seed)] = pre["margin"], rnd["margin"]
             cells.append({"task": f"is {sq} mine", "seed": seed,
                           "pretrained_balanced_accuracy": pre["balanced_accuracy"],
                           "random_balanced_accuracy": rnd["balanced_accuracy"],
@@ -225,7 +418,7 @@ def evaluate(model, train: dict[str, np.ndarray], test: dict[str, np.ndarray], s
     per_seed = [float(np.mean([c["gap"] for c in cells if c["seed"] == s])) for s in seeds]
     per_task = {f"is {sq} mine": float(np.mean([c["gap"] for c in cells if c["task"] == f"is {sq} mine"]))
                 for sq in TASK_SQUARES}
-    return {
+    out = {
         "score": float(gaps.mean()),
         "score_std": float(np.std(per_seed, ddof=1)) if len(per_seed) > 1 else None,
         "gap_by_seed": per_seed,
@@ -236,12 +429,16 @@ def evaluate(model, train: dict[str, np.ndarray], test: dict[str, np.ndarray], s
         "positive_rate_test": test["labels"].mean(0).round(4).tolist(),
         "cells": cells,
     }
+    if symbolic:
+        out["symbolic_regression"] = symbolic_arm(test, margins, seeds, regressor or pysr_fit)
+    return out
 
 
 def score(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, n_adapt: int = N_ADAPT,
           seeds=ADAPT_SEEDS, **adapt: Any):
     """The diagnostic contract (src/docs/diagnostic_interface.md). n_adapt, seeds and adapt
-    (steps, batch, head_lr, body_lr, make_random) may be overridden for tests only."""
+    (steps, batch, head_lr, body_lr, make_random, symbolic, regressor) may be overridden for
+    tests only."""
     t0 = time.time()
     dist = training_distribution(model)
     train = prepare(dist, "val", n_adapt, data_seed)
@@ -297,6 +494,15 @@ def main() -> None:
             print(f"{r.model_id:45s} score {r.score:.4f}  pretrained {d['pretrained_balanced_accuracy']:.4f}  "
                   f"random {d['random_balanced_accuracy']:.4f}  by seed {[round(x, 3) for x in d['gap_by_seed']]}  "
                   f"games {r.n_games}  {r.provenance.get('runtime_sec', '?')} s")
+            if "symbolic_regression" in d:
+                sr = d["symbolic_regression"]
+                print(f"{'':45s} symbolic regression: recovered pretrained {sr['recovery_rate_pretrained']:.3f}  "
+                      f"random {sr['recovery_rate_random']:.3f}  occupancy shortcut pretrained "
+                      f"{sr['occupancy_shortcut_rate_pretrained']:.3f}  random {sr['occupancy_shortcut_rate_random']:.3f}  "
+                      f"by task {sr['recovery_by_task_pretrained']}  "
+                      f"stability {sr['stability_by_task_pretrained']}  fit r2 {sr['mean_fit_r2_pretrained']:.3f}  "
+                      f"linear reference r2 {sr['mean_linear_r2_pretrained']:.3f}  "
+                      f"(random: fit {sr['mean_fit_r2_random']:.3f}, linear {sr['mean_linear_r2_random']:.3f})")
         else:
             print(f"{r.model_id:45s} {r.status}: {r.reason}")
 
