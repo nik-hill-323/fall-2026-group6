@@ -216,11 +216,11 @@
   "run_id": "othello_gpt_synthetic_D4",
   "schema_version": 1,
   "provenance": {
-    "git_commit": "343313f",
-    "time_utc": "2026-10-15T23:21:25Z",
+    "git_commit": "dd10e52",
+    "time_utc": "2026-10-16T03:41:19Z",
     "python": "3.13.15",
     "host": "ip-10-0-2-159",
-    "runtime_sec": 34.1,
+    "runtime_sec": 34.2,
     "torch": "2.13.0+cu130",
     "gpu": "NVIDIA A10G",
     "numpy": "2.4.4"
