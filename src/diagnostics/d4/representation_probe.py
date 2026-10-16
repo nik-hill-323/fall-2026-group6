@@ -270,10 +270,11 @@ def evaluate_probes(model, real: nn.ModuleList, control: nn.ModuleList, data: di
 # Causal check (Amendment 2, B2)
 #
 # Plain words: flip one disc in the true board (mine <-> theirs) so that the legal next moves
-# change. Edit the model's vector at the best layer until the linear probe reads that edited
-# board, let the rest of the model run, and ask whether its predicted moves now follow the edited
-# board. The same edit size in a random direction is the control. A model that only stores the
-# board (decodable) but does not use it for its predictions shows no difference between the two.
+# change. At every layer from the middle one (or the best layer, if earlier) to the last, edit the
+# model's vector until that layer's linear probe reads the edited board, let the model run on,
+# and ask whether its predicted moves now follow the edited board. The same edit size in a random
+# direction is the control. A model that only stores the board (decodable) but does not use it
+# for its predictions shows no difference between the two.
 # ==========================================================================
 
 def flip_relative(rel: np.ndarray, sq: int) -> np.ndarray:
@@ -574,7 +575,7 @@ def score(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, *
             "probe_acc_occupied_by_layer": r(mte["probe_acc_occupied"]),
             "gain_over_linear_by_layer": r(mte["probe_acc"] - te["probe_acc"]),
         }
-    if causal:                               # causal check at the linear best layer (Amendment 2, B2)
+    if causal:                               # causal check, middle (or best) layer to last (Amendment 2, B2)
         details["causal"] = causal_check(model, real, best, test, mu, sd, float(sel_test[best]), batch,
                                          max_cases=causal_cases_max, mode=causal_mode, confidence=causal_confidence)
     return itf.result_for(model, DIAGNOSTIC, method=METHOD, split=split, n_games=len(test["tokens"]),
