@@ -347,12 +347,15 @@ Code: `src/diagnostics/d3/inductive_bias.py`.
 
 ### Amendment 2 (prereg-v1.2), 2026-10-15
 
-Written and tagged before any zoo model is scored by any diagnostic. It completes D2, D3 and D4 as the
-proposal describes them, so that no part of a diagnostic is added after zoo scores exist. Nothing in
-Sections 1 to 5 or Amendment 1 changes: every master table `score` is computed exactly as before (the
-D3 and D4 anchor scores were rerun with this code and reproduce to every digit). All choices below
-were made on the two reference Othello GPTs only, never on a zoo model, as Section 3 allows.
-D3 and D4 refuse zoo models until the git tag `prereg-v1.2` exists.
+Written and tagged before any zoo model is scored by any diagnostic: when it was written, `results/`
+held only the two reference Othello GPTs for D1 to D4. It completes D2, D3 and D4 as the proposal
+describes them, so that no part of a diagnostic is added after zoo scores exist. Nothing in Sections 1
+to 5 or Amendment 1 changes: every master table `score` is computed exactly as before (the D3 and D4
+anchor scores were rerun with this code and reproduce to every digit; each anchor file records the
+commit that holds the code). All choices below were made on the two reference Othello GPTs only, never
+on a zoo model, as Section 3 allows. D3 and D4 refuse zoo models until the git tag `prereg-v1.2`
+exists. D1 and D2 keep their prereg-v1.1 gate: their code is unchanged by this amendment, and no zoo
+model is to be scored by any diagnostic before `prereg-v1.2` exists.
 After merge: `git tag prereg-v1.2 && git push origin prereg-v1.2`.
 
 #### B1. D4 nonlinear probe (proposal, Week 9: "linear and nonlinear probes")
@@ -447,31 +450,48 @@ After merge: `git tag prereg-v1.2 && git push origin prereg-v1.2`.
 * **Search.** PySR 2.4.0: operators +, - and x, no unary operators, at most 15 nodes, the 10 most
   relevant squares kept first (`select_k_features`), 40 iterations, 15 populations, deterministic,
   serial, `random_state` = the adaptation seed, best equation by PySR's `model_selection="best"`.
-* **Law recovered** for a (model, task, seed): the task's own square has the largest importance in the
-  formula, where the importance of a square = the mean absolute change of the formula when that
-  square is set to empty.
-* **Reported in `details["symbolic_regression"]`:** every formula with its complexity, top square,
-  squares used, share of importance on the task's own square, R squared against the model's margin
-  and balanced accuracy of its sign against the true rule; the recovery rate of the pretrained and of
-  the random weight models, overall and per task; stability per task = the mean Jaccard overlap of the
-  squares used across the 3 seeds; mean R squared.
+* **How a formula is read.** For every square j, on the 1,000 test boards: the **contrast** = mean
+  |f(board with j mine) - f(board with j theirs)| (how much the formula tells mine from theirs on j),
+  the **signed contrast** = the mean of f(j mine) - f(j theirs) (positive when mine raises the margin),
+  and the **occupancy effect** = mean |(f(j mine) + f(j theirs)) / 2 - f(j empty)| (how much the
+  formula reacts to j being occupied at all).
+* **Law recovered** for a (model, task, seed): the task's own square has the largest contrast, its
+  signed contrast is positive, and the formula's sign beats chance against the true rule
+  (`law_agreement`, balanced accuracy, above 0.5). A formula such as a x sq_X x sq_X + b is 1 for mine
+  and for theirs alike, so it has zero contrast and is never counted as recovered.
+* **Occupancy shortcut** for a (model, task, seed): the formula reacts to the task's own square being
+  occupied but has zero contrast on it. Occupancy can be read off the move list, which is why A7 does
+  not use occupancy tasks; this flag shows when an adapted model answers "is X mine" through it.
+* **Reported in `details["symbolic_regression"]`:** every formula with its complexity, top contrast
+  square, squares used, own square contrast, signed contrast, contrast share and occupancy effect, the
+  occupancy shortcut flag, R squared against the model's margin, and `law_agreement`; the recovery and
+  occupancy shortcut rates of the pretrained and of the random weight models, overall and per task;
+  stability per task = the mean Jaccard overlap of the squares used across the 3 seeds; mean R squared.
+* **Reference fit.** Next to each formula, the R squared of a least squares fit of the same margin on
+  128 indicator columns (mine and theirs for each square) plus an intercept. Indicators, not the
+  signed squares, so that the reference can also express occupancy. It has 129 free parameters while a
+  formula has at most 15 nodes over 10 squares, so the reference is an upper guide for an additive
+  board formula, not a target the short formulas are expected to reach.
 * **Not the score.** The D3 score stays the adaptation gap of A7. As the proposal's risk 4 says, "the
   probe's primary score is the adaptation based measure, with symbolic recovery reported as a
   qualitative, stability annotated companion result rather than a load bearing number".
-* **Reference fit.** Next to each formula, the R squared of a plain least squares fit of the same
-  margin on all 64 squares, to show whether the search found as much as a linear board formula can.
 * **Anchors (test split).** The D3 scores reproduce A7 to every digit (0.13969 and 0.05930).
 
-  | Anchor | law recovered: pretrained, random | recovered per task (C4, F5, C3, F6) | stability per task (C4, F5, C3, F6) | R squared: formula, linear reference |
+  | Anchor | law recovered: pretrained, random | occupancy shortcut: pretrained, random | stability per task (C4, F5, C3, F6) | R squared: formula, 128 indicator reference |
   |---|---|---|---|---|
-  | Othello GPT synthetic | 8/12 (0.667), 2/12 (0.167) | 0.33, 0.67, 1.00, 0.67 | 0.67, 0.33, 1.00, 0.33 | 0.139, 0.094 |
-  | Othello GPT championship | 9/12 (0.750), 0/12 (0.000) | 0.67, 1.00, 1.00, 0.33 | 0.33, 1.00, 1.00, 0.33 | 0.345, 0.136 |
+  | Othello GPT synthetic | 2/12, 1/12 | 7/12, 1/12 | 0.67, 0.33, 1.00, 0.33 | 0.139, 0.374 |
+  | Othello GPT championship | 0/12, 0/12 | 6/12, 0/12 | 0.33, 1.00, 1.00, 0.33 | 0.345, 0.690 |
 
-  The adapted pretrained models put the most weight on the task's own square far more often than the
-  random weight models do, which is the contrast this arm exists to show. The formulas explain only
-  part of the adapted models' answers, but more than the best linear formula of the 64 squares does,
-  so the search is not underfitting: most of an adapted model's answer is not a function of the
-  current board. This is reported as is, and is the reason the arm stays descriptive.
+  On both reference models, the short formulas almost never recover the "is X mine" law (the 2
+  synthetic recoveries are both on C4). What they find instead, in about half the searches and almost
+  never for the random weight models, is the occupancy shortcut: once adapted to "is X mine", the
+  pretrained models' answers largely follow whether X is occupied. The formulas explain less of the
+  margin than the 128 indicator reference, as expected from their size, so these results describe the
+  dominant short structure of the answers, not all of it.
+* **What this means for D3 (stated in the paper).** Part of the pretrained advantage that the D3 score
+  measures on these tasks may come from occupancy, which the move list gives away, rather than from
+  whose disc is on the square. The D3 score is unchanged (A7); the occupancy shortcut rate is reported
+  next to it for every zoo model, so the analysis can show how much of D3 it accounts for.
 
 #### D. D2 sample size (proposal, Week 7: "explicit sample size justification")
 
