@@ -29,10 +29,13 @@ Symbolic regression arm (Amendment 2, C; descriptive, the score above is unchang
     after each adaptation (pretrained and random, every task and seed), PySR searches for a short
     formula (+, -, *, at most 15 nodes, 10 squares kept) that reproduces the adapted model's
     margin, logit(mine) - logit(not mine), on the test positions from the 64 true squares (+1
-    mine, -1 theirs, 0 empty). Law recovered = the task's own square matters most to the formula.
-    Reported: recovery rate (pretrained vs random), per task, stability across the 3 seeds
-    (mean Jaccard of the squares used), fit R squared next to the R squared of a plain least
-    squares fit on all 64 squares (the reference), and every formula (details["symbolic_regression"])
+    mine, -1 theirs, 0 empty). Law recovered = the task's own square has the largest mine vs theirs
+    contrast in the formula, mine raises the margin, and the formula's sign beats chance against
+    the true rule. A formula that only sees whether the square is occupied (x squared) is counted
+    as the occupancy shortcut, not as recovered. Reported: recovery and occupancy shortcut rates
+    (pretrained vs random), per task, stability across the 3 seeds (mean Jaccard of the squares
+    used), fit R squared next to a least squares reference on 128 mine / theirs indicators, and
+    every formula (details["symbolic_regression"])
 
 The original model is never trained: adaptation always runs on a deep copy, so other diagnostics
 see the original weights.
@@ -262,14 +265,14 @@ def pysr_fit(X: np.ndarray, y: np.ndarray, seed: int) -> tuple[Callable[[np.ndar
                   deterministic=True, parallelism="serial", random_state=seed, progress=False,
                   verbosity=0, model_selection="best")
     params = inspect.signature(pysr.PySRRegressor.__init__).parameters
-    tmp = tempfile.mkdtemp(prefix="d3_sr_")
-    if "output_directory" in params:          # PySR 1.x+ writes its hall of fame files here, not in the repo
-        kwargs["output_directory"] = tmp
-    elif "tempdir" in params:
-        kwargs.update(tempdir=tmp, temp_equation_file=True)
-    reg = pysr.PySRRegressor(**kwargs)
-    reg.fit(X, y, variable_names=SR_VARIABLE_NAMES)
-    best = reg.get_best()
+    with tempfile.TemporaryDirectory(prefix="d3_sr_") as tmp:   # removed after the fit
+        if "output_directory" in params:      # PySR 1.x+ writes its hall of fame files here, not in the repo
+            kwargs["output_directory"] = tmp
+        elif "tempdir" in params:
+            kwargs.update(tempdir=tmp, temp_equation_file=True)
+        reg = pysr.PySRRegressor(**kwargs)
+        reg.fit(X, y, variable_names=SR_VARIABLE_NAMES)
+        best = reg.get_best()
     return reg.predict, str(best["equation"]), int(best["complexity"])
 
 
@@ -279,33 +282,58 @@ def r_squared(pred: np.ndarray, y: np.ndarray) -> float:
 
 
 def linear_r2(X: np.ndarray, y: np.ndarray) -> float:
-    """R squared of an ordinary least squares fit of y on all 64 squares plus an intercept: the
-    reference for how much of the model's margin any linear board formula can explain."""
-    A = np.c_[X, np.ones(len(X))]
+    """R squared of an ordinary least squares fit of y on 128 indicator columns (mine_j and
+    theirs_j for every square) plus an intercept: the reference for how much of the model's margin
+    any additive board formula can explain. Indicators, not the signed squares, so the reference can
+    also express occupancy (x squared), which a formula with * can build."""
+    A = np.c_[(X == 1).astype(np.float64), (X == -1).astype(np.float64), np.ones(len(X))]
     coef = np.linalg.lstsq(A, y, rcond=None)[0]
     return r_squared(A @ coef, y)
 
 
+def _set(X: np.ndarray, j: int, value: float) -> np.ndarray:
+    out = X.copy()
+    out[:, j] = value
+    return out
+
+
 def describe_law(predict: Callable[[np.ndarray], np.ndarray], X: np.ndarray, y_model: np.ndarray,
                  y_true: np.ndarray, task_sq: int) -> dict[str, Any]:
-    """How a fitted formula behaves. Importance of square j = mean absolute change of the formula
-    when square j is set to empty (0). The law is recovered when the task's own square has the
-    largest importance. linear_r2 is the reference fit (all 64 squares, least squares)."""
+    """How a fitted formula behaves, square by square, on the test boards.
+        contrast importance of square j = mean |f(X, j mine) - f(X, j theirs)|: how much the formula
+                             tells mine from theirs on that square (what "is X mine" needs);
+        signed contrast    = mean of f(X, j mine) - f(X, j theirs): positive when mine raises the margin;
+        occupancy effect   = mean |(f(X, j mine) + f(X, j theirs)) / 2 - f(X, j empty)|: how much the
+                             formula reacts to the square being occupied at all.
+    Law recovered (Amendment 2, C): the task's own square has the largest contrast importance, its
+    signed contrast is positive, and the formula's sign beats chance against the true rule
+    (law_agreement above 0.5). A formula in x squared (occupancy) has zero contrast and is counted
+    as the occupancy shortcut, never as recovered. linear_r2 is the reference fit."""
     base = np.asarray(predict(X), dtype=np.float64)
-    imp = np.zeros(oth.N_SQ)
+    contrast, signed, occupancy = np.zeros(oth.N_SQ), np.zeros(oth.N_SQ), np.zeros(oth.N_SQ)
     for j in range(oth.N_SQ):
-        Xj = X.copy()
-        Xj[:, j] = 0.0
-        imp[j] = float(np.abs(np.asarray(predict(Xj), dtype=np.float64) - base).mean())
-    used = [SQUARE_NAMES[j] for j in np.flatnonzero(imp > 1e-9)]
-    top = int(np.argmax(imp))
-    return {"top_square": SQUARE_NAMES[top] if imp[top] > 1e-9 else None,
-            "recovered": bool(imp[top] > 1e-9 and top == task_sq),
-            "own_square_importance_share": round(float(imp[task_sq] / imp.sum()) if imp.sum() > 0 else 0.0, 4),
+        f_mine = np.asarray(predict(_set(X, j, 1.0)), dtype=np.float64)
+        f_theirs = np.asarray(predict(_set(X, j, -1.0)), dtype=np.float64)
+        f_empty = np.asarray(predict(_set(X, j, 0.0)), dtype=np.float64)
+        contrast[j] = float(np.abs(f_mine - f_theirs).mean())
+        signed[j] = float((f_mine - f_theirs).mean())
+        occupancy[j] = float(np.abs((f_mine + f_theirs) / 2 - f_empty).mean())
+    eps = 1e-9
+    used = [SQUARE_NAMES[j] for j in np.flatnonzero((contrast > eps) | (occupancy > eps))]
+    top = int(np.argmax(contrast))
+    agreement = balanced_accuracy((base > 0).astype(np.int64), y_true)
+    recovered = bool(contrast[top] > eps and top == task_sq and signed[task_sq] > 0 and agreement > 0.5)
+    return {"top_square": SQUARE_NAMES[top] if contrast[top] > eps else None,
+            "recovered": recovered,
+            "own_square_contrast": round(float(contrast[task_sq]), 4),
+            "own_square_signed_contrast": round(float(signed[task_sq]), 4),
+            "own_square_contrast_share": round(float(contrast[task_sq] / contrast.sum()) if contrast.sum() > eps else 0.0, 4),
+            "own_square_occupancy_effect": round(float(occupancy[task_sq]), 4),
+            "occupancy_shortcut": bool(occupancy[task_sq] > eps and contrast[task_sq] <= eps),
             "squares_used": used,
             "fit_r2": round(r_squared(base, y_model), 4),
             "linear_r2": round(linear_r2(X, y_model), 4),
-            "law_agreement": round(balanced_accuracy((base > 0).astype(np.int64), y_true), 4)}
+            "law_agreement": round(agreement, 4)}
 
 
 def jaccard(a: list[str], b: list[str]) -> float:
@@ -326,9 +354,9 @@ def symbolic_arm(test: dict[str, np.ndarray], margins: dict[tuple[str, int, int]
                 cells.append({"model": kind, "task": f"is {sq} mine", "seed": seed, "equation": eq,
                               "complexity": complexity, **d})
 
-    def rate(kind, task=None):
+    def rate(kind, task=None, key="recovered"):
         c = [x for x in cells if x["model"] == kind and (task is None or x["task"] == task)]
-        return round(float(np.mean([x["recovered"] for x in c])), 4)
+        return round(float(np.mean([x[key] for x in c])), 4)
 
     tasks = [f"is {sq} mine" for sq in TASK_SQUARES]
     stability = {}
@@ -338,6 +366,8 @@ def symbolic_arm(test: dict[str, np.ndarray], margins: dict[tuple[str, int, int]
         stability[t] = round(float(np.mean([jaccard(a, b) for a, b in pairs])), 4) if pairs else None
     return {
         "recovery_rate_pretrained": rate("pretrained"), "recovery_rate_random": rate("random"),
+        "occupancy_shortcut_rate_pretrained": rate("pretrained", key="occupancy_shortcut"),
+        "occupancy_shortcut_rate_random": rate("random", key="occupancy_shortcut"),
         "recovery_by_task_pretrained": {t: rate("pretrained", t) for t in tasks},
         "recovery_by_task_random": {t: rate("random", t) for t in tasks},
         "stability_by_task_pretrained": stability,
@@ -467,7 +497,9 @@ def main() -> None:
             if "symbolic_regression" in d:
                 sr = d["symbolic_regression"]
                 print(f"{'':45s} symbolic regression: recovered pretrained {sr['recovery_rate_pretrained']:.3f}  "
-                      f"random {sr['recovery_rate_random']:.3f}  by task {sr['recovery_by_task_pretrained']}  "
+                      f"random {sr['recovery_rate_random']:.3f}  occupancy shortcut pretrained "
+                      f"{sr['occupancy_shortcut_rate_pretrained']:.3f}  random {sr['occupancy_shortcut_rate_random']:.3f}  "
+                      f"by task {sr['recovery_by_task_pretrained']}  "
                       f"stability {sr['stability_by_task_pretrained']}  fit r2 {sr['mean_fit_r2_pretrained']:.3f}  "
                       f"linear reference r2 {sr['mean_linear_r2_pretrained']:.3f}  "
                       f"(random: fit {sr['mean_fit_r2_random']:.3f}, linear {sr['mean_linear_r2_random']:.3f})")

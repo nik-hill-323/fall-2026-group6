@@ -217,7 +217,7 @@ def test_describe_law_finds_the_square_that_matters() -> None:
     y_true = (X[:, c4] == 1).astype(np.int64)
     good = d3.describe_law(lambda Z: 2.0 * Z[:, c4] + 0.2 * Z[:, f6], X, 2.0 * X[:, c4], y_true, c4)
     assert good["recovered"] and good["top_square"] == "C4" and set(good["squares_used"]) == {"C4", "F6"}
-    assert good["own_square_importance_share"] > 0.8 and good["law_agreement"] > 0.7
+    assert good["own_square_contrast_share"] > 0.8 and good["law_agreement"] > 0.7
     assert good["linear_r2"] == pytest.approx(1.0)        # 2 C4 is linear in the squares
     noisy = 2.0 * X[:, c4] + rng.normal(0, 3.0, 500)
     assert 0.0 < d3.linear_r2(X, noisy) < 0.5              # most of it is not a board formula
@@ -225,6 +225,25 @@ def test_describe_law_finds_the_square_that_matters() -> None:
     assert not shortcut["recovered"] and shortcut["top_square"] == "F6"
     flat = d3.describe_law(lambda Z: np.zeros(len(Z)), X, np.zeros(500), y_true, c4)
     assert not flat["recovered"] and flat["top_square"] is None and flat["squares_used"] == []
+
+
+def test_occupancy_is_not_the_law() -> None:
+    """Nikhil's review of #94: x squared is 1 for mine and for theirs, so a formula in C4 squared
+    only knows whether C4 is occupied (the shortcut A7 excluded). It must not count as recovered."""
+    rng = np.random.default_rng(1)
+    X = rng.choice([-1.0, 0.0, 1.0], size=(500, oth.N_SQ))
+    c4 = d3.square("C4")
+    y_true = (X[:, c4] == 1).astype(np.int64)
+    occ = d3.describe_law(lambda Z: 2.0 * Z[:, c4] ** 2 - 1, X, 2.0 * X[:, c4] ** 2 - 1, y_true, c4)
+    assert occ["recovered"] is False and occ["occupancy_shortcut"] is True
+    assert occ["own_square_contrast"] == pytest.approx(0.0) and occ["top_square"] is None
+    law = d3.describe_law(lambda Z: 2.0 * Z[:, c4], X, 2.0 * X[:, c4], y_true, c4)
+    assert law["recovered"] is True and law["occupancy_shortcut"] is False and law["law_agreement"] == 1.0
+    wrong_way = d3.describe_law(lambda Z: -2.0 * Z[:, c4], X, -2.0 * X[:, c4], y_true, c4)
+    assert wrong_way["recovered"] is False                 # theirs raises the margin: the wrong sign
+    always_mine = d3.describe_law(lambda Z: Z[:, c4] + 3.0, X, X[:, c4] + 3.0, y_true, c4)
+    assert always_mine["recovered"] is False and always_mine["law_agreement"] == 0.5   # never says "not mine"
+    assert d3.linear_r2(X, 2.0 * X[:, c4] ** 2 - 1) == pytest.approx(1.0)              # the reference sees occupancy
 
 
 def test_pysr_variable_names_are_valid_symbols() -> None:
