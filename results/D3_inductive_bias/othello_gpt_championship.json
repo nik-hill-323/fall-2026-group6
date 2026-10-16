@@ -144,6 +144,438 @@
         "gap": 0.038390966831333806
       }
     ],
+    "symbolic_regression": {
+      "recovery_rate_pretrained": 0.75,
+      "recovery_rate_random": 0.0,
+      "recovery_by_task_pretrained": {
+        "is C4 mine": 0.6667,
+        "is F5 mine": 1.0,
+        "is C3 mine": 1.0,
+        "is F6 mine": 0.3333
+      },
+      "recovery_by_task_random": {
+        "is C4 mine": 0.0,
+        "is F5 mine": 0.0,
+        "is C3 mine": 0.0,
+        "is F6 mine": 0.0
+      },
+      "stability_by_task_pretrained": {
+        "is C4 mine": 0.3333,
+        "is F5 mine": 1.0,
+        "is C3 mine": 1.0,
+        "is F6 mine": 0.3333
+      },
+      "mean_fit_r2_pretrained": 0.345,
+      "mean_linear_r2_pretrained": 0.1364,
+      "mean_fit_r2_random": 0.1754,
+      "mean_linear_r2_random": 0.1024,
+      "settings": {
+        "binary_operators": [
+          "+",
+          "-",
+          "*"
+        ],
+        "unary_operators": [],
+        "maxsize": 15,
+        "niterations": 40,
+        "populations": 15,
+        "select_k_features": 10,
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "deterministic": true,
+        "inputs": "64 squares, +1 mine, -1 theirs, 0 empty",
+        "target": "adapted model margin logit(mine) - logit(not mine)"
+      },
+      "cells": [
+        {
+          "model": "pretrained",
+          "task": "is C4 mine",
+          "seed": 0,
+          "equation": "((sq_D6 * sq_D6) + -0.7809666) * 10.966808",
+          "complexity": 7,
+          "top_square": "D6",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "D6"
+          ],
+          "fit_r2": 0.2748,
+          "linear_r2": 0.136,
+          "law_agreement": 0.5567
+        },
+        {
+          "model": "pretrained",
+          "task": "is C4 mine",
+          "seed": 1,
+          "equation": "((sq_C4 * sq_C4) * 9.932291) + -6.9898086",
+          "complexity": 7,
+          "top_square": "C4",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.479,
+          "linear_r2": 0.0891,
+          "law_agreement": 0.6475
+        },
+        {
+          "model": "pretrained",
+          "task": "is C4 mine",
+          "seed": 2,
+          "equation": "((sq_C4 * sq_C4) * 14.189744) - 13.089877",
+          "complexity": 7,
+          "top_square": "C4",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.5319,
+          "linear_r2": 0.1191,
+          "law_agreement": 0.6475
+        },
+        {
+          "model": "pretrained",
+          "task": "is F5 mine",
+          "seed": 0,
+          "equation": "sq_F5 + 3.6917715",
+          "complexity": 3,
+          "top_square": "F5",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.0542,
+          "linear_r2": 0.1682,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "pretrained",
+          "task": "is F5 mine",
+          "seed": 1,
+          "equation": "sq_F5 + 3.0186644",
+          "complexity": 3,
+          "top_square": "F5",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.0748,
+          "linear_r2": 0.2441,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "pretrained",
+          "task": "is F5 mine",
+          "seed": 2,
+          "equation": "sq_F5 - -3.2089221",
+          "complexity": 3,
+          "top_square": "F5",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.0494,
+          "linear_r2": 0.1589,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "pretrained",
+          "task": "is C3 mine",
+          "seed": 0,
+          "equation": "((sq_C3 * sq_C3) + -0.8336135) * 5.9228215",
+          "complexity": 7,
+          "top_square": "C3",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.2847,
+          "linear_r2": 0.1664,
+          "law_agreement": 0.6798
+        },
+        {
+          "model": "pretrained",
+          "task": "is C3 mine",
+          "seed": 1,
+          "equation": "((sq_C3 * sq_C3) - 0.7931132) * 6.978509",
+          "complexity": 7,
+          "top_square": "C3",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.3808,
+          "linear_r2": 0.1342,
+          "law_agreement": 0.6798
+        },
+        {
+          "model": "pretrained",
+          "task": "is C3 mine",
+          "seed": 2,
+          "equation": "(sq_C3 * (6.4967318 * sq_C3)) - 6.272251",
+          "complexity": 7,
+          "top_square": "C3",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.3695,
+          "linear_r2": 0.1303,
+          "law_agreement": 0.6798
+        },
+        {
+          "model": "pretrained",
+          "task": "is F6 mine",
+          "seed": 0,
+          "equation": "((sq_F4 * 19.025568) * sq_F4) - 15.807256",
+          "complexity": 7,
+          "top_square": "F4",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "F4"
+          ],
+          "fit_r2": 0.6158,
+          "linear_r2": 0.1041,
+          "law_agreement": 0.5549
+        },
+        {
+          "model": "pretrained",
+          "task": "is F6 mine",
+          "seed": 1,
+          "equation": "((sq_F4 * sq_F4) * 16.88869) - 13.844497",
+          "complexity": 7,
+          "top_square": "F4",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "F4"
+          ],
+          "fit_r2": 0.5694,
+          "linear_r2": 0.0994,
+          "law_agreement": 0.5549
+        },
+        {
+          "model": "pretrained",
+          "task": "is F6 mine",
+          "seed": 2,
+          "equation": "((sq_F6 * sq_F6) + -0.73534477) * 10.177724",
+          "complexity": 7,
+          "top_square": "F6",
+          "recovered": true,
+          "own_square_importance_share": 1.0,
+          "squares_used": [
+            "F6"
+          ],
+          "fit_r2": 0.4554,
+          "linear_r2": 0.0868,
+          "law_agreement": 0.6321
+        },
+        {
+          "model": "random",
+          "task": "is C4 mine",
+          "seed": 0,
+          "equation": "6.880613 * ((sq_C3 * sq_C3) + -0.8947473)",
+          "complexity": 7,
+          "top_square": "C3",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.2036,
+          "linear_r2": 0.1134,
+          "law_agreement": 0.6064
+        },
+        {
+          "model": "random",
+          "task": "is C4 mine",
+          "seed": 1,
+          "equation": "(((sq_D3 * -1.2923985) - sq_D3) * (sq_D3 * -5.265501)) - 9.207112",
+          "complexity": 11,
+          "top_square": "D3",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "D3"
+          ],
+          "fit_r2": 0.2575,
+          "linear_r2": 0.0951,
+          "law_agreement": 0.5889
+        },
+        {
+          "model": "random",
+          "task": "is C4 mine",
+          "seed": 2,
+          "equation": "(sq_D3 * (sq_D3 * 6.4083576)) - 5.646063",
+          "complexity": 7,
+          "top_square": "D3",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "D3"
+          ],
+          "fit_r2": 0.1349,
+          "linear_r2": 0.0903,
+          "law_agreement": 0.5889
+        },
+        {
+          "model": "random",
+          "task": "is F5 mine",
+          "seed": 0,
+          "equation": "5.9707775 + (sq_E1 * sq_E1)",
+          "complexity": 5,
+          "top_square": "E1",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "E1"
+          ],
+          "fit_r2": 0.0259,
+          "linear_r2": 0.1016,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is F5 mine",
+          "seed": 1,
+          "equation": "((sq_A1 * 3.5517948) * sq_A1) + 2.7186701",
+          "complexity": 7,
+          "top_square": "A1",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "A1"
+          ],
+          "fit_r2": 0.036,
+          "linear_r2": 0.1023,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is F5 mine",
+          "seed": 2,
+          "equation": "sq_E4 + 3.9089973",
+          "complexity": 3,
+          "top_square": "E4",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "E4"
+          ],
+          "fit_r2": 0.0235,
+          "linear_r2": 0.1198,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is C3 mine",
+          "seed": 0,
+          "equation": "(sq_E8 * 5.3005705) * sq_E8",
+          "complexity": 5,
+          "top_square": "E8",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "E8"
+          ],
+          "fit_r2": 0.233,
+          "linear_r2": 0.1069,
+          "law_agreement": 0.5787
+        },
+        {
+          "model": "random",
+          "task": "is C3 mine",
+          "seed": 1,
+          "equation": "(sq_D8 * (sq_D8 * 7.8343096)) + -5.444389",
+          "complexity": 7,
+          "top_square": "D8",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "D8"
+          ],
+          "fit_r2": 0.276,
+          "linear_r2": 0.1166,
+          "law_agreement": 0.5746
+        },
+        {
+          "model": "random",
+          "task": "is C3 mine",
+          "seed": 2,
+          "equation": "(sq_C7 * 4.729836) * sq_C7",
+          "complexity": 5,
+          "top_square": "C7",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "C7"
+          ],
+          "fit_r2": 0.1582,
+          "linear_r2": 0.1015,
+          "law_agreement": 0.6004
+        },
+        {
+          "model": "random",
+          "task": "is F6 mine",
+          "seed": 0,
+          "equation": "(sq_D2 * 7.2211742) * sq_D2",
+          "complexity": 5,
+          "top_square": "D2",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "D2"
+          ],
+          "fit_r2": 0.218,
+          "linear_r2": 0.1022,
+          "law_agreement": 0.5564
+        },
+        {
+          "model": "random",
+          "task": "is F6 mine",
+          "seed": 1,
+          "equation": "((sq_E6 * sq_E6) * 20.725058) - 15.652333",
+          "complexity": 7,
+          "top_square": "E6",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "E6"
+          ],
+          "fit_r2": 0.3775,
+          "linear_r2": 0.0724,
+          "law_agreement": 0.5824
+        },
+        {
+          "model": "random",
+          "task": "is F6 mine",
+          "seed": 2,
+          "equation": "sq_F8 * (sq_F8 * 4.2478867)",
+          "complexity": 5,
+          "top_square": "F8",
+          "recovered": false,
+          "own_square_importance_share": 0.0,
+          "squares_used": [
+            "F8"
+          ],
+          "fit_r2": 0.1602,
+          "linear_r2": 0.1072,
+          "law_agreement": 0.57
+        }
+      ]
+    },
     "distribution": "championship",
     "tasks": [
       "is C4 mine",
@@ -176,11 +608,11 @@
   "run_id": "othello_gpt_championship_D3",
   "schema_version": 1,
   "provenance": {
-    "git_commit": "188dd57",
-    "time_utc": "2026-10-13T14:45:02Z",
-    "python": "3.13.14",
-    "host": "ip-10-0-2-123",
-    "runtime_sec": 265.2,
+    "git_commit": "343313f",
+    "time_utc": "2026-10-16T00:14:47Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 378.4,
     "torch": "2.13.0+cu130",
     "gpu": "NVIDIA A10G",
     "numpy": "2.4.4"
