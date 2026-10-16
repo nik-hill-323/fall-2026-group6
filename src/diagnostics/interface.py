@@ -7,6 +7,13 @@ Three pieces
                         activations(tokens)  (layers, batch, positions, width) the vector after
                                              each layer: residual stream for transformers
                                              and Mamba, hidden state for LSTM
+                    and two calls for interventions (D4 causal check):
+                        logits_edited(tokens, positions, {layer: fn})
+                                             logits with the vector after each listed layer
+                                             at one position per game passed through fn, in
+                                             layer order, so later layers see the edits
+                        logits_patched(tokens, layer, positions, vectors)
+                                             the same with one layer set to fixed vectors
     the contract    every diagnostic module defines
                         DIAGNOSTIC = "D1" (or D2, D3, D4)
                         def score(model: ZooModel, split: str, n_games: int, data_seed: int,
@@ -37,7 +44,7 @@ import time
 import traceback
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import torch
 import torch.nn as nn
@@ -106,6 +113,26 @@ class ZooModel:
         assert acts.shape[0] == self.n_layers and acts.shape[-1] == self.d_model, acts.shape
         return acts
 
+    @torch.no_grad()
+    def logits_edited(self, tokens: torch.Tensor, positions: torch.Tensor,
+                      edits: dict[int, Callable[[torch.Tensor], torch.Tensor]]) -> torch.Tensor:
+        """Logits with edits during the forward pass: for each layer in `edits`, the vector after
+        that layer at position positions[b] of game b is passed to edits[layer] ((batch, width) ->
+        (batch, width)) and replaced by what it returns, in layer order, so every later layer (and
+        later edit) sees the edited vector. Used by the D4 causal check (Amendment 2)."""
+        tokens = self._to(tokens)
+        positions = torch.as_tensor(positions, device=self.device, dtype=torch.long)
+        assert all(0 <= layer < self.n_layers for layer in edits), sorted(edits)
+        return self._logits_edited(tokens, positions, edits)
+
+    def logits_patched(self, tokens: torch.Tensor, layer: int, positions: torch.Tensor,
+                       vectors: torch.Tensor) -> torch.Tensor:
+        """Logits with one vector replaced: in game b, the vector after `layer` at position
+        positions[b] becomes vectors[b]; every later layer then runs on the edited vector."""
+        vectors = torch.as_tensor(vectors, device=self.device)
+        assert vectors.shape == (len(tokens), self.d_model), vectors.shape
+        return self.logits_edited(tokens, positions, {layer: lambda v: vectors})
+
     def __call__(self, tokens: torch.Tensor) -> torch.Tensor:
         """So a ZooModel can be passed wherever a model(tokens) -> logits is expected
         (for example othello.legal_rate)."""
@@ -116,6 +143,19 @@ class ZooModel:
 
     def _activations(self, tokens: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
+
+    def _logits_edited(self, tokens: torch.Tensor, positions: torch.Tensor,
+                       edits: dict[int, Callable[[torch.Tensor], torch.Tensor]]) -> torch.Tensor:
+        raise NotImplementedError
+
+
+def _edit_at(act: torch.Tensor, positions: torch.Tensor, fn: Callable[[torch.Tensor], torch.Tensor]) -> torch.Tensor:
+    """Copy of (B, T, d) act with act[b, positions[b]] = fn(act[rows, positions])[b]."""
+    rows = torch.arange(len(act), device=act.device)
+    new = fn(act[rows, positions].float())
+    act = act.clone()
+    act[rows, positions] = new.to(act.dtype)
+    return act
 
 
 class TransformerLensModel(ZooModel):
@@ -129,6 +169,14 @@ class TransformerLensModel(ZooModel):
         _, cache = self.module.run_with_cache(tokens, names_filter=lambda n: n in names)
         return torch.stack([cache[n] for n in names])
 
+    def _logits_edited(self, tokens, positions, edits):
+        def make(fn):
+            def hook(act, hook):  # noqa: ARG001 (TransformerLens passes the hook point)
+                return _edit_at(act, positions, fn)
+            return hook
+        hooks = [(f"blocks.{layer}.hook_resid_post", make(fn)) for layer, fn in sorted(edits.items())]
+        return self.module.run_with_hooks(tokens, fwd_hooks=hooks)
+
 
 class TrainPyModel(ZooModel):
     """A model built by src/zoo/train.py (classes GPT, LSTM, Mamba)."""
@@ -140,6 +188,25 @@ class TrainPyModel(ZooModel):
         # every train.py model (GPT, LSTM, Mamba) exposes layer_outputs: residual stream after
         # each block for GPT and Mamba, hidden state after each layer for the LSTM
         return torch.stack(self.module.layer_outputs(tokens))
+
+    def _layer_modules(self) -> nn.ModuleList:
+        """The modules whose outputs are layer_outputs: layers (GPT, LSTM) or backbone.layers (Mamba)."""
+        return self.module.backbone.layers if hasattr(self.module, "backbone") else self.module.layers
+
+    def _logits_edited(self, tokens, positions, edits):
+        def make(fn):
+            def hook(mod, inp, out):  # noqa: ARG001
+                if isinstance(out, tuple):      # nn.LSTM returns (output, (h, c)); only output feeds on
+                    return (_edit_at(out[0], positions, fn),) + tuple(out[1:])
+                return _edit_at(out, positions, fn)
+            return hook
+        layers = self._layer_modules()
+        handles = [layers[layer].register_forward_hook(make(fn)) for layer, fn in edits.items()]
+        try:
+            return self.module(tokens)
+        finally:
+            for h in handles:
+                h.remove()
 
 
 # ==========================================================================

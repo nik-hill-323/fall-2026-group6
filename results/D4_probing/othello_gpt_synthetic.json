@@ -1,7 +1,7 @@
 {
   "model_id": "othello_gpt_synthetic",
   "diagnostic": "D4",
-  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better",
+  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit vs random edit)",
   "split": "test",
   "n_games": 1000,
   "data_seed": 0,
@@ -91,6 +91,119 @@
       "fit": 0,
       "choose": 0,
       "test": 0
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 7,
+      "selectivity_at_best": 0.41573,
+      "probe_acc_by_layer": [
+        0.90318,
+        0.94257,
+        0.96688,
+        0.97884,
+        0.98653,
+        0.99057,
+        0.98998,
+        0.98976
+      ],
+      "control_acc_by_layer": [
+        0.63684,
+        0.6259,
+        0.61861,
+        0.6128,
+        0.60532,
+        0.59715,
+        0.58656,
+        0.57404
+      ],
+      "selectivity_by_layer": [
+        0.26634,
+        0.31666,
+        0.34827,
+        0.36604,
+        0.38121,
+        0.39342,
+        0.40342,
+        0.41573
+      ],
+      "selectivity_by_layer_choose": [
+        0.26766,
+        0.31745,
+        0.34884,
+        0.36645,
+        0.38154,
+        0.39353,
+        0.40371,
+        0.41601
+      ],
+      "probe_acc_occupied_by_layer": [
+        0.81793,
+        0.8919,
+        0.93768,
+        0.96023,
+        0.97487,
+        0.98286,
+        0.98316,
+        0.98276
+      ],
+      "gain_over_linear_by_layer": [
+        -0.00264,
+        -0.00264,
+        -0.00189,
+        -0.00145,
+        -0.00108,
+        -0.0005,
+        -0.00031,
+        0.00568
+      ]
+    },
+    "causal": {
+      "causal_score": 0.6927,
+      "causal_score_ci": [
+        0.6647,
+        0.7192
+      ],
+      "causal_label": "decodable and causal",
+      "boundary_acc_edit": 0.87188,
+      "boundary_acc_random": 0.17918,
+      "boundary_acc_none": 0.19752,
+      "edit_success_rate": 1.0,
+      "edit_success_by_layer": {
+        "4": 1.0,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "flip_read_by_layer": {
+        "4": 1.0,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "edit_steps_by_layer": {
+        "4": 5.523,
+        "5": 2.385,
+        "6": 1.29,
+        "7": 1.715
+      },
+      "edit_size_by_layer": {
+        "4": 5.44256,
+        "5": 2.15124,
+        "6": 1.17815,
+        "7": 1.41773
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "best_layer": 6,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.698
     }
   },
   "status": "ok",
@@ -103,11 +216,11 @@
   "run_id": "othello_gpt_synthetic_D4",
   "schema_version": 1,
   "provenance": {
-    "git_commit": "cf42f9f",
-    "time_utc": "2026-10-13T00:08:51Z",
+    "git_commit": "dd10e52",
+    "time_utc": "2026-10-16T03:41:19Z",
     "python": "3.13.15",
     "host": "ip-10-0-2-159",
-    "runtime_sec": 22.7,
+    "runtime_sec": 34.2,
     "torch": "2.13.0+cu130",
     "gpu": "NVIDIA A10G",
     "numpy": "2.4.4"
