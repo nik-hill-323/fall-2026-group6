@@ -145,16 +145,18 @@
       }
     ],
     "symbolic_regression": {
-      "recovery_rate_pretrained": 0.6667,
-      "recovery_rate_random": 0.1667,
+      "recovery_rate_pretrained": 0.1667,
+      "recovery_rate_random": 0.0833,
+      "occupancy_shortcut_rate_pretrained": 0.5833,
+      "occupancy_shortcut_rate_random": 0.0833,
       "recovery_by_task_pretrained": {
-        "is C4 mine": 0.3333,
-        "is F5 mine": 0.6667,
-        "is C3 mine": 1.0,
-        "is F6 mine": 0.6667
+        "is C4 mine": 0.6667,
+        "is F5 mine": 0.0,
+        "is C3 mine": 0.0,
+        "is F6 mine": 0.0
       },
       "recovery_by_task_random": {
-        "is C4 mine": 0.3333,
+        "is C4 mine": 0.0,
         "is F5 mine": 0.0,
         "is C3 mine": 0.3333,
         "is F6 mine": 0.0
@@ -166,9 +168,9 @@
         "is F6 mine": 0.3333
       },
       "mean_fit_r2_pretrained": 0.1385,
-      "mean_linear_r2_pretrained": 0.0942,
+      "mean_linear_r2_pretrained": 0.3743,
       "mean_fit_r2_random": 0.1256,
-      "mean_linear_r2_random": 0.0803,
+      "mean_linear_r2_random": 0.4342,
       "settings": {
         "binary_operators": [
           "+",
@@ -196,14 +198,18 @@
           "seed": 0,
           "equation": "-6.1055055 - (sq_C4 * (-5.1848264 * sq_C4))",
           "complexity": 7,
-          "top_square": "C4",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 5.1848,
+          "occupancy_shortcut": true,
           "squares_used": [
             "C4"
           ],
           "fit_r2": 0.124,
-          "linear_r2": 0.1152,
+          "linear_r2": 0.3483,
           "law_agreement": 0.5
         },
         {
@@ -212,15 +218,19 @@
           "seed": 1,
           "equation": "sq_C4 - sq_E5",
           "complexity": 3,
-          "top_square": "E5",
-          "recovered": false,
-          "own_square_importance_share": 0.4487,
+          "top_square": "C4",
+          "recovered": true,
+          "own_square_contrast": 2.0,
+          "own_square_signed_contrast": 2.0,
+          "own_square_contrast_share": 0.5,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "C4",
             "E5"
           ],
           "fit_r2": 0.0983,
-          "linear_r2": 0.1465,
+          "linear_r2": 0.2835,
           "law_agreement": 0.7101
         },
         {
@@ -229,15 +239,19 @@
           "seed": 2,
           "equation": "sq_C4 - sq_E5",
           "complexity": 3,
-          "top_square": "E5",
-          "recovered": false,
-          "own_square_importance_share": 0.4487,
+          "top_square": "C4",
+          "recovered": true,
+          "own_square_contrast": 2.0,
+          "own_square_signed_contrast": 2.0,
+          "own_square_contrast_share": 0.5,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "C4",
             "E5"
           ],
           "fit_r2": 0.0874,
-          "linear_r2": 0.1692,
+          "linear_r2": 0.3927,
           "law_agreement": 0.7101
         },
         {
@@ -246,14 +260,18 @@
           "seed": 0,
           "equation": "((sq_F5 * sq_F5) * 7.385041) - 5.3410287",
           "complexity": 7,
-          "top_square": "F5",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 7.385,
+          "occupancy_shortcut": true,
           "squares_used": [
             "F5"
           ],
           "fit_r2": 0.1888,
-          "linear_r2": 0.1079,
+          "linear_r2": 0.4046,
           "law_agreement": 0.6654
         },
         {
@@ -262,14 +280,18 @@
           "seed": 1,
           "equation": "46.567207 - (sq_C4 * (sq_C4 * 42.032307))",
           "complexity": 7,
-          "top_square": "C4",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "C4"
           ],
           "fit_r2": 0.1121,
-          "linear_r2": 0.0641,
+          "linear_r2": 0.3296,
           "law_agreement": 0.5
         },
         {
@@ -278,14 +300,18 @@
           "seed": 2,
           "equation": "(sq_F5 * (sq_F5 * 9.150337)) - 8.210626",
           "complexity": 7,
-          "top_square": "F5",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 9.1503,
+          "occupancy_shortcut": true,
           "squares_used": [
             "F5"
           ],
           "fit_r2": 0.1772,
-          "linear_r2": 0.0772,
+          "linear_r2": 0.3034,
           "law_agreement": 0.6654
         },
         {
@@ -294,14 +320,18 @@
           "seed": 0,
           "equation": "-10.328869 - ((sq_C3 * -8.900868) * sq_C3)",
           "complexity": 7,
-          "top_square": "C3",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 8.9009,
+          "occupancy_shortcut": true,
           "squares_used": [
             "C3"
           ],
           "fit_r2": 0.0994,
-          "linear_r2": 0.0732,
+          "linear_r2": 0.2973,
           "law_agreement": 0.5
         },
         {
@@ -310,14 +340,18 @@
           "seed": 1,
           "equation": "((sq_C3 * 6.530097) * sq_C3) + -7.0628004",
           "complexity": 7,
-          "top_square": "C3",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 6.5301,
+          "occupancy_shortcut": true,
           "squares_used": [
             "C3"
           ],
           "fit_r2": 0.1453,
-          "linear_r2": 0.1415,
+          "linear_r2": 0.4111,
           "law_agreement": 0.5
         },
         {
@@ -326,14 +360,18 @@
           "seed": 2,
           "equation": "-13.578884 - (sq_C3 * (sq_C3 * -13.578884))",
           "complexity": 7,
-          "top_square": "C3",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 13.5789,
+          "occupancy_shortcut": true,
           "squares_used": [
             "C3"
           ],
           "fit_r2": 0.121,
-          "linear_r2": 0.0743,
+          "linear_r2": 0.3384,
           "law_agreement": 0.5
         },
         {
@@ -342,14 +380,18 @@
           "seed": 0,
           "equation": "-12.145423 - ((sq_F6 * sq_F6) * -10.916162)",
           "complexity": 7,
-          "top_square": "F6",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 10.9162,
+          "occupancy_shortcut": true,
           "squares_used": [
             "F6"
           ],
           "fit_r2": 0.143,
-          "linear_r2": 0.0577,
+          "linear_r2": 0.4034,
           "law_agreement": 0.5
         },
         {
@@ -358,14 +400,18 @@
           "seed": 1,
           "equation": "-34.25239 - (sq_E6 * (sq_E6 * -30.887648))",
           "complexity": 7,
-          "top_square": "E6",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "E6"
           ],
           "fit_r2": 0.1536,
-          "linear_r2": 0.0419,
+          "linear_r2": 0.4516,
           "law_agreement": 0.5
         },
         {
@@ -375,13 +421,17 @@
           "equation": "(((sq_F6 * 8.5435705) + 1.520802) * sq_F6) + -12.332267",
           "complexity": 9,
           "top_square": "F6",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "recovered": false,
+          "own_square_contrast": 3.0416,
+          "own_square_signed_contrast": 3.0416,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 8.5436,
+          "occupancy_shortcut": false,
           "squares_used": [
             "F6"
           ],
           "fit_r2": 0.2119,
-          "linear_r2": 0.0613,
+          "linear_r2": 0.5276,
           "law_agreement": 0.5
         },
         {
@@ -390,14 +440,18 @@
           "seed": 0,
           "equation": "(sq_C4 * (sq_C4 * 6.8251348)) - 7.403774",
           "complexity": 7,
-          "top_square": "C4",
-          "recovered": true,
-          "own_square_importance_share": 1.0,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 6.8251,
+          "occupancy_shortcut": true,
           "squares_used": [
             "C4"
           ],
           "fit_r2": 0.2144,
-          "linear_r2": 0.0649,
+          "linear_r2": 0.4646,
           "law_agreement": 0.5
         },
         {
@@ -406,14 +460,18 @@
           "seed": 1,
           "equation": "(sq_A2 * (sq_A2 * 2.909941)) - 1.6098678",
           "complexity": 7,
-          "top_square": "A2",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "A2"
           ],
           "fit_r2": 0.0375,
-          "linear_r2": 0.0778,
+          "linear_r2": 0.2518,
           "law_agreement": 0.5398
         },
         {
@@ -422,15 +480,19 @@
           "seed": 2,
           "equation": "(((sq_D6 * sq_D6) - -1.3501458) - (sq_A1 * sq_A1)) * -2.758369",
           "complexity": 11,
-          "top_square": "D6",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "A1",
             "D6"
           ],
           "fit_r2": 0.0388,
-          "linear_r2": 0.0852,
+          "linear_r2": 0.2928,
           "law_agreement": 0.5
         },
         {
@@ -439,14 +501,18 @@
           "seed": 0,
           "equation": "(sq_E8 * 8.018662) * sq_E8",
           "complexity": 5,
-          "top_square": "E8",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "E8"
           ],
           "fit_r2": 0.2318,
-          "linear_r2": 0.0636,
+          "linear_r2": 0.5884,
           "law_agreement": 0.522
         },
         {
@@ -455,14 +521,18 @@
           "seed": 1,
           "equation": "(sq_D7 * 3.2461212) * sq_D7",
           "complexity": 5,
-          "top_square": "D7",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "D7"
           ],
           "fit_r2": 0.1748,
-          "linear_r2": 0.075,
+          "linear_r2": 0.5018,
           "law_agreement": 0.5515
         },
         {
@@ -471,14 +541,18 @@
           "seed": 2,
           "equation": "(sq_E8 * sq_E8) * 5.2647705",
           "complexity": 5,
-          "top_square": "E8",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "E8"
           ],
           "fit_r2": 0.2423,
-          "linear_r2": 0.0775,
+          "linear_r2": 0.6958,
           "law_agreement": 0.522
         },
         {
@@ -489,12 +563,16 @@
           "complexity": 9,
           "top_square": "C3",
           "recovered": true,
-          "own_square_importance_share": 1.0,
+          "own_square_contrast": 0.8348,
+          "own_square_signed_contrast": 0.8348,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 6.1173,
+          "occupancy_shortcut": false,
           "squares_used": [
             "C3"
           ],
           "fit_r2": 0.1731,
-          "linear_r2": 0.1086,
+          "linear_r2": 0.4673,
           "law_agreement": 0.6824
         },
         {
@@ -503,14 +581,18 @@
           "seed": 1,
           "equation": "(sq_G3 * sq_G3) * -2.8752692",
           "complexity": 5,
-          "top_square": "G3",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "G3"
           ],
           "fit_r2": 0.0512,
-          "linear_r2": 0.0537,
+          "linear_r2": 0.3842,
           "law_agreement": 0.5
         },
         {
@@ -519,14 +601,18 @@
           "seed": 2,
           "equation": "(sq_A4 * sq_A4) + -1.295989",
           "complexity": 5,
-          "top_square": "A4",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "A4"
           ],
           "fit_r2": 0.0294,
-          "linear_r2": 0.0971,
+          "linear_r2": 0.2957,
           "law_agreement": 0.5
         },
         {
@@ -535,14 +621,18 @@
           "seed": 0,
           "equation": "-2.3017294 - (((sq_D6 * -5.323047) * sq_D6) + 4.4570894)",
           "complexity": 9,
-          "top_square": "D6",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "D6"
           ],
           "fit_r2": 0.078,
-          "linear_r2": 0.0681,
+          "linear_r2": 0.3646,
           "law_agreement": 0.5
         },
         {
@@ -551,15 +641,19 @@
           "seed": 1,
           "equation": "((sq_D7 * sq_D7) * (2.2448974 - (sq_F1 * sq_F1))) - 6.4697866",
           "complexity": 11,
-          "top_square": "D7",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "F1",
             "D7"
           ],
           "fit_r2": 0.0454,
-          "linear_r2": 0.095,
+          "linear_r2": 0.352,
           "law_agreement": 0.5
         },
         {
@@ -568,14 +662,18 @@
           "seed": 2,
           "equation": "-6.5189095 - ((sq_F2 * sq_F2) * -5.8474255)",
           "complexity": 7,
-          "top_square": "F2",
+          "top_square": null,
           "recovered": false,
-          "own_square_importance_share": 0.0,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
           "squares_used": [
             "F2"
           ],
           "fit_r2": 0.1906,
-          "linear_r2": 0.0969,
+          "linear_r2": 0.5514,
           "law_agreement": 0.5
         }
       ]
@@ -612,11 +710,11 @@
   "run_id": "othello_gpt_synthetic_D3",
   "schema_version": 1,
   "provenance": {
-    "git_commit": "343313f",
-    "time_utc": "2026-10-16T00:08:29Z",
+    "git_commit": "1a1df91",
+    "time_utc": "2026-10-16T03:54:28Z",
     "python": "3.13.15",
     "host": "ip-10-0-2-159",
-    "runtime_sec": 397.9,
+    "runtime_sec": 407.0,
     "torch": "2.13.0+cu130",
     "gpu": "NVIDIA A10G",
     "numpy": "2.4.4"
