@@ -7,6 +7,8 @@
 #### The George Washington University, Washington DC  
 #### Data Science Program
 
+*Revised 2026-10-16 after Instructor Review #4 and preregistration Amendment 2: all four diagnostics, complete as described below (including the D4 causal check and the D3 symbolic regression arm), on Othello by the preliminary presentation, plus a Streamlit demo.*
+
 
 ## 1 Objective:  
 
@@ -361,11 +363,16 @@
                             Othello distributions; zoo trainer and measured throughput (111 GPU hours)
             Week 7:         Othello fragility suite FROZEN (tag fragility-v1); analysis plan pre-registered;
                             Othello zoo (81 models) training starts on the four instances
-            Week 8:         Othello zoo trained and validated, zoo_registry.csv; D1 and D4 (with control task
-                            and occupancy baseline) on all Othello models
-            Week 9:         PRELIMINARY PRESENTATION (Oct 20): first D1 vs D4 concordance table on the Othello zoo
-            Weeks 9 to 10:  D2 and D3 on the Othello zoo; causal check of the D4 probes; navigation generator,
-                            DFA spec and fragility suite frozen; Vafa et al. 2024 navigation metrics reproduced
+            Week 8:         Othello zoo (81 models) trained and validated, zoo_registry.csv; preregistration
+                            amendments prereg-v1.1 and prereg-v1.2 tagged before any score (v1.2 completes D4
+                            with the nonlinear probe and the causal check, D3 with the symbolic regression arm,
+                            and D2 with the sample size justification); all four diagnostics (D1, D2, D3, D4,
+                            with control task, occupancy baseline and causal check) on every Othello model
+            Week 9:         PRELIMINARY PRESENTATION (Oct 20): four way concordance on the Othello zoo (Kendall
+                            tau raw and controlled for legal move rate, Kendall W, bootstrap intervals);
+                            Streamlit demo of the project
+            Weeks 9 to 10:  Navigation generator, DFA spec and fragility suite frozen; Vafa et al. 2024
+                            navigation metrics reproduced
             Week 11:        Navigation zoo (81 models) trained; all four diagnostics on navigation
             Week 12:        H1 and H2 on Othello and navigation; interpreter generator and fragility suite
                             frozen; interpreter zoo trained but not analyzed (held out for H4)
@@ -376,14 +383,14 @@
             TOTAL: 15 weeks (one semester)
 
             KEY MILESTONES:
-            - Week 2:  Implementation verified against published results before any new claim is made
-            - Week 4:  Fragility criterion frozen and analysis pre-registered, ruling out post-hoc tuning
-            - Week 5:  Model zoo complete and validated
-            - Week 10: All four diagnostics run across the full zoo
-            - Week 11: Concordance resolved (H1)
-            - Week 13: Predictive validity resolved (H3) -- the project's headline result
-            - Week 14: All hypotheses (H1-H4) resolved; new domains and held-out check complete
-            - Week 15: Paper submitted; WM-Concord released
+            - Week 6:  Reproduction gate passed (Othello GPT probe within 1 point of Nanda et al. 2023)
+            - Week 7:  Fragility suite frozen and analysis pre-registered, ruling out post hoc tuning
+            - Week 8:  Othello zoo complete and validated; all four diagnostics, complete, on Othello
+            - Week 9:  Preliminary presentation: four way concordance on Othello
+            - Week 11: Navigation zoo and all four diagnostics on navigation
+            - Week 13: H1 to H3 resolved on Othello and navigation; master table frozen
+            - Week 14: H4 on the held out interpreter domain
+            - Week 15: Paper finished; WM-Concord released
 
             STAGE GATES (decision points that change the plan, not status meetings):
             - Week 2:  If published results cannot be reproduced, halt and fix the implementation before
