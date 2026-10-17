@@ -92,28 +92,39 @@ Note: Use Markdown Cheat Sheet download in the directory as needed.
 
 - Action Items:
 
-* [ ] Literature review to 10+ works and 6 new references.bib entries
-* [ ] First zoo models: one transformer, LSTM and Mamba on synthetic Othello with legal move rate (PR #47)
-* [ ] Freeze and tag the fragility suite (PR #43)
-* [ ] Results schema, common diagnostic interface, model registry, activation hooks for all 3 architectures
-* [ ] Preregistration of the H1 to H4 analysis
-* [ ] Othello zoo training split across the 4 instances
-* [ ] Occupancy only baseline for the black/white probe
-* [ ] D2 explainer (#7)
+* [x] Literature review to 10+ works and 6 new references.bib entries (PR #51)
+* [x] First zoo models: one transformer, LSTM and Mamba on synthetic Othello with legal move rate (PR #47; LSTM retrained with the stacked LSTM in PR #61)
+* [x] Freeze and tag the fragility suite (PR #43, tag fragility-v1)
+* [x] Results schema, common diagnostic interface, model registry, activation hooks for all 3 architectures (PRs #53, #55, #57)
+* [x] Preregistration of the H1 to H4 analysis (PR #59, tag prereg-v1)
+* [x] Othello zoo training split across the 4 instances: launcher and slice list (PR #69); transformer small and Mamba small retrained with checkpoint hashes (PR #67)
+* [x] Occupancy only baseline for the black/white probe: added to the D4 plan in the preregistration (PR #59), computed with the D4 run
+* [x] D1 scoring protocol (PR #62) and Othello data and splits in the report (PR #66)
+* [ ] D2 explainer (#7) (moved to Week 7, now owned by Siddu)
 ---
-## Date: Week 7 - Month Day Year 
+## Date: Week 7 - October 13, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #4 (#70): on schedule against the revised plan (was about 2 weeks behind); Review #3 items done
+    - Othello zoo: slice 1 finished on October 7 (19 of 19, 0 failed); 23 of 81 models trained, all admitted (legal move rate 0.56 to 0.97); slices 2, 3 and 4 running on the other three instances
+    - Plan for October 20: all four diagnostics (D1, D2, D3, D4) on every admitted Othello model, a four way concordance table, and a Streamlit demo of the project (asked for by Prof. Jafari)
+    - Competence control (Review #4): diagnostics may agree only because better trained models score higher on all of them, so the preregistration is amended before any score
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Preregistration amendment prereg-v1.1: H1 also controlled for legal move rate, H3 fragility relative to each model's own baseline, D2 protocol (PR #72, tag prereg-v1.1)
+* [x] D2 explainer, diagram and module (PR #73, closes #7)
+* [x] D1, D3 and D4 modules with tests and anchor scores on both Othello GPTs (PRs #89, #85, #79)
+* [x] Amendment 2 (prereg-v1.2): D4 nonlinear probe and causal check, D3 symbolic regression arm, D2 sample size justification, all fixed before any zoo score (PRs #93, #94, #95, tag prereg-v1.2)
+* [x] Review #4 minor fixes: zip(strict=True), LSTM row in zoo_first_models.md (PR #77)
+* [x] Streamlit demo skeleton in demo/ (PR #83)
+* [ ] Checkpoints shared through S3 (s3://dats-capstone/shared/group6/zoo/ set up and tested; uploads in progress)
+* [ ] Slices 1 to 3 committed (PRs #75, #81, #87, 61 of 81 models, all admitted); slice 4 trained and committed; zoo_registry.csv rebuilt with admission per architecture and scale
+* [ ] D1, D2, D3 and D4 scored on every admitted Othello model, master table built
+* [ ] Four way concordance table (Kendall tau raw and partial, Kendall W, bootstrap intervals)
+* [ ] Streamlit demo on the real results
+* [ ] Methods section in Sample_Report.tex
+* [ ] Slides for the preliminary presentation in presentation/
+* [ ] Proposal timeline updated to the October 20 plan
 ----
 ## Date: Week 8 - Month Day Year 
 - Topics of discussion
