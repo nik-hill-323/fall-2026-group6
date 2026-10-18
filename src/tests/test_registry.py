@@ -84,6 +84,27 @@ def test_write_registry_csv(tmp_path: Path) -> None:
     assert lines[0] == ",".join(reg.COLUMNS) and lines[1].startswith(MID)
 
 
+def test_admission_table(tmp_path: Path) -> None:
+    rdir = fake_record(tmp_path)
+    fake_record(tmp_path / "b", model_id="othello_lstm_small_synthetic_s1", legal=0.30)
+    (rdir / "othello_lstm_small_synthetic_s1.json").write_text(
+        (tmp_path / "b" / "records" / "othello_lstm_small_synthetic_s1.json").read_text())
+    rows = reg.build_registry(rdir)
+    table = reg.admission_table(rows)
+    assert list(table[0]) == reg.ADMISSION_COLUMNS
+    assert len(table) == 10  # 3 architectures x 3 scales, plus the "all" row
+    lstm_small = next(t for t in table if (t["arch"], t["scale"]) == ("lstm", "small"))
+    assert (lstm_small["planned"], lstm_small["trained"], lstm_small["admitted"],
+            lstm_small["not_admitted"]) == (9, 2, 1, 1)
+    assert lstm_small["competence_mean"] == lstm_small["competence_min"] == 0.81  # admitted models only
+    total = table[-1]
+    assert (total["arch"], total["planned"], total["trained"], total["admitted"]) == ("all", 81, 2, 1)
+    empty = next(t for t in table if (t["arch"], t["scale"]) == ("mamba", "large"))
+    assert (empty["trained"], empty["competence_mean"]) == (0, "")
+    reg.write_admission(tmp_path / "adm.csv", rows=rows)
+    assert (tmp_path / "adm.csv").read_text().splitlines()[0] == ",".join(reg.ADMISSION_COLUMNS)
+
+
 def test_load_model_round_trip(tmp_path: Path) -> None:
     rdir = fake_record(tmp_path)
     m = reg.load_model(MID, device="cpu", records_dir=rdir)
