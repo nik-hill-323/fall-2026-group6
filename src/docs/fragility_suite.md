@@ -85,3 +85,29 @@ Team decision, 2026-10-05: accepted. The proposal is updated to match in PR #47.
 
 Navigation and the interpreter need their own suites (detour routing, changed instruction semantics).
 They will follow the same rule: defined and tagged before any model in that domain is scored.
+
+## Version 2 (Amendment 3, tag `fragility-v2`)
+
+Version 1 stays exactly as above and is still run on every model. Scoring the first zoo model showed
+that two of its parts do not measure fragility on this zoo (reports/preregistration.md, Amendment 3):
+
+* **Detour completion hits the floor.** A game counts only if all of about 58 proposals are legal, so a
+  model legal with probability q per move completes about q^58 of them (0.84 gives 0.00004). The first
+  zoo model completed 0 games in every setting, so all detour drops were 0.
+* **After pass compares easy positions with harder ones.** A pass means one player has no move, and on
+  those boards most empty squares are legal for the other (0.934 against 0.660 at the same move numbers
+  for the first zoo model), so its 0.972 after a pass against 0.842 overall says little about passes.
+  Matched on move number and number of legal moves the gap is 0.963 against 0.972.
+
+Code: `src/fragility/othello_v2.py`. Tests: `src/tests/test_othello_fragility_v2.py`. It imports v1
+and changes only these two parts:
+
+| Variant | v2 |
+|---|---|
+| detour | every game is played to its end; the model's top move is scored, the move played is its best legal move, replaced with probability p as in v1; score = legal rate over all predictions; drop = rate at p = 0 minus rate at p |
+| after pass | each pass position is compared with the non pass positions at the same move number and with the same number of legal moves; drop = that baseline minus the after pass legal rate |
+| in distribution, cross distribution, symmetry | v1, unchanged |
+
+Output: `results/fragility_v2/{model_id}.json`. Hash of the v2 definition: `a5f70d4658a5`. H3 uses
+relative fragility v2 (fragility v2 divided by the in distribution legal rate); v1 is the preregistered
+secondary outcome.
