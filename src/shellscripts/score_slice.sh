@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Score one slice of the Othello zoo: D1, D2, D3, D4 and the fragility suite, one model after another.
+# Score one slice of the Othello zoo: D1, D2, D3, D4 and the fragility suites (v1 and v2), one model after another.
 #
 #   bash src/shellscripts/score_slice.sh <slice>                      # 0, 1, 2, 3 or 4
 #   bash src/shellscripts/score_slice.sh <slice> --dry_run            # only print the plan
@@ -21,6 +21,8 @@
 #   D2         src/diagnostics/d2/state_equiv.py           -> results/D2_state_equiv/<id>.json
 #   D4         src/diagnostics/d4/representation_probe.py  -> results/D4_probing/<id>.json
 #   fragility  src/fragility/othello.py (fragility-v1)     -> results/fragility/<id>.json
+#   fragility_v2  src/fragility/othello_v2.py (fragility-v2, the H3 outcome, Amendment 3)
+#                                                           -> results/fragility_v2/<id>.json
 #   D3         src/diagnostics/d3/inductive_bias.py        -> results/D3_inductive_bias/<id>.json
 # Every diagnostic uses its preregistered defaults (test split, 1,000 games, data seed 0).
 #
@@ -44,7 +46,7 @@ RECORDS="results/zoo_training"
 ZOO="outputs/zoo"
 LOGS="outputs/score_logs"
 PY="${PY:-python}"
-JOBS="${JOBS:-D1 D2 D4 fragility D3}"
+JOBS="${JOBS:-D1 D2 D4 fragility fragility_v2 D3}"
 PREREG_TAG="prereg-v1.2"
 
 if [[ ! "$SLICE" =~ ^[0-4]$ ]]; then
@@ -56,7 +58,7 @@ if [[ ! -f "$CSV" || ! -f src/fragility/othello.py ]]; then
   exit 1
 fi
 for j in $JOBS; do
-  [[ "$j" =~ ^(D1|D2|D3|D4|fragility)$ ]] || { echo "unknown job $j (use D1 D2 D3 D4 fragility)"; exit 1; }
+  [[ "$j" =~ ^(D1|D2|D3|D4|fragility|fragility_v2)$ ]] || { echo "unknown job $j (use D1 D2 D3 D4 fragility fragility_v2)"; exit 1; }
 done
 if [[ "$(git tag -l "$PREREG_TAG")" != "$PREREG_TAG" ]]; then
   echo "the git tag $PREREG_TAG is missing here: run 'git fetch --tags' (no zoo model is scored before it)"
@@ -76,12 +78,13 @@ result_file() {   # job model_id
     D3) echo "results/D3_inductive_bias/$2.json" ;;
     D4) echo "results/D4_probing/$2.json" ;;
     fragility) echo "results/fragility/$2.json" ;;
+    fragility_v2) echo "results/fragility_v2/$2.json" ;;
   esac
 }
 
 result_ok() {     # job file: 0 if the file holds a finished result
   [[ -f "$2" ]] || return 1
-  if [[ "$1" == "fragility" ]]; then
+  if [[ "$1" == fragility* ]]; then
     "$PY" -c "import json, sys; d = json.load(open(sys.argv[1])); sys.exit(0 if 'fragility' in d else 1)" "$2" 2>/dev/null
   else
     "$PY" -c "import json, sys; d = json.load(open(sys.argv[1])); sys.exit(0 if d.get('status') == 'ok' else 1)" "$2" 2>/dev/null
@@ -93,7 +96,7 @@ result_line() {   # job file: the headline numbers, for the log
 import json, sys
 job, path = sys.argv[1], sys.argv[2]
 d = json.load(open(path))
-if job == "fragility":
+if job.startswith("fragility"):
     print(f"fragility {d['fragility']:.4f}  in distribution {d['in_distribution_legal_rate']:.4f}")
 elif d.get("status") == "ok":
     extra = ""
@@ -105,7 +108,7 @@ else:
 EOF
 }
 
-mkdir -p "$LOGS" results/fragility
+mkdir -p "$LOGS" results/fragility results/fragility_v2
 COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 echo "score slice $SLICE on $(hostname), commit $COMMIT, jobs: $JOBS, $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 if [[ -n "$(git status --porcelain -- src 2>/dev/null)" ]]; then
@@ -149,6 +152,8 @@ while IFS=, read -r slice model_id arch scale dist seed micro est owner; do
       D4) cmd=("$PY" src/diagnostics/d4/representation_probe.py --models "$model_id" --save) ;;
       fragility) cmd=("$PY" src/fragility/othello.py --model "$ckpt" --arch "$arch" --scale "$scale"
                       --train_distribution "$dist" --seed "$seed") ;;
+      fragility_v2) cmd=("$PY" src/fragility/othello_v2.py --model "$ckpt" --arch "$arch" --scale "$scale"
+                         --train_distribution "$dist" --seed "$seed") ;;
     esac
     if [[ "$DRY_RUN" == "--dry_run" ]]; then
       echo "[plan] $model_id $job  ${cmd[*]}"
@@ -184,5 +189,5 @@ if (( failed > 0 )); then
 fi
 if [[ "$DRY_RUN" != "--dry_run" ]]; then
   echo "next: commit only the result files of your models (never another slice's, never master_table.csv):"
-  echo "  git add results/D1_next_token results/D2_state_equiv results/D3_inductive_bias results/D4_probing results/fragility && git status"
+  echo "  git add results/D1_next_token results/D2_state_equiv results/D3_inductive_bias results/D4_probing results/fragility results/fragility_v2 && git status"
 fi

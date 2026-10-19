@@ -500,3 +500,78 @@ Each D2 error is a mean over pairs of a number between 0 and 1, so its standard 
 reference Othello GPTs the largest standard error was 0.005 (championship compression error, 768
 pairs) and every other was below 0.004, so a D2 score is known to about plus or minus 0.01, well
 below the spread between models that H1 compares. The protocol of A4 is unchanged.
+
+### Amendment 3 (prereg-v1.3), 2026-10-18
+
+Written before the zoo is scored. At this point one zoo model, `othello_transformer_small_synthetic_s0`,
+has been scored by D1 to D4 and by fragility v1, as the test run of the scoring launcher (#102). No
+relation between any diagnostic and fragility has been computed, and none can be computed from one model.
+The reason for this amendment comes from that model's fragility output and from arithmetic about the
+suite itself, not from any diagnostic score. Frozen with the git tags `fragility-v2` and `prereg-v1.3`.
+Sections 1 to 5 and Amendments 1 and 2 stay in force except where this amendment says otherwise.
+
+#### E1. Two parts of fragility v1 do not measure fragility on this zoo
+
+* **Detour floor.** v1 scores the share of self play games in which the model never proposes an illegal
+  move in about 58 moves. A model that is legal with probability q per move completes about q^58 of them:
+  0.84 gives 0.00004, and the best zoo model (0.969 on validation games) about 0.16. On the test model all
+  six completion rates were 0.000 (one was 0.002), so the four detour drops were 0 and carried no
+  information. This holds for almost every model in the zoo, so 4 of the 9 terms of `fragility` would be
+  near 0 for all of them.
+* **After pass compares easy positions with harder ones.** v1 compares the legal rate right after a pass
+  with the legal rate over all positions. A pass means one player has no move at all, and on those boards
+  most empty squares are legal for the player who keeps moving. On the test model's 1,000 test games
+  (180 pass positions, mean move number 55): 0.934 of the empty squares were legal after a pass against
+  0.660 at the same move numbers otherwise, and the model's legal rate rises with that share (0.78 to 0.80
+  between 0.2 and 0.5, 0.94 above 0.7). Its legal rate was 0.972 after a pass against 0.842 overall, a
+  drop of minus 0.130, which alone is minus 0.0144 of its fragility of minus 0.0149. Matching on the move
+  number only (the first draft of v2) does not remove this: the baseline becomes 0.854, a drop of minus
+  0.119. Matching on the move number and the number of legal moves does: the baseline becomes 0.963, a
+  drop of minus 0.009. The v1 variant therefore measures how easy pass positions are, not whether the
+  model handles "the same player moves again".
+
+| Test model, fragility v1 | rate | drop |
+|---|---|---|
+| in distribution | 0.8423 | |
+| cross distribution, championship | 0.8515 | minus 0.0092 |
+| after pass | 0.9722 | minus 0.1299 |
+| symmetry rot180, transpose, anti transpose | 0.8412, 0.8395, 0.8391 | 0.0010, 0.0028, 0.0032 |
+| detour completion, random p = 0, 0.1, 0.5 | 0.000, 0.000, 0.000 | 0, 0 |
+| detour completion, adversarial p = 0, 0.1, 0.5 | 0.000, 0.002, 0.000 | minus 0.002, 0 |
+| **fragility** | | **minus 0.0149** |
+
+#### E2. Fragility v2 (`src/fragility/othello_v2.py`, tag `fragility-v2`)
+
+v1 is not changed. v2 imports it and replaces only the two parts above; the in distribution, cross
+distribution and symmetry variants are v1's functions on v1's games.
+
+* **Detour.** Every game is played to its end (or 59 moves). At each move the model's top move is scored
+  legal or illegal, and the move played is the model's best legal move (its top move when that is legal),
+  so an illegal proposal no longer ends the game. With probability p that move is replaced by another
+  legal move, a uniformly random one or the one the model rates least likely, as in v1 (same p, modes,
+  500 games, seed 0). Score: the legal rate over all predictions. Drop: the rate at p = 0 minus the rate
+  at p. Because every setting plays full games, every p is scored on the same stages of the game.
+* **After pass.** Each pass position is compared with the non pass positions at the same move number and
+  with the same number of legal moves, in the same test games (the move number also fixes the number of
+  empty squares, so the share of empty squares that are legal is matched too). Baseline = the mean, over
+  pass positions, of the non pass legal rate in that cell. Drop: baseline minus the legal rate at the pass
+  positions. Pass positions whose cell is empty are left out and counted.
+* **Fragility v2** = the mean of the drops, as in v1. Output: `results/fragility_v2/{model_id}.json`.
+* **Checks** (`src/tests/test_othello_fragility_v2.py`): a perfect model scores 0 on every drop; when the
+  legal rate depends on the move number and the number of legal moves and pass positions are no worse
+  than non pass positions in the same cell, the v2 after pass drop is near 0 while matching on the move
+  number alone, or the v1 style comparison, is strongly negative; a
+  model that is illegal only right after a pass gets a drop of 1; a broken model is still scored on full
+  games; v1 and v2 give identical numbers on the unchanged variants; v1's hash is unchanged.
+
+#### E3. Use in H3
+
+* The H3 outcome of Amendment 1, A2, becomes **relative fragility v2** = fragility v2 divided by
+  `in_distribution_legal_rate`. Every A2 rule (D1 as the reference, the contest among D2, D3 and D4, the
+  partial correlations, the regression, the decision rule) is unchanged and is applied to this outcome.
+* Fragility v1 and relative fragility v1 are run on every model and reported as the preregistered
+  secondary outcome, labelled as such, with the reason of E1. The per variant drops of both versions are
+  reported, so a reader can see what each version is made of.
+* Both suites are run on every admitted model, including the test model above, with no other change.
+* On the test model, fragility v2 = minus 0.0134 before the after pass matching was extended (first
+  draft); its v2 numbers with this definition are those written by the scoring run.
