@@ -1,0 +1,40 @@
+{
+  "model_id": "othello_mamba_small_championship_s2",
+  "diagnostic": "D1",
+  "method": "legal move rate: share of positions where the top predicted move is legal (argmax), higher is better",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.8306897505010713,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "argmax_legal_rate": 0.8306897505010713,
+    "sampled_legal_rate": 0.7163729352408598,
+    "n_samples": 10,
+    "temperature": 1.0,
+    "sample_seed": 0,
+    "n_positions": 57876,
+    "distribution": "championship",
+    "illegal_games_dropped": 0
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "mamba",
+  "scale": "small",
+  "distribution": "championship",
+  "seed": 2,
+  "run_id": "othello_mamba_small_championship_s2_D1",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "8c947fe",
+    "time_utc": "2026-10-19T01:49:04Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 6.3,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
