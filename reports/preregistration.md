@@ -575,3 +575,30 @@ distribution and symmetry variants are v1's functions on v1's games.
 * Both suites are run on every admitted model, including the test model above, with no other change.
 * On the test model, fragility v2 = minus 0.0134 before the after pass matching was extended (first
   draft); its v2 numbers with this definition are those written by the scoring run.
+
+#### E4. Analysis details, fixed before any H1 to H3 statistic is computed
+
+The analysis code is `src/analysis/hypotheses.py` (tests: `src/tests/test_hypotheses.py`). It was written
+and tested on fake zoos in the real file formats before any zoo model had all four scores. These choices
+were left open by Section 4 and Amendment 1 and are fixed here:
+
+* **Models.** H1 and H2 use admitted models whose four scores all have status ok; H3 also needs fragility
+  v2. Every admitted model without a score is listed by diagnostic in the output.
+* **Statistics.** Kendall tau b and Spearman rho (both handle ties). Intervals: 95% percentile bootstrap,
+  2,000 resamples over models, seed 0; every statistic of one analysis uses the same resamples, so the
+  difference of two statistics has its own interval. An interval is not reported if fewer than 1,000
+  resamples give a finite value.
+* **Partial Kendall tau (A1)** is the A1 formula. It does not fall all the way to 0 when two diagnostics
+  share only competence (on simulated data with raw tau above 0.5 it stays near 0.2), so it is a
+  conservative test of "agreement through competence"; the categories and thresholds are unchanged.
+* **H2.** Rank percentile = average rank divided by the number of models; disagreement = their population
+  standard deviation over the four diagnostics. Effect of a factor = the range of its level means of
+  disagreement. The decision compares that effect with the noise floor **of the disagreement** (the mean,
+  over configurations, of the standard deviation of disagreement across seeds), so both are in the same
+  units; the Section 4 noise floor of each diagnostic's score is reported next to it. F test per factor:
+  the least squares model without that factor against the full model; Holm over the 3 factors.
+* **H3 (A2).** Partial Spearman of a diagnostic given D1 = Pearson correlation of the rank residuals after
+  a least squares fit on the D1 ranks. Regression covariates are treatment coded; the interval of a
+  coefficient is the 95% t interval. The Section 4 secondary rule takes the most negative Spearman as the
+  strongest. The D4 causal flag (decodable and causal) is tested beyond D4 selectivity by a regression of
+  the outcome on D4 and the flag and by the partial Spearman of the flag given D4.
