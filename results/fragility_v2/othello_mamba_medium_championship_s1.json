@@ -1,0 +1,87 @@
+{
+  "model_id": "othello_mamba_medium_championship_s1",
+  "suite_version": "othello-fragility-v2",
+  "suite_hash": "a5f70d4658a5",
+  "base_suite_hash": "644671bfb322",
+  "train_distribution": "championship",
+  "in_distribution_legal_rate": 0.8744902895846292,
+  "legal_rate": {
+    "cross_distribution/synthetic": 0.750388265746333,
+    "symmetry/rot180": 0.7582935931992536,
+    "symmetry/transpose": 0.8014375561545373,
+    "symmetry/anti_transpose": 0.7853168843734881,
+    "after_pass": 0.91792656587473
+  },
+  "positions_scored": {
+    "in_distribution": 57876,
+    "cross_distribution/synthetic": 57950,
+    "symmetry/rot180": 57876,
+    "symmetry/transpose": 57876,
+    "symmetry/anti_transpose": 57876,
+    "after_pass": 926
+  },
+  "after_pass": {
+    "rate": 0.91792656587473,
+    "baseline": 0.9536957545793943,
+    "n_positions": 926,
+    "n_left_out": 0,
+    "mean_move_number": 52.48596112311015,
+    "mean_n_legal": 4.915766738660907
+  },
+  "detour": {
+    "random/p=0.0": {
+      "legal_rate": 0.6542758620689655,
+      "n_games": 500,
+      "n_predictions": 29000,
+      "n_detours": 0,
+      "mean_game_length": 59.0
+    },
+    "random/p=0.1": {
+      "legal_rate": 0.6945077720207253,
+      "n_games": 500,
+      "n_predictions": 28950,
+      "n_detours": 2873,
+      "mean_game_length": 58.9
+    },
+    "random/p=0.5": {
+      "legal_rate": 0.7560344827586207,
+      "n_games": 500,
+      "n_predictions": 29000,
+      "n_detours": 14316,
+      "mean_game_length": 59.0
+    },
+    "adversarial/p=0.0": {
+      "legal_rate": 0.6542758620689655,
+      "n_games": 500,
+      "n_predictions": 29000,
+      "n_detours": 0,
+      "mean_game_length": 59.0
+    },
+    "adversarial/p=0.1": {
+      "legal_rate": 0.7418531673505983,
+      "n_games": 500,
+      "n_predictions": 28999,
+      "n_detours": 2884,
+      "mean_game_length": 58.998
+    },
+    "adversarial/p=0.5": {
+      "legal_rate": 0.7547156798510294,
+      "n_games": 500,
+      "n_predictions": 28999,
+      "n_detours": 14310,
+      "mean_game_length": 58.998
+    }
+  },
+  "drops": {
+    "cross_distribution/synthetic": 0.12410202383829616,
+    "symmetry/rot180": 0.11619669638537555,
+    "symmetry/transpose": 0.07305273343009189,
+    "symmetry/anti_transpose": 0.08917340521114103,
+    "after_pass": 0.03576918870466428,
+    "detour/random/p=0.1": -0.04023190995175985,
+    "detour/random/p=0.5": -0.10175862068965524,
+    "detour/adversarial/p=0.1": -0.08757730528163277,
+    "detour/adversarial/p=0.5": -0.1004398177820639
+  },
+  "fragility": 0.012031821540495239
+}

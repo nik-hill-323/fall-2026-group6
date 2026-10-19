@@ -1,0 +1,202 @@
+{
+  "model_id": "othello_lstm_medium_mixed_s1",
+  "diagnostic": "D4",
+  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.1533204451310607,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 2,
+    "best_layer_depth": 0.5,
+    "n_layers": 6,
+    "probe_acc_by_layer": [
+      0.72453,
+      0.72137,
+      0.73322,
+      0.72772,
+      0.72666,
+      0.72413
+    ],
+    "control_acc_by_layer": [
+      0.59059,
+      0.58194,
+      0.5799,
+      0.57936,
+      0.58196,
+      0.57911
+    ],
+    "selectivity_by_layer": [
+      0.13394,
+      0.13943,
+      0.15332,
+      0.14837,
+      0.1447,
+      0.14502
+    ],
+    "selectivity_by_layer_choose": [
+      0.13317,
+      0.13834,
+      0.15225,
+      0.14787,
+      0.14398,
+      0.14448
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      -0.00317,
+      0.00868,
+      0.00319,
+      0.00212,
+      -0.0004
+    ],
+    "probe_acc_occupied_by_layer": [
+      0.53642,
+      0.5209,
+      0.55232,
+      0.54543,
+      0.54055,
+      0.52938
+    ],
+    "occupancy_baseline_acc": 0.75651,
+    "gain_over_occupancy_by_layer": [
+      -0.03197,
+      -0.03514,
+      -0.02329,
+      -0.02879,
+      -0.02985,
+      -0.03237
+    ],
+    "distribution": "mixed",
+    "n_fit_games": 10000,
+    "n_choose_games": 1000,
+    "n_test_games": 1000,
+    "illegal_games_dropped": {
+      "fit": 0,
+      "choose": 0,
+      "test": 0
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 2,
+      "selectivity_at_best": 0.14413,
+      "probe_acc_by_layer": [
+        0.73238,
+        0.73197,
+        0.74452,
+        0.73924,
+        0.73595,
+        0.73146
+      ],
+      "control_acc_by_layer": [
+        0.61547,
+        0.60557,
+        0.60039,
+        0.59821,
+        0.59814,
+        0.59365
+      ],
+      "selectivity_by_layer": [
+        0.11691,
+        0.1264,
+        0.14413,
+        0.14104,
+        0.1378,
+        0.13781
+      ],
+      "selectivity_by_layer_choose": [
+        0.11627,
+        0.1249,
+        0.14309,
+        0.14026,
+        0.13748,
+        0.13738
+      ],
+      "probe_acc_occupied_by_layer": [
+        0.54545,
+        0.53334,
+        0.56882,
+        0.55982,
+        0.55013,
+        0.54023
+      ],
+      "gain_over_linear_by_layer": [
+        0.00785,
+        0.01061,
+        0.0113,
+        0.01152,
+        0.00929,
+        0.00733
+      ]
+    },
+    "causal": {
+      "causal_score": 0.02253,
+      "causal_score_ci": [
+        -0.00696,
+        0.05202
+      ],
+      "causal_label": "decodable but not causal",
+      "boundary_acc_edit": 0.46318,
+      "boundary_acc_random": 0.44066,
+      "boundary_acc_none": 0.41823,
+      "edit_success_rate": 0.778,
+      "edit_success_by_layer": {
+        "2": 1.0,
+        "3": 0.974,
+        "4": 0.985,
+        "5": 0.781
+      },
+      "flip_read_by_layer": {
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "edit_steps_by_layer": {
+        "2": 43.801,
+        "3": 48.945,
+        "4": 48.236,
+        "5": 63.97
+      },
+      "edit_size_by_layer": {
+        "2": 33.54359,
+        "3": 32.97697,
+        "4": 34.59081,
+        "5": 44.36724
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "best_layer": 2,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.788
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "lstm",
+  "scale": "medium",
+  "distribution": "mixed",
+  "seed": 1,
+  "run_id": "othello_lstm_medium_mixed_s1_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "156bf34",
+    "time_utc": "2026-10-19T13:51:33Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-67",
+    "runtime_sec": 21.8,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
