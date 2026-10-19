@@ -1,0 +1,166 @@
+{
+  "model_id": "othello_transformer_small_synthetic_s0",
+  "diagnostic": "D4",
+  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.21656170483460557,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 3,
+    "best_layer_depth": 1.0,
+    "n_layers": 4,
+    "probe_acc_by_layer": [
+      0.66675,
+      0.71448,
+      0.76062,
+      0.77795
+    ],
+    "control_acc_by_layer": [
+      0.57387,
+      0.5714,
+      0.56689,
+      0.56139
+    ],
+    "selectivity_by_layer": [
+      0.09288,
+      0.14308,
+      0.19373,
+      0.21656
+    ],
+    "selectivity_by_layer_choose": [
+      0.09354,
+      0.14376,
+      0.19402,
+      0.2172
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.04773,
+      0.09387,
+      0.1112
+    ],
+    "probe_acc_occupied_by_layer": [
+      0.46983,
+      0.52375,
+      0.57144,
+      0.58642
+    ],
+    "occupancy_baseline_acc": 0.756,
+    "gain_over_occupancy_by_layer": [
+      -0.08925,
+      -0.04152,
+      0.00461,
+      0.02194
+    ],
+    "distribution": "synthetic",
+    "n_fit_games": 10000,
+    "n_choose_games": 1000,
+    "n_test_games": 1000,
+    "illegal_games_dropped": {
+      "fit": 0,
+      "choose": 0,
+      "test": 0
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 3,
+      "selectivity_at_best": 0.19537,
+      "probe_acc_by_layer": [
+        0.69242,
+        0.73556,
+        0.77077,
+        0.78664
+      ],
+      "control_acc_by_layer": [
+        0.69645,
+        0.65554,
+        0.62667,
+        0.59128
+      ],
+      "selectivity_by_layer": [
+        -0.00402,
+        0.08002,
+        0.1441,
+        0.19537
+      ],
+      "selectivity_by_layer_choose": [
+        -0.00332,
+        0.08093,
+        0.14499,
+        0.1962
+      ],
+      "probe_acc_occupied_by_layer": [
+        0.49727,
+        0.5461,
+        0.58166,
+        0.59904
+      ],
+      "gain_over_linear_by_layer": [
+        0.02568,
+        0.02108,
+        0.01016,
+        0.00869
+      ]
+    },
+    "causal": {
+      "causal_score": 0.15178,
+      "causal_score_ci": [
+        0.11616,
+        0.18825
+      ],
+      "causal_label": "decodable but not causal",
+      "boundary_acc_edit": 0.5847,
+      "boundary_acc_random": 0.43292,
+      "boundary_acc_none": 0.49478,
+      "edit_success_rate": 0.883,
+      "edit_success_by_layer": {
+        "2": 0.884,
+        "3": 0.995
+      },
+      "flip_read_by_layer": {
+        "2": 1.0,
+        "3": 1.0
+      },
+      "edit_steps_by_layer": {
+        "2": 61.424,
+        "3": 34.046
+      },
+      "edit_size_by_layer": {
+        "2": 33.41761,
+        "3": 15.96587
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        2,
+        3
+      ],
+      "best_layer": 3,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.698
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "transformer",
+  "scale": "small",
+  "distribution": "synthetic",
+  "seed": 0,
+  "run_id": "othello_transformer_small_synthetic_s0_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "b0954f7",
+    "time_utc": "2026-10-19T00:06:01Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 18.7,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}

@@ -1,0 +1,720 @@
+{
+  "model_id": "othello_transformer_large_synthetic_s0",
+  "diagnostic": "D3",
+  "method": "inductive bias probe (Vafa et al. 2025): balanced accuracy of the adapted model minus that of a random weight model of the same architecture, 4 'is square X mine' tasks, higher is better",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.06682489850754525,
+  "score_std": 0.02967087379399652,
+  "score_ci": null,
+  "details": {
+    "gap_by_seed": [
+      0.032696143942582245,
+      0.08649347155506767,
+      0.08128508002498583
+    ],
+    "gap_by_task": {
+      "is C4 mine": 0.07407768885418693,
+      "is F5 mine": 0.04579356585200948,
+      "is C3 mine": 0.07489842783960432,
+      "is F6 mine": 0.07252991148438026
+    },
+    "pretrained_balanced_accuracy": 0.6265061727032069,
+    "random_balanced_accuracy": 0.5596812741956616,
+    "positive_rate_adapt": [
+      0.4375,
+      0.5312,
+      0.4219,
+      0.3594
+    ],
+    "positive_rate_test": [
+      0.436,
+      0.477,
+      0.408,
+      0.407
+    ],
+    "cells": [
+      {
+        "task": "is C4 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.6048457934803826,
+        "random_balanced_accuracy": 0.5622844687357669,
+        "pretrained_accuracy": 0.603,
+        "random_accuracy": 0.582,
+        "gap": 0.042561324744615714
+      },
+      {
+        "task": "is F5 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.6024026840795123,
+        "random_balanced_accuracy": 0.5706695367397413,
+        "pretrained_accuracy": 0.598,
+        "random_accuracy": 0.565,
+        "gap": 0.03173314733977095
+      },
+      {
+        "task": "is C3 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.6003577106518283,
+        "random_balanced_accuracy": 0.5811307631160573,
+        "pretrained_accuracy": 0.608,
+        "random_accuracy": 0.592,
+        "gap": 0.019226947535771033
+      },
+      {
+        "task": "is F6 mine",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.5877601501547538,
+        "random_balanced_accuracy": 0.5504969940045825,
+        "pretrained_accuracy": 0.597,
+        "random_accuracy": 0.572,
+        "gap": 0.037263156150171284
+      },
+      {
+        "task": "is C4 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.6327103259808706,
+        "random_balanced_accuracy": 0.5371527100006507,
+        "pretrained_accuracy": 0.613,
+        "random_accuracy": 0.556,
+        "gap": 0.09555761598021995
+      },
+      {
+        "task": "is F5 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.6294619414681466,
+        "random_balanced_accuracy": 0.5680780531604877,
+        "pretrained_accuracy": 0.621,
+        "random_accuracy": 0.562,
+        "gap": 0.06138388830765895
+      },
+      {
+        "task": "is C3 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.6793521462639109,
+        "random_balanced_accuracy": 0.5666732909379968,
+        "pretrained_accuracy": 0.688,
+        "random_accuracy": 0.583,
+        "gap": 0.11267885532591415
+      },
+      {
+        "task": "is F6 mine",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.623573136220691,
+        "random_balanced_accuracy": 0.5472196096142133,
+        "pretrained_accuracy": 0.602,
+        "random_accuracy": 0.564,
+        "gap": 0.07635352660647765
+      },
+      {
+        "task": "is C4 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.623438414991216,
+        "random_balanced_accuracy": 0.5393242891534908,
+        "pretrained_accuracy": 0.609,
+        "random_accuracy": 0.547,
+        "gap": 0.08411412583772515
+      },
+      {
+        "task": "is F5 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.6308749313547466,
+        "random_balanced_accuracy": 0.586611269446148,
+        "pretrained_accuracy": 0.63,
+        "random_accuracy": 0.581,
+        "gap": 0.04426366190859854
+      },
+      {
+        "task": "is C3 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.6540805511393747,
+        "random_balanced_accuracy": 0.5612910704822469,
+        "pretrained_accuracy": 0.645,
+        "random_accuracy": 0.564,
+        "gap": 0.09278948065712778
+      },
+      {
+        "task": "is F6 mine",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.6492162866530489,
+        "random_balanced_accuracy": 0.545243234956557,
+        "pretrained_accuracy": 0.674,
+        "random_accuracy": 0.558,
+        "gap": 0.10397305169649185
+      }
+    ],
+    "symbolic_regression": {
+      "recovery_rate_pretrained": 0.25,
+      "recovery_rate_random": 0.1667,
+      "occupancy_shortcut_rate_pretrained": 0.6667,
+      "occupancy_shortcut_rate_random": 0.4167,
+      "recovery_by_task_pretrained": {
+        "is C4 mine": 0.3333,
+        "is F5 mine": 0.0,
+        "is C3 mine": 0.6667,
+        "is F6 mine": 0.0
+      },
+      "recovery_by_task_random": {
+        "is C4 mine": 0.0,
+        "is F5 mine": 0.0,
+        "is C3 mine": 0.6667,
+        "is F6 mine": 0.0
+      },
+      "stability_by_task_pretrained": {
+        "is C4 mine": 1.0,
+        "is F5 mine": 1.0,
+        "is C3 mine": 1.0,
+        "is F6 mine": 1.0
+      },
+      "mean_fit_r2_pretrained": 0.2209,
+      "mean_linear_r2_pretrained": 0.6349,
+      "mean_fit_r2_random": 0.0536,
+      "mean_linear_r2_random": 0.2559,
+      "settings": {
+        "binary_operators": [
+          "+",
+          "-",
+          "*"
+        ],
+        "unary_operators": [],
+        "maxsize": 15,
+        "niterations": 40,
+        "populations": 15,
+        "select_k_features": 10,
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "deterministic": true,
+        "inputs": "64 squares, +1 mine, -1 theirs, 0 empty",
+        "target": "adapted model margin logit(mine) - logit(not mine)"
+      },
+      "cells": [
+        {
+          "model": "pretrained",
+          "task": "is C4 mine",
+          "seed": 0,
+          "equation": "(-13.364187 * (sq_C4 * (-0.035029013 - sq_C4))) + -11.750115",
+          "complexity": 9,
+          "top_square": "C4",
+          "recovered": true,
+          "own_square_contrast": 0.9363,
+          "own_square_signed_contrast": 0.9363,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 13.3642,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.2762,
+          "linear_r2": 0.676,
+          "law_agreement": 0.6649
+        },
+        {
+          "model": "pretrained",
+          "task": "is C4 mine",
+          "seed": 1,
+          "equation": "(sq_C4 * (sq_C4 * 16.028618)) + -11.630923",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 16.0286,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.2805,
+          "linear_r2": 0.6841,
+          "law_agreement": 0.6649
+        },
+        {
+          "model": "pretrained",
+          "task": "is C4 mine",
+          "seed": 2,
+          "equation": "((sq_C4 * sq_C4) * 12.981943) - 8.125721",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 12.9819,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.1891,
+          "linear_r2": 0.479,
+          "law_agreement": 0.6649
+        },
+        {
+          "model": "pretrained",
+          "task": "is F5 mine",
+          "seed": 0,
+          "equation": "-6.9416375 - (sq_F5 * (sq_F5 * -9.846903))",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 9.8469,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.2012,
+          "linear_r2": 0.6211,
+          "law_agreement": 0.6654
+        },
+        {
+          "model": "pretrained",
+          "task": "is F5 mine",
+          "seed": 1,
+          "equation": "(sq_F5 * sq_F5) * 4.8133626",
+          "complexity": 5,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 4.8134,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.1601,
+          "linear_r2": 0.6344,
+          "law_agreement": 0.6654
+        },
+        {
+          "model": "pretrained",
+          "task": "is F5 mine",
+          "seed": 2,
+          "equation": "(sq_F5 * (sq_F5 * 18.478794)) - 16.56614",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 18.4788,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.4044,
+          "linear_r2": 0.72,
+          "law_agreement": 0.6654
+        },
+        {
+          "model": "pretrained",
+          "task": "is C3 mine",
+          "seed": 0,
+          "equation": "sq_C3 - 1.8893237",
+          "complexity": 3,
+          "top_square": "C3",
+          "recovered": false,
+          "own_square_contrast": 2.0,
+          "own_square_signed_contrast": 2.0,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.0299,
+          "linear_r2": 0.5259,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "pretrained",
+          "task": "is C3 mine",
+          "seed": 1,
+          "equation": "(sq_C3 * (8.456101 - ((sq_C3 - 0.534399) * -9.055742))) + -9.055742",
+          "complexity": 11,
+          "top_square": "C3",
+          "recovered": true,
+          "own_square_contrast": 7.2334,
+          "own_square_signed_contrast": 7.2334,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 9.0557,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.2244,
+          "linear_r2": 0.672,
+          "law_agreement": 1.0
+        },
+        {
+          "model": "pretrained",
+          "task": "is C3 mine",
+          "seed": 2,
+          "equation": "((sq_C3 + 0.36934942) * (sq_C3 * 7.6745253)) - 5.953722",
+          "complexity": 9,
+          "top_square": "C3",
+          "recovered": true,
+          "own_square_contrast": 5.6692,
+          "own_square_signed_contrast": 5.6692,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 7.6745,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.1444,
+          "linear_r2": 0.5389,
+          "law_agreement": 1.0
+        },
+        {
+          "model": "pretrained",
+          "task": "is F6 mine",
+          "seed": 0,
+          "equation": "((sq_F6 * sq_F6) * 12.402824) + -11.731024",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 12.4028,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F6"
+          ],
+          "fit_r2": 0.2302,
+          "linear_r2": 0.7452,
+          "law_agreement": 0.6973
+        },
+        {
+          "model": "pretrained",
+          "task": "is F6 mine",
+          "seed": 1,
+          "equation": "((sq_F6 * sq_F6) * 13.270089) + -9.965186",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 13.2701,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F6"
+          ],
+          "fit_r2": 0.2731,
+          "linear_r2": 0.7476,
+          "law_agreement": 0.6973
+        },
+        {
+          "model": "pretrained",
+          "task": "is F6 mine",
+          "seed": 2,
+          "equation": "-18.78288 - (sq_F6 * (sq_F6 * -15.791654))",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 15.7917,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F6"
+          ],
+          "fit_r2": 0.2369,
+          "linear_r2": 0.575,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is C4 mine",
+          "seed": 0,
+          "equation": "(sq_C4 * ((sq_C4 + sq_C4) + sq_C4)) + -5.3004465",
+          "complexity": 9,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 3.0,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.0512,
+          "linear_r2": 0.205,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is C4 mine",
+          "seed": 1,
+          "equation": "(sq_C4 * sq_C4) + -4.134475",
+          "complexity": 5,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 1.0,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.019,
+          "linear_r2": 0.2087,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is C4 mine",
+          "seed": 2,
+          "equation": "(sq_C4 * sq_C4) - 1.6521956",
+          "complexity": 5,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 1.0,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "C4"
+          ],
+          "fit_r2": 0.0265,
+          "linear_r2": 0.2245,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is F5 mine",
+          "seed": 0,
+          "equation": "(sq_F5 * sq_F5) * 3.8139055",
+          "complexity": 5,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 3.8139,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.0814,
+          "linear_r2": 0.3183,
+          "law_agreement": 0.6654
+        },
+        {
+          "model": "random",
+          "task": "is F5 mine",
+          "seed": 1,
+          "equation": "(sq_F5 * 2.9478366) * sq_F5",
+          "complexity": 5,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 2.9478,
+          "occupancy_shortcut": true,
+          "squares_used": [
+            "F5"
+          ],
+          "fit_r2": 0.0414,
+          "linear_r2": 0.2135,
+          "law_agreement": 0.6654
+        },
+        {
+          "model": "random",
+          "task": "is F5 mine",
+          "seed": 2,
+          "equation": "sq_B6 * (sq_B6 * 4.179446)",
+          "complexity": 5,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "B6"
+          ],
+          "fit_r2": 0.0768,
+          "linear_r2": 0.3444,
+          "law_agreement": 0.554
+        },
+        {
+          "model": "random",
+          "task": "is C3 mine",
+          "seed": 0,
+          "equation": "(sq_C3 + (sq_H8 * (sq_H8 * 3.1816478))) - 2.3394198",
+          "complexity": 9,
+          "top_square": "C3",
+          "recovered": true,
+          "own_square_contrast": 2.0,
+          "own_square_signed_contrast": 2.0,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "C3",
+            "H8"
+          ],
+          "fit_r2": 0.0399,
+          "linear_r2": 0.2066,
+          "law_agreement": 0.6584
+        },
+        {
+          "model": "random",
+          "task": "is C3 mine",
+          "seed": 1,
+          "equation": "((sq_E6 * sq_E6) + -1.20475) * 5.898572",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "E6"
+          ],
+          "fit_r2": 0.0746,
+          "linear_r2": 0.2468,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is C3 mine",
+          "seed": 2,
+          "equation": "(0.7107373 - sq_C3) * ((sq_C3 + 1.0019219) * -2.9917314)",
+          "complexity": 9,
+          "top_square": "C3",
+          "recovered": true,
+          "own_square_contrast": 1.7423,
+          "own_square_signed_contrast": 1.7423,
+          "own_square_contrast_share": 1.0,
+          "own_square_occupancy_effect": 2.9917,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "C3"
+          ],
+          "fit_r2": 0.035,
+          "linear_r2": 0.2168,
+          "law_agreement": 1.0
+        },
+        {
+          "model": "random",
+          "task": "is F6 mine",
+          "seed": 0,
+          "equation": "((sq_G6 * sq_G6) * 5.488502) - 6.62812",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "G6"
+          ],
+          "fit_r2": 0.0789,
+          "linear_r2": 0.2934,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is F6 mine",
+          "seed": 1,
+          "equation": "(sq_F4 * ((5.3183727 - sq_D2) * sq_F4)) - 6.6358366",
+          "complexity": 9,
+          "top_square": "D2",
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "D2",
+            "F4"
+          ],
+          "fit_r2": 0.0638,
+          "linear_r2": 0.2953,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "is F6 mine",
+          "seed": 2,
+          "equation": "((sq_C5 * 5.3085623) * sq_C5) + -6.1792884",
+          "complexity": 7,
+          "top_square": null,
+          "recovered": false,
+          "own_square_contrast": 0.0,
+          "own_square_signed_contrast": 0.0,
+          "own_square_contrast_share": 0.0,
+          "own_square_occupancy_effect": 0.0,
+          "occupancy_shortcut": false,
+          "squares_used": [
+            "C5"
+          ],
+          "fit_r2": 0.0547,
+          "linear_r2": 0.2971,
+          "law_agreement": 0.5
+        }
+      ]
+    },
+    "distribution": "synthetic",
+    "tasks": [
+      "is C4 mine",
+      "is F5 mine",
+      "is C3 mine",
+      "is F6 mine"
+    ],
+    "n_adapt_games": 64,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "protocol": {
+      "steps": 300,
+      "batch": 16,
+      "head_lr": 0.001,
+      "body_lr": 0.0001,
+      "weight_decay": 0.01,
+      "position_seed": 0
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "transformer",
+  "scale": "large",
+  "distribution": "synthetic",
+  "seed": 0,
+  "run_id": "othello_transformer_large_synthetic_s0_D3",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "8c947fe",
+    "time_utc": "2026-10-19T00:21:33Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 291.4,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
