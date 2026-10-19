@@ -1,0 +1,40 @@
+{
+  "model_id": "othello_lstm_medium_synthetic_s1",
+  "diagnostic": "D1",
+  "method": "legal move rate: share of positions where the top predicted move is legal (argmax), higher is better",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.6966522864538395,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "argmax_legal_rate": 0.6966522864538395,
+    "sampled_legal_rate": 0.39207075064710956,
+    "n_samples": 10,
+    "temperature": 1.0,
+    "sample_seed": 0,
+    "n_positions": 57950,
+    "distribution": "synthetic",
+    "illegal_games_dropped": 0
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "lstm",
+  "scale": "medium",
+  "distribution": "synthetic",
+  "seed": 1,
+  "run_id": "othello_lstm_medium_synthetic_s1_D1",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "a9c86ce",
+    "time_utc": "2026-10-19T02:42:43Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-27",
+    "runtime_sec": 6.2,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}

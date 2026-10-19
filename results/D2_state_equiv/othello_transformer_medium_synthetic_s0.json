@@ -1,0 +1,53 @@
+{
+  "model_id": "othello_transformer_medium_synthetic_s0",
+  "diagnostic": "D2",
+  "method": "state equivalence (Vafa et al. 2024), next move: 1 minus mean of compression error and distinction error, accepted moves = top k with k = number of legal moves, higher is better",
+  "split": "test",
+  "n_games": 4000,
+  "data_seed": 0,
+  "score": 0.8470780609772253,
+  "score_std": 0.003343064485354877,
+  "score_ci": null,
+  "details": {
+    "compression_error": 0.08770918331893941,
+    "compression_error_se": 0.005977943860192953,
+    "distinction_error": 0.21813469472661018,
+    "distinction_error_se": 0.002994746703370029,
+    "n_same_state_pairs": 615,
+    "n_different_state_pairs": 2000,
+    "n_histories": 216055,
+    "same_state_pair_lengths": {
+      "3": 2,
+      "4": 8,
+      "5": 117,
+      "6": 289,
+      "7": 143,
+      "8": 43,
+      "9": 11,
+      "10": 2
+    },
+    "mean_legal_moves": 8.957932008053504,
+    "distribution": "synthetic",
+    "games_requested": 1000,
+    "games_used": 4000
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "transformer",
+  "scale": "medium",
+  "distribution": "synthetic",
+  "seed": 0,
+  "run_id": "othello_transformer_medium_synthetic_s0_D2",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "a9c86ce",
+    "time_utc": "2026-10-19T02:46:49Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-27",
+    "runtime_sec": 66.8,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}

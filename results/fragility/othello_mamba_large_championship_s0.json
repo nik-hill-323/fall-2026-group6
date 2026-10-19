@@ -1,0 +1,78 @@
+{
+  "model_id": "othello_mamba_large_championship_s0",
+  "suite_version": "othello-fragility-v1",
+  "suite_hash": "644671bfb322",
+  "train_distribution": "championship",
+  "in_distribution_legal_rate": 0.8874490289584629,
+  "legal_rate": {
+    "cross_distribution/synthetic": 0.742053494391717,
+    "after_pass": 0.9319654427645788,
+    "symmetry/rot180": 0.7846084732877185,
+    "symmetry/transpose": 0.8137224410809316,
+    "symmetry/anti_transpose": 0.7942497753818508
+  },
+  "positions_scored": {
+    "in_distribution": 57876,
+    "cross_distribution/synthetic": 57950,
+    "after_pass": 926,
+    "symmetry/rot180": 57876,
+    "symmetry/transpose": 57876,
+    "symmetry/anti_transpose": 57876
+  },
+  "detour": {
+    "random/p=0.0": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.9113003370587192,
+      "n_games": 500,
+      "n_predictions": 5637,
+      "n_detours": 0
+    },
+    "random/p=0.1": {
+      "completion_rate": 0.004,
+      "legal_rate": 0.8646371296547976,
+      "n_games": 500,
+      "n_predictions": 3679,
+      "n_detours": 326
+    },
+    "random/p=0.5": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.813849590469099,
+      "n_games": 500,
+      "n_predictions": 2686,
+      "n_detours": 1131
+    },
+    "adversarial/p=0.0": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.9113003370587192,
+      "n_games": 500,
+      "n_predictions": 5637,
+      "n_detours": 0
+    },
+    "adversarial/p=0.1": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.8413705583756346,
+      "n_games": 500,
+      "n_predictions": 3152,
+      "n_detours": 283
+    },
+    "adversarial/p=0.5": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.7943233237350884,
+      "n_games": 500,
+      "n_predictions": 2431,
+      "n_detours": 998
+    }
+  },
+  "drops": {
+    "cross_distribution/synthetic": 0.14539553456674592,
+    "after_pass": -0.04451641380611593,
+    "symmetry/rot180": 0.10284055567074435,
+    "symmetry/transpose": 0.07372658787753128,
+    "symmetry/anti_transpose": 0.09319925357661207,
+    "detour/random/p=0.1": -0.004,
+    "detour/random/p=0.5": 0.0,
+    "detour/adversarial/p=0.1": 0.0,
+    "detour/adversarial/p=0.5": 0.0
+  },
+  "fragility": 0.04073839087616863
+}
