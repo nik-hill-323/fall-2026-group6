@@ -1,0 +1,11 @@
+domain,arch,scale,planned,trained,admitted,not_admitted,competence_mean,competence_min,competence_max
+othello,transformer,small,9,9,9,0,0.8406,0.8372,0.8485
+othello,transformer,medium,9,9,9,0,0.9152,0.8847,0.9441
+othello,transformer,large,9,9,9,0,0.9319,0.8955,0.9688
+othello,lstm,small,9,9,9,0,0.5827,0.5592,0.6089
+othello,lstm,medium,9,9,9,0,0.6877,0.6534,0.7308
+othello,lstm,large,9,9,9,0,0.7781,0.7234,0.8152
+othello,mamba,small,9,9,9,0,0.8346,0.8268,0.8444
+othello,mamba,medium,9,9,9,0,0.8968,0.8707,0.9268
+othello,mamba,large,9,9,9,0,0.9244,0.8846,0.9638
+othello,all,all,81,81,81,0,0.8213,0.5592,0.9688

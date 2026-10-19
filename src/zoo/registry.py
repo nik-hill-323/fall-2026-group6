@@ -4,8 +4,11 @@ Source of truth: one small training record per model in results/zoo_training/{mo
 written by src/zoo/train.py after every full budget run on real data. Each instance commits only
 its own records, so four people training different slices never edit the same file.
 
-The registry table src/docs/zoo_registry.csv is rebuilt from those records:
-    python src/zoo/registry.py              # rebuild src/docs/zoo_registry.csv and print a summary
+The registry table src/docs/zoo_registry.csv is rebuilt from those records, together with the
+admission table src/docs/zoo_admission.csv (preregistration Section 5 and Amendment 1, A3: per
+architecture and scale, how many models are planned, trained, admitted and not admitted, and the
+count, mean and range of competence, the validation legal move rate, of the admitted models):
+    python src/zoo/registry.py              # rebuild both tables and print the admission table
 
 Loading a model for a diagnostic:
     model = load_model("othello_transformer_large_synthetic_s0")    # a ZooModel
@@ -25,6 +28,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 RECORDS_DIR = ROOT / "results" / "zoo_training"
 REGISTRY_CSV = ROOT / "src" / "docs" / "zoo_registry.csv"
+ADMISSION_CSV = ROOT / "src" / "docs" / "zoo_admission.csv"
 
 # Minimum legal move rate (validation split) for a model to count in H1 to H3.
 # Fixed by the preregistration (reports/preregistration.md, section 2, tag prereg-v1).
@@ -101,6 +105,52 @@ def write_registry(path: Path | str = REGISTRY_CSV, **kwargs: Any) -> list[dict[
     return rows
 
 
+ADMISSION_COLUMNS = ["domain", "arch", "scale", "planned", "trained", "admitted", "not_admitted",
+                     "competence_mean", "competence_min", "competence_max"]
+
+
+def admission_table(rows: list[dict[str, Any]], models_csv: Path | str | None = None,
+                    domain: str = "othello") -> list[dict[str, Any]]:
+    """Per architecture and scale of one domain: planned models (models.csv), trained, admitted,
+    not admitted, and the mean and range of competence (validation legal move rate) over the
+    admitted models. The last row, arch "all", sums the whole domain."""
+    results = _load("results", "src/component/results.py")
+    models = results.load_models(models_csv) if models_csv else results.load_models()
+    groups: dict[tuple[str, str], dict[str, Any]] = {}
+    for m in models.values():
+        if m["domain"] == domain:
+            g = groups.setdefault((m["arch"], m["scale"]), {"planned": 0, "rows": []})
+            g["planned"] += 1
+    for r in rows:
+        if r["domain"] == domain:
+            groups[(r["arch"], r["scale"])]["rows"].append(r)
+
+    def line(arch: str, scale: str, planned: int, rs: list[dict[str, Any]]) -> dict[str, Any]:
+        rates = [float(r["val_legal_rate"]) for r in rs if r["admitted"] == "yes"]
+        return {"domain": domain, "arch": arch, "scale": scale, "planned": planned, "trained": len(rs),
+                "admitted": len(rates), "not_admitted": sum(r["admitted"] == "no" for r in rs),
+                "competence_mean": round(sum(rates) / len(rates), 4) if rates else "",
+                "competence_min": round(min(rates), 4) if rates else "",
+                "competence_max": round(max(rates), 4) if rates else ""}
+
+    out = [line(a, s, g["planned"], g["rows"]) for (a, s), g in groups.items()]
+    out.append(line("all", "all", sum(g["planned"] for g in groups.values()),
+                    [r for g in groups.values() for r in g["rows"]]))
+    return out
+
+
+def write_admission(path: Path | str = ADMISSION_CSV, rows: list[dict[str, Any]] | None = None,
+                    **kwargs: Any) -> list[dict[str, Any]]:
+    table = admission_table(rows if rows is not None else build_registry(), **kwargs)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=ADMISSION_COLUMNS)
+        w.writeheader()
+        w.writerows(table)
+    return table
+
+
 def load_model(model_id: str, device: str | None = None, check_hash: bool = True,
                records_dir: Path | str = RECORDS_DIR):
     """A trained zoo model as a ZooModel (src/diagnostics/interface.py). Checks that a training
@@ -151,17 +201,23 @@ def import_outputs(zoo_dir: Path | str = ROOT / "outputs" / "zoo", records_dir: 
 if __name__ == "__main__":
     import argparse
 
-    p = argparse.ArgumentParser(description="Rebuild src/docs/zoo_registry.csv from results/zoo_training/.")
+    p = argparse.ArgumentParser(description="Rebuild src/docs/zoo_registry.csv and src/docs/zoo_admission.csv "
+                                            "from results/zoo_training/.")
     p.add_argument("--import_outputs", action="store_true",
                    help="first write records for finished full budget runs in outputs/zoo that have none")
+    p.add_argument("--domain", default="othello", help="domain of the admission table")
     a = p.parse_args()
     if a.import_outputs:
         for m in import_outputs():
             print(f"  record written for {m}")
     rows = write_registry()
     print(f"wrote {REGISTRY_CSV.relative_to(ROOT)}: {len(rows)} trained models")
-    by = {}
-    for r in rows:
-        by.setdefault((r["arch"], r["scale"]), []).append(r["val_legal_rate"])
-    for (arch, scale), rates in sorted(by.items()):
-        print(f"  {arch:12s} {scale:7s} {len(rates):3d} models  legal rate {min(rates):.3f} to {max(rates):.3f}")
+    table = write_admission(rows=rows, domain=a.domain)
+    print(f"wrote {ADMISSION_CSV.relative_to(ROOT)}: admission per architecture and scale ({a.domain}), "
+          f"threshold {ADMISSION_MIN_LEGAL_RATE}")
+    print(f"  {'arch':12s} {'scale':7s} planned trained admitted not_adm  competence mean [min, max]")
+    for t in table:
+        comp = (f"{t['competence_mean']:.3f} [{t['competence_min']:.3f}, {t['competence_max']:.3f}]"
+                if t["admitted"] else "")
+        print(f"  {t['arch']:12s} {t['scale']:7s} {t['planned']:7d} {t['trained']:7d} {t['admitted']:8d} "
+              f"{t['not_admitted']:7d}  {comp}")
