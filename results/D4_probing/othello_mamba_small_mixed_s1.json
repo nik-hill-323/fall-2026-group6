@@ -1,0 +1,166 @@
+{
+  "model_id": "othello_mamba_small_mixed_s1",
+  "diagnostic": "D4",
+  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.20759997198832003,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 3,
+    "best_layer_depth": 1.0,
+    "n_layers": 4,
+    "probe_acc_by_layer": [
+      0.67857,
+      0.72432,
+      0.74761,
+      0.77844
+    ],
+    "control_acc_by_layer": [
+      0.58451,
+      0.58519,
+      0.58379,
+      0.57084
+    ],
+    "selectivity_by_layer": [
+      0.09406,
+      0.13913,
+      0.16381,
+      0.2076
+    ],
+    "selectivity_by_layer_choose": [
+      0.09304,
+      0.13824,
+      0.16315,
+      0.20645
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.04575,
+      0.06904,
+      0.09987
+    ],
+    "probe_acc_occupied_by_layer": [
+      0.48775,
+      0.54272,
+      0.56933,
+      0.58531
+    ],
+    "occupancy_baseline_acc": 0.75651,
+    "gain_over_occupancy_by_layer": [
+      -0.07794,
+      -0.03219,
+      -0.0089,
+      0.02193
+    ],
+    "distribution": "mixed",
+    "n_fit_games": 10000,
+    "n_choose_games": 1000,
+    "n_test_games": 1000,
+    "illegal_games_dropped": {
+      "fit": 0,
+      "choose": 0,
+      "test": 0
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 3,
+      "selectivity_at_best": 0.18526,
+      "probe_acc_by_layer": [
+        0.69348,
+        0.74413,
+        0.76644,
+        0.7807
+      ],
+      "control_acc_by_layer": [
+        0.60667,
+        0.60993,
+        0.61134,
+        0.59544
+      ],
+      "selectivity_by_layer": [
+        0.08681,
+        0.1342,
+        0.15511,
+        0.18526
+      ],
+      "selectivity_by_layer_choose": [
+        0.08634,
+        0.1341,
+        0.15461,
+        0.18419
+      ],
+      "probe_acc_occupied_by_layer": [
+        0.50215,
+        0.56301,
+        0.5863,
+        0.58754
+      ],
+      "gain_over_linear_by_layer": [
+        0.01491,
+        0.01981,
+        0.01884,
+        0.00225
+      ]
+    },
+    "causal": {
+      "causal_score": 0.13377,
+      "causal_score_ci": [
+        0.09871,
+        0.16856
+      ],
+      "causal_label": "decodable but not causal",
+      "boundary_acc_edit": 0.5674,
+      "boundary_acc_random": 0.43363,
+      "boundary_acc_none": 0.46142,
+      "edit_success_rate": 0.902,
+      "edit_success_by_layer": {
+        "2": 0.912,
+        "3": 0.969
+      },
+      "flip_read_by_layer": {
+        "2": 1.0,
+        "3": 1.0
+      },
+      "edit_steps_by_layer": {
+        "2": 58.654,
+        "3": 49.182
+      },
+      "edit_size_by_layer": {
+        "2": 31.84187,
+        "3": 24.78305
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        2,
+        3
+      ],
+      "best_layer": 3,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.788
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "mamba",
+  "scale": "small",
+  "distribution": "mixed",
+  "seed": 1,
+  "run_id": "othello_mamba_small_mixed_s1_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "156bf34",
+    "time_utc": "2026-10-19T14:50:03Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-67",
+    "runtime_sec": 27.3,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
