@@ -1,0 +1,197 @@
+{
+  "model_id": "othello_mamba_medium_championship_s0",
+  "diagnostic": "D4",
+  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.198997946956315,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 4,
+    "best_layer_depth": 0.8333,
+    "n_layers": 6,
+    "probe_acc_by_layer": [
+      0.73509,
+      0.78405,
+      0.80058,
+      0.81531,
+      0.82037,
+      0.80903
+    ],
+    "control_acc_by_layer": [
+      0.62347,
+      0.62518,
+      0.62467,
+      0.6229,
+      0.62137,
+      0.61323
+    ],
+    "selectivity_by_layer": [
+      0.11162,
+      0.15887,
+      0.17591,
+      0.19241,
+      0.199,
+      0.19581
+    ],
+    "selectivity_by_layer_choose": [
+      0.11247,
+      0.15857,
+      0.17507,
+      0.19169,
+      0.19781,
+      0.19517
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.04896,
+      0.0655,
+      0.08022,
+      0.08528,
+      0.07394
+    ],
+    "probe_acc_occupied_by_layer": [
+      0.55563,
+      0.61288,
+      0.63698,
+      0.65652,
+      0.66489,
+      0.64694
+    ],
+    "occupancy_baseline_acc": 0.75695,
+    "gain_over_occupancy_by_layer": [
+      -0.02186,
+      0.0271,
+      0.04363,
+      0.05836,
+      0.06341,
+      0.05208
+    ],
+    "distribution": "championship",
+    "n_fit_games": 10000,
+    "n_choose_games": 1000,
+    "n_test_games": 1000,
+    "illegal_games_dropped": {
+      "fit": 0,
+      "choose": 0,
+      "test": 0
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 5,
+      "selectivity_at_best": 0.17708,
+      "probe_acc_by_layer": [
+        0.74761,
+        0.79297,
+        0.80842,
+        0.8224,
+        0.82764,
+        0.81895
+      ],
+      "control_acc_by_layer": [
+        0.646,
+        0.65213,
+        0.65369,
+        0.65441,
+        0.65373,
+        0.64187
+      ],
+      "selectivity_by_layer": [
+        0.1016,
+        0.14084,
+        0.15473,
+        0.16799,
+        0.17391,
+        0.17708
+      ],
+      "selectivity_by_layer_choose": [
+        0.10188,
+        0.14025,
+        0.15404,
+        0.16674,
+        0.1727,
+        0.17615
+      ],
+      "probe_acc_occupied_by_layer": [
+        0.5723,
+        0.62456,
+        0.64804,
+        0.66793,
+        0.67629,
+        0.65984
+      ],
+      "gain_over_linear_by_layer": [
+        0.01252,
+        0.00892,
+        0.00784,
+        0.00709,
+        0.00728,
+        0.00992
+      ]
+    },
+    "causal": {
+      "causal_score": 0.13993,
+      "causal_score_ci": [
+        0.10852,
+        0.1691
+      ],
+      "causal_label": "decodable but not causal",
+      "boundary_acc_edit": 0.55984,
+      "boundary_acc_random": 0.41991,
+      "boundary_acc_none": 0.45849,
+      "edit_success_rate": 1.0,
+      "edit_success_by_layer": {
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "flip_read_by_layer": {
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "edit_steps_by_layer": {
+        "3": 28.977,
+        "4": 12.257,
+        "5": 18.584
+      },
+      "edit_size_by_layer": {
+        "3": 22.28538,
+        "4": 8.8796,
+        "5": 12.76072
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        3,
+        4,
+        5
+      ],
+      "best_layer": 4,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.79
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "mamba",
+  "scale": "medium",
+  "distribution": "championship",
+  "seed": 0,
+  "run_id": "othello_mamba_medium_championship_s0_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "156bf34",
+    "time_utc": "2026-10-19T06:19:06Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-123",
+    "runtime_sec": 53.1,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}

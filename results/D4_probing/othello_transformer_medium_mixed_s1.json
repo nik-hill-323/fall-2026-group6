@@ -1,0 +1,197 @@
+{
+  "model_id": "othello_transformer_medium_mixed_s1",
+  "diagnostic": "D4",
+  "method": "linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task (type = square played + position); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.25091727641586314,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 5,
+    "best_layer_depth": 1.0,
+    "n_layers": 6,
+    "probe_acc_by_layer": [
+      0.71012,
+      0.77105,
+      0.8201,
+      0.84418,
+      0.84909,
+      0.8478
+    ],
+    "control_acc_by_layer": [
+      0.60553,
+      0.60905,
+      0.60802,
+      0.60506,
+      0.60125,
+      0.59688
+    ],
+    "selectivity_by_layer": [
+      0.10458,
+      0.162,
+      0.21208,
+      0.23912,
+      0.24784,
+      0.25092
+    ],
+    "selectivity_by_layer_choose": [
+      0.10435,
+      0.16166,
+      0.21101,
+      0.2384,
+      0.2473,
+      0.25018
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.06093,
+      0.10998,
+      0.13407,
+      0.13897,
+      0.13769
+    ],
+    "probe_acc_occupied_by_layer": [
+      0.5155,
+      0.59593,
+      0.67794,
+      0.71781,
+      0.72401,
+      0.71684
+    ],
+    "occupancy_baseline_acc": 0.75651,
+    "gain_over_occupancy_by_layer": [
+      -0.04639,
+      0.01454,
+      0.06359,
+      0.08767,
+      0.09258,
+      0.09129
+    ],
+    "distribution": "mixed",
+    "n_fit_games": 10000,
+    "n_choose_games": 1000,
+    "n_test_games": 1000,
+    "illegal_games_dropped": {
+      "fit": 0,
+      "choose": 0,
+      "test": 0
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 5,
+      "selectivity_at_best": 0.2107,
+      "probe_acc_by_layer": [
+        0.74002,
+        0.78918,
+        0.82894,
+        0.85018,
+        0.85434,
+        0.85187
+      ],
+      "control_acc_by_layer": [
+        0.77417,
+        0.75694,
+        0.73151,
+        0.70237,
+        0.67337,
+        0.64117
+      ],
+      "selectivity_by_layer": [
+        -0.03415,
+        0.03224,
+        0.09744,
+        0.14781,
+        0.18097,
+        0.2107
+      ],
+      "selectivity_by_layer_choose": [
+        -0.03387,
+        0.03193,
+        0.09715,
+        0.14795,
+        0.18106,
+        0.21052
+      ],
+      "probe_acc_occupied_by_layer": [
+        0.55186,
+        0.61737,
+        0.68884,
+        0.7253,
+        0.731,
+        0.72146
+      ],
+      "gain_over_linear_by_layer": [
+        0.0299,
+        0.01813,
+        0.00884,
+        0.006,
+        0.00525,
+        0.00407
+      ]
+    },
+    "causal": {
+      "causal_score": 0.1722,
+      "causal_score_ci": [
+        0.13738,
+        0.20532
+      ],
+      "causal_label": "decodable but not causal",
+      "boundary_acc_edit": 0.60039,
+      "boundary_acc_random": 0.42819,
+      "boundary_acc_none": 0.42006,
+      "edit_success_rate": 1.0,
+      "edit_success_by_layer": {
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "flip_read_by_layer": {
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "edit_steps_by_layer": {
+        "3": 20.023,
+        "4": 7.202,
+        "5": 7.763
+      },
+      "edit_size_by_layer": {
+        "3": 15.2488,
+        "4": 5.15761,
+        "5": 5.12436
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        3,
+        4,
+        5
+      ],
+      "best_layer": 5,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.788
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "othello",
+  "arch": "transformer",
+  "scale": "medium",
+  "distribution": "mixed",
+  "seed": 1,
+  "run_id": "othello_transformer_medium_mixed_s1_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "156bf34",
+    "time_utc": "2026-10-19T05:20:31Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-123",
+    "runtime_sec": 22.5,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
