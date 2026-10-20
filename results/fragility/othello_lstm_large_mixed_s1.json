@@ -1,0 +1,81 @@
+{
+  "model_id": "othello_lstm_large_mixed_s1",
+  "suite_version": "othello-fragility-v1",
+  "suite_hash": "644671bfb322",
+  "train_distribution": "mixed",
+  "in_distribution_legal_rate": 0.8143133462282398,
+  "legal_rate": {
+    "cross_distribution/synthetic": 0.8169628990509059,
+    "cross_distribution/championship": 0.8111652498444951,
+    "after_pass": 0.926873857404022,
+    "symmetry/rot180": 0.8317732799115778,
+    "symmetry/transpose": 0.825487012987013,
+    "symmetry/anti_transpose": 0.8293554849405913
+  },
+  "positions_scored": {
+    "in_distribution": 57904,
+    "cross_distribution/synthetic": 57950,
+    "cross_distribution/championship": 57876,
+    "after_pass": 547,
+    "symmetry/rot180": 57904,
+    "symmetry/transpose": 57904,
+    "symmetry/anti_transpose": 57904
+  },
+  "detour": {
+    "random/p=0.0": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.9321665988332655,
+      "n_games": 500,
+      "n_predictions": 7371,
+      "n_detours": 0
+    },
+    "random/p=0.1": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.9251944943147815,
+      "n_games": 500,
+      "n_predictions": 6684,
+      "n_detours": 652
+    },
+    "random/p=0.5": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.9226963512677798,
+      "n_games": 500,
+      "n_predictions": 6468,
+      "n_detours": 3036
+    },
+    "adversarial/p=0.0": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.9321665988332655,
+      "n_games": 500,
+      "n_predictions": 7371,
+      "n_detours": 0
+    },
+    "adversarial/p=0.1": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.9231478635106056,
+      "n_games": 500,
+      "n_predictions": 6506,
+      "n_detours": 625
+    },
+    "adversarial/p=0.5": {
+      "completion_rate": 0.0,
+      "legal_rate": 0.917952084017066,
+      "n_games": 500,
+      "n_predictions": 6094,
+      "n_detours": 2814
+    }
+  },
+  "drops": {
+    "cross_distribution/synthetic": -0.0026495528226661014,
+    "cross_distribution/championship": 0.003148096383744692,
+    "after_pass": -0.11256051117578214,
+    "symmetry/rot180": -0.01745993368333798,
+    "symmetry/transpose": -0.011173666758773182,
+    "symmetry/anti_transpose": -0.015042138712351494,
+    "detour/random/p=0.1": 0.0,
+    "detour/random/p=0.5": 0.0,
+    "detour/adversarial/p=0.1": 0.0,
+    "detour/adversarial/p=0.5": 0.0
+  },
+  "fragility": -0.01557377067691662
+}
