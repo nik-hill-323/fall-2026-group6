@@ -1,0 +1,423 @@
+{
+  "note": "Exploratory, not preregistered; decided after the preregistered analysis was read.",
+  "n_models": 81,
+  "descriptives": {
+    "arch_scale": {
+      "lstm/large": {
+        "competence": 0.778133,
+        "D1": 0.77969,
+        "D2": 0.665783,
+        "D3": 0.017416,
+        "D4": 0.174425,
+        "rel_frag_v2": 0.014087,
+        "n": 9,
+        "n_decodable_and_causal": 0
+      },
+      "lstm/medium": {
+        "competence": 0.687711,
+        "D1": 0.690041,
+        "D2": 0.631974,
+        "D3": 0.014339,
+        "D4": 0.154971,
+        "rel_frag_v2": 0.020015,
+        "n": 9,
+        "n_decodable_and_causal": 0
+      },
+      "lstm/small": {
+        "competence": 0.582667,
+        "D1": 0.583751,
+        "D2": 0.606551,
+        "D3": 0.013221,
+        "D4": 0.119975,
+        "rel_frag_v2": 0.008394,
+        "n": 9,
+        "n_decodable_and_causal": 0
+      },
+      "mamba/large": {
+        "competence": 0.924444,
+        "D1": 0.925163,
+        "D2": 0.825525,
+        "D3": 0.070222,
+        "D4": 0.269266,
+        "rel_frag_v2": 0.008351,
+        "n": 9,
+        "n_decodable_and_causal": 2
+      },
+      "mamba/medium": {
+        "competence": 0.896833,
+        "D1": 0.898506,
+        "D2": 0.789074,
+        "D3": 0.043861,
+        "D4": 0.239735,
+        "rel_frag_v2": 0.006944,
+        "n": 9,
+        "n_decodable_and_causal": 1
+      },
+      "mamba/small": {
+        "competence": 0.834589,
+        "D1": 0.836742,
+        "D2": 0.722288,
+        "D3": 0.025378,
+        "D4": 0.202981,
+        "rel_frag_v2": 0.018927,
+        "n": 9,
+        "n_decodable_and_causal": 0
+      },
+      "transformer/large": {
+        "competence": 0.931922,
+        "D1": 0.933349,
+        "D2": 0.839872,
+        "D3": 0.056234,
+        "D4": 0.267898,
+        "rel_frag_v2": 0.012594,
+        "n": 9,
+        "n_decodable_and_causal": 4
+      },
+      "transformer/medium": {
+        "competence": 0.915167,
+        "D1": 0.917155,
+        "D2": 0.817236,
+        "D3": 0.037637,
+        "D4": 0.247069,
+        "rel_frag_v2": 0.020711,
+        "n": 9,
+        "n_decodable_and_causal": 3
+      },
+      "transformer/small": {
+        "competence": 0.8406,
+        "D1": 0.843147,
+        "D2": 0.750864,
+        "D3": 0.013529,
+        "D4": 0.193557,
+        "rel_frag_v2": 0.021931,
+        "n": 9,
+        "n_decodable_and_causal": 0
+      }
+    },
+    "arch": {
+      "lstm": {
+        "competence": 0.682837,
+        "D1": 0.684494,
+        "D2": 0.63477,
+        "D3": 0.014992,
+        "D4": 0.14979,
+        "rel_frag_v2": 0.014165,
+        "n": 27,
+        "n_decodable_and_causal": 0
+      },
+      "mamba": {
+        "competence": 0.885289,
+        "D1": 0.886803,
+        "D2": 0.778962,
+        "D3": 0.046487,
+        "D4": 0.237327,
+        "rel_frag_v2": 0.011407,
+        "n": 27,
+        "n_decodable_and_causal": 3
+      },
+      "transformer": {
+        "competence": 0.895896,
+        "D1": 0.897884,
+        "D2": 0.802657,
+        "D3": 0.0358,
+        "D4": 0.236175,
+        "rel_frag_v2": 0.018412,
+        "n": 27,
+        "n_decodable_and_causal": 7
+      }
+    },
+    "scale": {
+      "large": {
+        "competence": 0.878167,
+        "D1": 0.879401,
+        "D2": 0.77706,
+        "D3": 0.047957,
+        "D4": 0.237197,
+        "rel_frag_v2": 0.011677,
+        "n": 27,
+        "n_decodable_and_causal": 6
+      },
+      "medium": {
+        "competence": 0.833237,
+        "D1": 0.835234,
+        "D2": 0.746095,
+        "D3": 0.031946,
+        "D4": 0.213925,
+        "rel_frag_v2": 0.01589,
+        "n": 27,
+        "n_decodable_and_causal": 4
+      },
+      "small": {
+        "competence": 0.752619,
+        "D1": 0.754547,
+        "D2": 0.693234,
+        "D3": 0.017376,
+        "D4": 0.172171,
+        "rel_frag_v2": 0.016417,
+        "n": 27,
+        "n_decodable_and_causal": 0
+      }
+    },
+    "distribution": {
+      "championship": {
+        "competence": 0.811789,
+        "D1": 0.81363,
+        "D2": 0.719463,
+        "D3": 0.031329,
+        "D4": 0.175427,
+        "rel_frag_v2": 0.089743,
+        "n": 27,
+        "n_decodable_and_causal": 0
+      },
+      "mixed": {
+        "competence": 0.820904,
+        "D1": 0.82344,
+        "D2": 0.7534,
+        "D3": 0.025463,
+        "D4": 0.212156,
+        "rel_frag_v2": -0.02157,
+        "n": 27,
+        "n_decodable_and_causal": 1
+      },
+      "synthetic": {
+        "competence": 0.83133,
+        "D1": 0.832111,
+        "D2": 0.743526,
+        "D3": 0.040486,
+        "D4": 0.23571,
+        "rel_frag_v2": -0.024189,
+        "n": 27,
+        "n_decodable_and_causal": 9
+      }
+    }
+  },
+  "fragility_v2_mean_drop_by_training_distribution": {
+    "synthetic": {
+      "after_pass": -0.019777,
+      "cross_distribution/championship": -0.00712,
+      "detour/adversarial/p=0.1": -0.010547,
+      "detour/adversarial/p=0.5": -0.050381,
+      "detour/random/p=0.1": -0.00653,
+      "detour/random/p=0.5": -0.047623,
+      "symmetry/anti_transpose": -0.000275,
+      "symmetry/rot180": -0.000496,
+      "symmetry/transpose": -9.8e-05
+    },
+    "championship": {
+      "after_pass": 0.033752,
+      "cross_distribution/synthetic": 0.190159,
+      "detour/adversarial/p=0.1": -0.030342,
+      "detour/adversarial/p=0.5": -0.030951,
+      "detour/random/p=0.1": -0.005083,
+      "detour/random/p=0.5": -0.031483,
+      "symmetry/anti_transpose": 0.167489,
+      "symmetry/rot180": 0.180937,
+      "symmetry/transpose": 0.13957
+    },
+    "mixed": {
+      "after_pass": -0.006803,
+      "cross_distribution/championship": 0.009311,
+      "cross_distribution/synthetic": -0.008711,
+      "detour/adversarial/p=0.1": -0.009991,
+      "detour/adversarial/p=0.5": -0.041027,
+      "detour/random/p=0.1": -0.01014,
+      "detour/random/p=0.5": -0.045858,
+      "symmetry/anti_transpose": -0.013896,
+      "symmetry/rot180": -0.012999,
+      "symmetry/transpose": -0.011838
+    }
+  },
+  "h3_by_distribution": {
+    "within_distribution": {
+      "synthetic": {
+        "n_models": 27,
+        "n_configurations": 9,
+        "D1_spearman": 0.551672,
+        "D2": {
+          "partial_given_D1": -0.114376,
+          "ci": [
+            -0.356439,
+            0.381063
+          ],
+          "raw_spearman": 0.517094
+        },
+        "D3": {
+          "partial_given_D1": 0.154957,
+          "ci": [
+            -0.152461,
+            0.607207
+          ],
+          "raw_spearman": 0.557387
+        },
+        "D4": {
+          "partial_given_D1": 0.449458,
+          "ci": [
+            -0.22637,
+            0.725635
+          ],
+          "raw_spearman": 0.625153
+        }
+      },
+      "championship": {
+        "n_models": 27,
+        "n_configurations": 9,
+        "D1_spearman": -0.698413,
+        "D2": {
+          "partial_given_D1": 0.078973,
+          "ci": [
+            -0.499164,
+            0.400439
+          ],
+          "raw_spearman": -0.588523
+        },
+        "D3": {
+          "partial_given_D1": -0.490774,
+          "ci": [
+            -0.775606,
+            0.010488
+          ],
+          "raw_spearman": -0.75641
+        },
+        "D4": {
+          "partial_given_D1": -0.530214,
+          "ci": [
+            -0.761064,
+            0.19052
+          ],
+          "raw_spearman": -0.786935
+        }
+      },
+      "mixed": {
+        "n_models": 27,
+        "n_configurations": 9,
+        "D1_spearman": 0.666056,
+        "D2": {
+          "partial_given_D1": 0.046868,
+          "ci": [
+            -0.326972,
+            0.525638
+          ],
+          "raw_spearman": 0.666056
+        },
+        "D3": {
+          "partial_given_D1": -0.135804,
+          "ci": [
+            -0.33961,
+            0.429364
+          ],
+          "raw_spearman": 0.385226
+        },
+        "D4": {
+          "partial_given_D1": 0.341042,
+          "ci": [
+            -0.220665,
+            0.665858
+          ],
+          "raw_spearman": 0.709402
+        }
+      }
+    },
+    "controlling_distribution": {
+      "D2": {
+        "partial_given_D1_and_distribution": 0.152697,
+        "ci": [
+          -0.346251,
+          0.555376
+        ]
+      },
+      "D3": {
+        "partial_given_D1_and_distribution": -0.258734,
+        "ci": [
+          -0.501825,
+          0.077912
+        ]
+      },
+      "D4": {
+        "partial_given_D1_and_distribution": 0.230874,
+        "ci": [
+          -0.33556,
+          0.588986
+        ]
+      }
+    }
+  },
+  "diagnostic_details": {
+    "D2_compression_error": {
+      "mean": 0.146235,
+      "min": 0.021121,
+      "max": 0.288783
+    },
+    "D2_distinction_error": {
+      "mean": 0.376173,
+      "min": 0.159723,
+      "max": 0.647652
+    },
+    "D3_pretrained_balanced_accuracy": {
+      "mean": 0.579067,
+      "min": 0.530262,
+      "max": 0.634686
+    },
+    "D3_random_balanced_accuracy": {
+      "mean": 0.54664,
+      "min": 0.525661,
+      "max": 0.564805
+    },
+    "D3_law_recovered_pretrained": {
+      "mean": 0.038062,
+      "min": 0.0,
+      "max": 0.25
+    },
+    "D3_law_recovered_random": {
+      "mean": 0.026746,
+      "min": 0.0,
+      "max": 0.25
+    },
+    "D3_occupancy_shortcut_pretrained": {
+      "mean": 0.227363,
+      "min": 0.0,
+      "max": 0.8333
+    },
+    "D3_occupancy_shortcut_random": {
+      "mean": 0.148146,
+      "min": 0.0,
+      "max": 0.6667
+    },
+    "D4_linear_selectivity": {
+      "mean": 0.207764,
+      "min": 0.111048,
+      "max": 0.314461
+    },
+    "D4_mlp_selectivity": {
+      "mean": 0.183227,
+      "min": 0.10201,
+      "max": 0.28525
+    },
+    "D4_best_layer_depth": {
+      "mean": 0.830243,
+      "min": 0.125,
+      "max": 1.0
+    },
+    "D4_probe_minus_occupancy_baseline": {
+      "mean": 0.041388,
+      "min": -0.0829,
+      "max": 0.13341
+    },
+    "D4_causal_score": {
+      "mean": 0.125839,
+      "min": 0.00892,
+      "max": 0.25627
+    }
+  },
+  "decodable_and_causal_models": [
+    "othello_transformer_medium_synthetic_s0",
+    "othello_transformer_medium_synthetic_s1",
+    "othello_transformer_medium_synthetic_s2",
+    "othello_transformer_large_synthetic_s0",
+    "othello_transformer_large_synthetic_s1",
+    "othello_transformer_large_synthetic_s2",
+    "othello_transformer_large_mixed_s0",
+    "othello_mamba_medium_synthetic_s1",
+    "othello_mamba_large_synthetic_s1",
+    "othello_mamba_large_synthetic_s2"
+  ]
+}
