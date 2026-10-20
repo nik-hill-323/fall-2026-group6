@@ -602,3 +602,62 @@ were left open by Section 4 and Amendment 1 and are fixed here:
   coefficient is the 95% t interval. The Section 4 secondary rule takes the most negative Spearman as the
   strongest. The D4 causal flag (decodable and causal) is tested beyond D4 selectivity by a regression of
   the outcome on D4 and the flag and by the partial Spearman of the flag given D4.
+
+### Amendment 4 (prereg-v1.4), 2026-10-19
+
+Written after Instructor Review #5 (2026-10-19, Critiques 1, 2 and 4) and before any H1 to H3 statistic is
+computed on zoo data. Frozen with the git tag `prereg-v1.4`. Sections 1 to 5 and Amendments 1 to 3 stay in
+force except where this amendment says otherwise.
+
+**What existed when this was written.** The zoo was scored with `src/shellscripts/score_slice.sh` on
+2026-10-18 and 2026-10-19, before Review #5 arrived: the D1 to D4 and fragility v1 and v2 result files of
+61 of the 81 models were on main, and the remaining 20 were being committed. Per model scores were printed
+by the scoring launcher and checked for completeness and plausibility (status, fragility suite hashes,
+values next to the reference Othello GPTs). No statistic of H1, A1, A3, H2 or H3 had been computed on zoo
+data: no correlation between diagnostics or with fragility, no Kendall W, no regression and no interval.
+`src/analysis/hypotheses.py` had been run only on simulated zoos in its tests. The change below follows from
+the design of the zoo, not from any result.
+
+#### F1. Intervals resample configurations, not models (Critique 1)
+
+* The zoo is 27 configurations (architecture x scale x distribution) with 3 seeds each. Seeds of one
+  configuration share everything but the random seed, so their scores are close; resampling the 81 models
+  as independent units treats near copies as independent observations and makes intervals too narrow.
+* **Every interval of Section 4, Amendment 1, Amendment 3 E4 and this amendment** is now a 95% percentile
+  **cluster bootstrap**: each resample draws 27 configurations with replacement (as many as there are in
+  the analysed set) and keeps every model (seed) of each drawn configuration; 2,000 resamples, seed 0. The
+  statistic is computed on the pooled models of the resample, exactly as on the full set. This applies to
+  the H1 taus, Spearman rhos, partial taus and both Kendall W, the A3 sensitivity run, every H3 correlation,
+  partial correlation and difference of correlations, the D4 causal flag analysis and D3 against its
+  occupancy shortcut. All statistics of one analysis still share the same resamples.
+* **Regression coefficients** (H3 under A2 and Section 4, the D4 causal flag) get the same cluster
+  bootstrap interval, which replaces the 95% t interval of E4 in every decision; the model based t interval
+  is still reported next to it, labelled.
+* **H2 is unchanged.** Its F tests compare configurations against the spread between seeds of the same
+  configuration, which is the replication the design provides, and its decision already compares a
+  factor's effect with the seed noise floor of the disagreement.
+* Categories, thresholds and decision rules do not change; only the intervals they read do.
+* Reference for the method: Cameron, Gelbach and Miller (2008) on bootstrap inference with clustered data;
+  Bouthillier et al. (2021) on seed variance in machine learning benchmarks.
+
+#### F2. H3 with and without the model that motivated Amendment 3 (Critique 2)
+
+The primary H3 analysis (A2 on relative fragility v2) is reported twice: on all admitted models, and without
+`othello_transformer_small_synthetic_s0`, the model whose fragility v1 output motivated Amendment 3 (its
+fragility v1 file is `results/fragility/othello_transformer_small_synthetic_s0.json`). The decision of H3 is
+taken on all models; if the two versions differ, the paper reports both and says so.
+
+#### F3. The fragility distribution comes before H3 (Critique 4)
+
+Before any H3 statistic, the analysis reports the distribution of fragility v1, fragility v2 and both
+relative fragilities over the analysed models: count, mean, standard deviation, range, the 5th, 25th, 50th,
+75th and 95th percentiles, the share below 0, the share within 0.01 of 0, and the mean per architecture,
+with a histogram per architecture (`reports/figures/<domain>/fragility_distribution.png`). This shows how
+much of H3 rests on a few models when most values sit near 0. It does not change the H3 rules.
+
+#### F4. Code
+
+`src/analysis/hypotheses.py` implements F1 to F3 (`clusters`, `boot_indices`, `coef_interval`,
+`fragility_distribution`, `H3_without_test_model`). Tests in `src/tests/test_hypotheses.py` check that every
+resample is made of whole configurations, that the configuration bootstrap gives a wider interval than the
+model bootstrap when seeds are near copies, and that the new outputs are written.
