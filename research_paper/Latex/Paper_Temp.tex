@@ -1,89 +1,140 @@
 \documentclass[journal]{IEEEtran}
 
-%\usepackage[pass,letterpaper]{geometry}              %This package needs to be enaled when dvi--->ps----->PDF
-\usepackage{stmaryrd, amsfonts, mathptmx, mathtools, array, siunitx, subfigure, graphicx,balance }
-\usepackage{multirow, indentfirst, cite, verbatim, keyval, textcomp, enumerate, calc, microtype}
+% WM-Concord paper draft, Fall 2026, Group 6. Built from the course IEEEtran template.
+% Figures come from the report (reports/Latex_report/fig, made by reports/Latex_report/make_figures.py)
+% and references from the report's bib file, so both documents always use the same numbers and sources.
 
-
-
+\usepackage{amsmath, amsfonts, array, graphicx, booktabs, balance, cite}
 \usepackage[colorlinks,linktocpage]{hyperref}
 \hypersetup{
-   colorlinks   = true,                               %Colours links instead of ugly boxes
-   urlcolor     = blue,                               %Colour for external hyper links
-   linkcolor    = blue,                               %Colour of internal links
-   citecolor    = red,                                %Colour of citations
+   colorlinks   = true,
+   urlcolor     = blue,
+   linkcolor    = blue,
+   citecolor    = red,
    setpagesize  = false,
    linktocpage  = true,
 }
-
-\IEEEoverridecommandlockouts
+\graphicspath{{../../reports/Latex_report/fig/}{Fig/}}
 
 \begin{document}
 \raggedbottom
 
-\title{\ \\ \LARGE\bf Title of the paper \thanks{Amir Jafari and Martin Hagan are with the School of Electrical and Computer Engineering, Oklahoma State University, Stillwater, OK 74078, USA (email: \{amir.h.jafari@okstate.edu).}}
+\title{Do World Model Diagnostics Agree?\\ A Cross Diagnostic Validity Study on a Controlled Model Zoo}
 
-\author{Amir Jafari}
-\markboth{Journal of \LaTeX\ Class Files,~Vol.~xx, No.~xx, May~2016}%
-{Shell \MakeLowercase{\textit{et al.}}: Bare Demo of IEEEtran.cls for Journals}
+\author{Venkatesh~Nagarjuna, Siddardha~Reddy, Nikhil~Obuleni, Viharika~Vemparala, and~Amir~Jafari%
+\thanks{The authors are with the Data Science Program, The George Washington University, Washington, DC, USA.}}
+
+\markboth{WM-Concord draft, Fall 2026}{Nagarjuna \MakeLowercase{\textit{et al.}}: Do World Model Diagnostics Agree?}
 \maketitle
 
-%*********************************************************************************************************************************************************************************************************************
 \begin{abstract}
-This electronic document is a “live” template. The various components of your paper [title, text, heads, etc.] are already defined on the style sheet, as illustrated by the portions given in this document. DO NOT USE SPECIAL CHARACTERS, SYMBOLS, OR MATH IN YOUR TITLE OR ABSTRACT. (Abstract)
+Claims that sequence models learn a world model of their domain rest on four families of diagnostics: next
+token validity, state equivalence, inductive bias probes and representation probing. Each published study uses
+one of them, on its own models, and on Othello they reach opposite conclusions. We run all four on the same
+controlled zoo of 81 Othello models (three architectures, three scales, three training distributions, three
+seeds) under a preregistered analysis, and judge them against a fragility suite frozen before any score. The
+diagnostics agree strongly on raw scores (Kendall W 0.87), but almost all of this agreement is shared
+competence: with the legal move rate controlled, W falls to 0.27 and no pair of the diagnostics that can be
+separated from competence agrees. Their disagreement is not explained by architecture, scale or training data.
+Only the representation probe adds to the legal move rate in predicting fragility, and an exploratory analysis
+shows that this signal is a difference between training distributions, not a relation among comparable models.
+Navigation and a held out program interpreter test whether these findings generalize.
 \end{abstract}
-%*********************************************************************************************************************************************************************************************************************
-\section{INRODUCTION}
 
-All manuscripts must be in English. These guidelines include complete descriptions of the fonts, spacing, and related information for producing your proceedings manuscripts. Please follow them and if you have any questions, direct them to the production editor in charge of your proceedings (see author-kit message for contact info).
-This template provides authors with most of the formatting specifications needed for preparing electronic versions of their papers. All standard paper components have been specified for three reasons: (1) ease of use when formatting individual papers, (2) automatic compliance to electronic requirements that facilitate the concurrent or later production of electronic products, and (3) conformity of style throughout a conference proceedings. Margins, column widths, line spacing, and type styles are built-in; examples of the type styles are provided throughout this document and are identified in italic type, within parentheses, following the example. PLEASE DO NOT RE-ADJUST THESE MARGINS. Some components, such as multi-leveled equations, graphics, and tables are not prescribed, although the various table text styles are provided. The formatter will need to create these components, incorporating the applicable criteria that follow.
-%*********************************************************************************************************************************************************************************************************************
-\section{TYPE STYLE AND FONTS}
+\begin{IEEEkeywords}
+World models, interpretability, probing, measurement validity, Othello, preregistration.
+\end{IEEEkeywords}
 
-Wherever Times is specified, Times Roman or Times New Roman may be used. If neither is available on your word processor, please use the font closest in appearance to Times. Avoid using bit-mapped fonts. True Type 1 or Open Type fonts are required. Please embed all fonts, in particular symbol fonts, as well, for math, etc. training segment.
-%*********************************************************************************************************************************************************************************************************************
+\section{Introduction}
+\IEEEPARstart{W}{hether} a sequence model trained only to predict the next token builds a coherent internal
+model of its domain is a central open question. The same Othello models have been reported both as having a
+world model~\cite{li2023othello, nanda2023emergent, yuan2025revisiting} and as lacking a coherent
+one~\cite{vafa2024evaluating, vafa2025inductive}. Each of these studies uses its own diagnostic on its own
+models, so their disagreement cannot be interpreted. Following the measurement view of Jacobs and
+Wallach~\cite{jacobs2021measurement}, we treat ``has a world model'' as a construct and the diagnostics as
+competing measures of it, and ask whether they agree (convergent validity) and which predicts failure on shifted
+tasks (predictive validity). We propose no new diagnostic.
 
-\section{EASE OF USE}
+Our contributions are: the first head to head comparison of four world model diagnostics on the same models and
+ground truth; a test of their predictive validity against a fragility suite frozen before any score; and an open
+benchmark with a common interface to which future diagnostics can be added.
 
-The template is used to format your paper and style the text. All margins, column widths, line spaces, and text fonts are prescribed; please do not alter them. You may note peculiarities. For example, the head margin in this template measures proportionately more than is customary. This measurement and others are deliberate, using specifications that anticipate your paper as one part of the entire proceedings, and not as an independent document. Please do not revise any of the current designations.
-%*********************************************************************************************************************************************************************************************************************
-\section{PREPARE YOUR PAPER BEFORE STYLING}
+\section{Related Work}
+Representation probing reads the board from activations~\cite{li2023othello}, linearly once squares are labelled
+relative to the player~\cite{nanda2023emergent}, and across fine tuned language models~\cite{yuan2025revisiting};
+state tracking has been tested behaviourally in chess~\cite{toshniwal2022chess}. Vafa et al.\ derive state
+equivalence metrics from the Myhill Nerode theorem~\cite{vafa2024evaluating, nerode1958linear} and propose
+inductive bias probes~\cite{vafa2025inductive}. Control tasks~\cite{hewitt2019control} and the limits of
+probing~\cite{belinkov2022probing} shape our D4. Benchmarks often claim more than they measure~\cite{raji2021benchmark}.
+For inference with repeated runs we follow the cluster bootstrap~\cite{cameron2008bootstrap} and the case for
+accounting for seed variance~\cite{bouthillier2021variance}.
 
-Before you begin to format your paper, first write and save the content as a separate text file. Keep your text and graphic files separate until after the text has been formatted and styled. Do not use hard tabs, and limit use of hard returns to only one return at the end of a paragraph. Do not add any kind of pagination anywhere in the paper. Do not number text heads—the template will do that for you.
-Finally, complete content and organizational editing before formatting. Please take note of the following items when proofreading spelling and grammar.
+\section{Method}
+\subsection{Model zoo and domain}
+Othello's true state (board and player to move) is replayed exactly by our rules engine. We train
+transformers~\cite{vaswani2017attention}, stacked LSTMs~\cite{hochreiter1997lstm} and Mamba~\cite{gu2023mamba}
+at three scales (0.48 to 25.3 million parameters) on synthetic, championship (WTHOR) or mixed games, three seeds
+each, with one fixed budget. A model is admitted if its validation legal move rate, its \emph{competence}, is
+at least 0.50; all 81 are admitted (competence 0.559 to 0.969).
 
-\subsection{Abbreviations and Acronyms }
+\subsection{Diagnostics}
+\textbf{D1} is the share of positions whose top predicted move is legal. \textbf{D2} is one minus the mean of the
+compression and distinction errors of Vafa et al.~\cite{vafa2024evaluating} with next move continuations.
+\textbf{D3} is the balanced accuracy gain of the pretrained model over a random weight twin when adapted on 64
+examples to ``is square $X$ mine?''~\cite{vafa2025inductive}, with a symbolic regression arm~\cite{cranmer2023pysr}.
+\textbf{D4} is the selectivity of a linear mine, theirs or empty probe~\cite{hewitt2019control} at the best
+layer, with a causal edit check~\cite{li2023othello}. Protocols were tuned only on the two published Othello GPTs.
 
-Define abbreviations and acronyms the first time they are used in the text, even after they have been defined in the abstract. Abbreviations such as IEEE and SI do not have to be defined. Do not use abbreviations in the title or heads unless they are unavoidable.
+\subsection{Fragility and analysis}
+The fragility suite keeps the rules and shifts the situations (other distributions, after a pass, symmetries,
+forced detours); relative fragility divides the mean drop in legal move rate by the model's own rate. All
+rules were preregistered with git tags before the results they affect. H1 uses Kendall's tau~\cite{kendall1938tau},
+Kendall's partial tau given competence~\cite{kendall1942partial} and Kendall's W~\cite{kendall1939w}; H2 regresses
+per model disagreement on the design factors against a seed noise floor; H3 tests D2 to D4 beyond D1 by partial
+Spearman correlation. Intervals are 95\% cluster bootstrap intervals over the 27 configurations.
 
+\section{Results on Othello}
 \begin{figure}[t]
-	\centerline{\includegraphics[width=\columnwidth]{Fig/narxnet1.eps}}
-	\caption{Network}
-	\label{fig:1}
+    \centering
+    \includegraphics[width=\columnwidth]{othello_h1.pdf}
+    \caption{Rank agreement between diagnostics, raw and with competence controlled (81 models).}
+    \label{fig:h1}
 \end{figure}
 
+\textbf{H1.} Five of six pairs agree on raw scores and W is 0.872 [0.764, 0.921] (Fig.~\ref{fig:h1}). Every
+diagnostic follows competence (tau 0.968 for D1, 0.826 D2, 0.790 D4, 0.577 D3). D1 pairs are not interpretable
+after the control (preregistered rule), and the three pairs among D2, D3 and D4 all lose their agreement; W on
+competence residuals is 0.267 [0.189, 0.427].
 
-\subsection{Units}
+\textbf{H2.} Mean disagreement is 0.089 against a seed noise floor of 0.028; no factor is significant after Holm
+correction (architecture $p=0.78$, scale $p=0.081$, training data $p=0.34$).
 
-Use either SI or CGS as primary units. (SI units are encouraged.) English units may be used as secondary units (in parentheses). An exception would be the use of English units as identifiers in trade, such as 3.5-inch disk drive.
+\textbf{H3.} D1 does not predict relative fragility (0.150 [$-0.315$, 0.588]). Only D4 adds to D1 (partial
+$-0.554$ [$-0.734$, $-0.124$]), but no single diagnostic wins. In an exploratory analysis, championship trained
+models are both the most fragile and the least probe readable (Fig.~\ref{fig:d4}); within each training
+distribution the D4 link vanishes, and with training data controlled it is $+0.231$ [$-0.336$, 0.589].
 
-Avoid combining SI and CGS units, such as current in amperes and magnetic field in oersteds. This often leads to confusion because equations do not balance dimensionally. If you must use mixed units, clearly state the units for each quantity that you use in an equation
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.9\columnwidth]{othello_h3_d4.pdf}
+    \caption{D4 against relative fragility, by training distribution (exploratory).}
+    \label{fig:d4}
+\end{figure}
 
+\section{Discussion}
+On Othello the diagnostics agree mainly because better models score higher on all of them; beyond competence they
+measure different things, and none reliably predicts fragility among comparable models. A board that can be read
+out is not a board that is used: every model is decodable but only 10 of 81 pass the causal check. Studies that
+report a single diagnostic on models of different quality mostly report competence.
 
-%*********************************************************************************************************************************************************************************************************************
-\section{COPYRIGHT FORMS}
+\section{Conclusion and Future Work}
+We will repeat the analysis on navigation, reproducing the state equivalence results of Vafa et
+al.~\cite{vafa2024evaluating}, and test generalization (H4) on a held out program interpreter.
 
-You must submit the IEEE Electronic Copyright Form (ECF) as described in your author-kit message. THIS FORM MUST BE SUBMITTED IN ORDER TO PUBLISH YOUR PAPER.
-%*********************************************************************************************************************************************************************************************************************
-\section{ACKNOWLEDGMENT}
+\section*{Acknowledgment}
+We thank the GWU Data Science Program for compute on AWS.
 
-The preferred spelling of the word “acknowledgment” in America is without an “e” after the “g”. Avoid the stilted expression, “One of us (R. B. G.) thanks . . .”  Instead, try
-“R. B. G. thanks”. Put applicable sponsor acknowledgments here; DO NOT place them on the first page of your paper or as a footnote.
-
-
-%\bibliographystyle{IEEEtran}
-%\balance
-%\bibliography{../../reports/Latex_report/references}
+\balance
+\bibliographystyle{IEEEtran}
+\bibliography{../../reports/Latex_report/references}
 \end{document}
-
-

@@ -117,28 +117,40 @@ Note: Use Markdown Cheat Sheet download in the directory as needed.
 * [x] Amendment 2 (prereg-v1.2): D4 nonlinear probe and causal check, D3 symbolic regression arm, D2 sample size justification, all fixed before any zoo score (PRs #93, #94, #95, tag prereg-v1.2)
 * [x] Review #4 minor fixes: zip(strict=True), LSTM row in zoo_first_models.md (PR #77)
 * [x] Streamlit demo skeleton in demo/ (PR #83)
-* [ ] Checkpoints shared through S3 (s3://dats-capstone/shared/group6/zoo/ set up and tested; uploads in progress)
-* [ ] Slices 1 to 3 committed (PRs #75, #81, #87, 61 of 81 models, all admitted); slice 4 trained and committed; zoo_registry.csv rebuilt with admission per architecture and scale
-* [ ] D1, D2, D3 and D4 scored on every admitted Othello model, master table built
-* [ ] Four way concordance table (Kendall tau raw and partial, Kendall W, bootstrap intervals)
-* [ ] Streamlit demo on the real results
-* [ ] Methods section in Sample_Report.tex
-* [ ] Slides for the preliminary presentation in presentation/
-* [ ] Proposal timeline updated to the October 20 plan
+* [ ] Checkpoints shared through S3 (s3://dats-capstone/shared/group6/zoo/ set up and tested; uploads in progress) (moved to Week 8)
+* [ ] Slices 1 to 3 committed (PRs #75, #81, #87, 61 of 81 models, all admitted); slice 4 trained and committed; zoo_registry.csv rebuilt with admission per architecture and scale (moved to Week 8)
+* [ ] D1, D2, D3 and D4 scored on every admitted Othello model, master table built (moved to Week 8)
+* [ ] Four way concordance table (Kendall tau raw and partial, Kendall W, bootstrap intervals) (moved to Week 8)
+* [ ] Streamlit demo on the real results (moved to Week 8)
+* [ ] Methods section in Sample_Report.tex (moved to Week 8)
+* [ ] Slides for the preliminary presentation in presentation/ (moved to Week 8)
+* [x] Proposal timeline updated to the October 20 plan (PR #99, closes #98)
 ----
-## Date: Week 8 - Month Day Year 
+## Date: Week 8 - October 20, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #5 (2026-10-19): on schedule against the revised plan; every Review #4 item fixed; all four members committed. Blocker: the bootstrap treated the 81 models as independent, but they are 27 configurations x 3 seeds
+    - Othello zoo complete: 81 of 81 trained and admitted (competence 0.559 to 0.969); all 81 scored by D1 to D4 and fragility v1 and v2 (486 results, 0 missing) with the hash checked, resumable scoring launcher
+    - Fragility v2 (Amendment 3, before scoring): detours played to the end of the game, after pass positions matched on move number and number of legal moves
+    - Amendment 4 (prereg-v1.4) after Review #5: configuration bootstrap, H3 also without the test model, fragility distribution before H3. Written after the zoo was scored but before any H1 to H3 statistic; it changes no score
+    - Preregistered results on Othello: H1, the diagnostics agree (Kendall W 0.87) but through competence (W 0.27 with competence removed; D1 not interpretable under A5); H2, disagreement consistent with noise; H3, only D4 adds to D1, no single winner
+    - Exploratory (not preregistered): the D4 signal is a training data effect. Championship trained models are both the most fragile and the least probe readable; within each training distribution the link disappears
+    - Preliminary Presentation on October 20: slides, results and demo
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Zoo registry and admission table with all 81 models (PR #108, closes #101)
+* [x] Scoring launcher score_slice.sh: D1 to D4 and fragility per slice, hash checked, resumable (PR #103, closes #102)
+* [x] Amendment 3 (prereg-v1.3, fragility-v2) and analysis details E4 (PR #107, closes #104)
+* [x] Analysis code for H1 to H3 with tests on fake zoos; CI installs scipy and matplotlib (PR #109, closes #105)
+* [x] All 81 Othello models scored, one slice per member (PRs #112, #115, #116, #120)
+* [x] Amendment 4 (prereg-v1.4): configuration bootstrap (PR #119, closes #118)
+* [x] Master table, preregistered H1 to H3 analysis and exploratory analyses with a plain language summary in results/analysis/othello/RESULTS.md (PR #122, closes #121)
+* [x] Report: Methods, Othello results, discussion and limitations in Sample_Report.tex; 12 cited works in the literature review; vector figures made by reports/Latex_report/make_figures.py
+* [x] Paper draft in research_paper/Latex/Paper_Temp.tex that builds
+* [ ] Slides for the preliminary presentation in presentation/ (pptx and pdf)
+* [ ] Streamlit demo on the real results
+* [ ] Reply to Instructor Review #5 item by item
+* [ ] Checkpoints shared through S3 (uploads in progress)
 ---
 
 ## Date: Week 9 - Month Day Year 
