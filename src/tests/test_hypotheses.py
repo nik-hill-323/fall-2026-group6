@@ -76,6 +76,42 @@ def test_residual_rank_w_drops_shared_competence() -> None:
     assert hy.kendall_w(M) > 0.8 and hy.residual_rank_w(M, c) < 0.35
 
 
+def fake_rows(n_config: int = 27, seeds: int = 3) -> list[dict]:
+    archs, scales, dists = ["transformer", "lstm", "mamba"], ["small", "medium", "large"], ["a", "b", "c"]
+    keys = [(a, s, d) for a in archs for s in scales for d in dists][:n_config]
+    return [{"arch": a, "scale": s, "distribution": d, "seed": k} for (a, s, d) in keys for k in range(seeds)]
+
+
+def test_cluster_bootstrap_keeps_seeds_together() -> None:
+    """Amendment 4: every resample is made of whole configurations (all 3 seeds of each)."""
+    rows = fake_rows()
+    groups = {tuple(g.tolist()) for g in hy.clusters(rows)}
+    assert len(groups) == 27 and all(len(g) == 3 for g in groups)
+    idx = hy.boot_indices(rows, n_boot=50)
+    assert len(idx) == 50
+    for i in idx:
+        assert len(i) == 81
+        for k in range(0, 81, 3):
+            assert tuple(i[k:k + 3].tolist()) in groups
+    assert hy.boot_indices(rows, n_boot=5)[0].tolist() == hy.boot_indices(rows, n_boot=5)[0].tolist()
+
+
+def test_cluster_intervals_are_wider_for_near_duplicate_seeds() -> None:
+    """When seeds of a configuration are near copies, resampling models treats 81 points as
+    independent and gives too narrow an interval; the configuration bootstrap does not."""
+    rows = fake_rows()
+    rng = np.random.default_rng(3)
+    base_x, base_y = rng.normal(size=27), rng.normal(size=27)
+    base_y = 0.4 * base_x + base_y
+    x = np.repeat(base_x, 3) + 0.01 * rng.normal(size=81)
+    y = np.repeat(base_y, 3) + 0.01 * rng.normal(size=81)
+    fn = lambda i: hy.kendall_tau(x[i], y[i])
+    cl = hy.interval(hy.boot(fn, hy.boot_indices(rows)))
+    model_level = [np.random.default_rng(0).integers(0, 81, 81) for _ in range(hy.N_BOOT)]
+    ml = hy.interval(hy.boot(fn, model_level))
+    assert (cl[1] - cl[0]) > 1.4 * (ml[1] - ml[0])
+
+
 # --------------------------------------------------------------------------
 # A fake zoo in the real file formats
 # --------------------------------------------------------------------------
@@ -154,7 +190,12 @@ def test_h3_finds_the_planted_predictor(tmp_path: Path) -> None:
     h3 = s["H3"]
     assert h3["best_predictor"] == "D3" and h3["D3"]["adds_to_D1"]
     assert not h3["D2"]["adds_to_D1"] and not h3["D4"]["adds_to_D1"]
-    assert h3["D3"]["regression_ci"][1] < 0
+    assert h3["D3"]["regression_ci"][1] < 0 and h3["n_configurations"] == 27
+    without = s["H3_without_test_model"]
+    assert without["n_models"] == 80 and without["best_predictor"] == "D3"
+    fd = s["fragility_distribution"]["rel_frag_v2"]
+    assert fd["n"] == 81 and set(fd["mean_by_arch"]) == {"transformer", "lstm", "mamba"}
+    assert s["bootstrap"]["n_configurations"] == 27
     assert s["H3_secondary"]["rel_frag_v2"]["best_predictor_section4"] == "D3"
 
 
@@ -199,7 +240,7 @@ def test_causal_flag_and_outputs(tmp_path: Path) -> None:
     paths = hy.write_outputs(s, tmp_path / "out", tmp_path / "fig")
     names = {p.name for p in paths}
     assert {"summary.json", "model_table.csv", "h1_pairs.csv", "h3.csv", "h1_concordance.png",
-            "a3_competence.png", "h3_scatter.png", "h2_disagreement.png"} <= names
+            "a3_competence.png", "h3_scatter.png", "h2_disagreement.png", "fragility_distribution.png"} <= names
     json.loads((tmp_path / "out" / "summary.json").read_text())   # valid JSON, no NaN
 
 

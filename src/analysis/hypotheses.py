@@ -45,8 +45,14 @@ What is computed (section numbers refer to the preregistration)
         "decodable and causal" adds to D4 selectivity (regression of the outcome on D4 and the
         flag; partial Spearman of the flag controlling for D4). D3: Spearman of the D3 score with
         its occupancy shortcut rate (Amendment 2, C).
-    Every interval: 95% percentile bootstrap over models, 2,000 resamples, seed 0 (Section 4). All
-    statistics of one analysis use the same resamples, so differences have proper intervals.
+    Every interval (Amendment 4, prereg-v1.4): 95% percentile cluster bootstrap, 2,000 resamples, seed
+    0. The unit resampled is the configuration (architecture, scale, distribution) with all its seeds
+    kept together, not the model, because the seeds of one configuration are near duplicates. This
+    includes the intervals of regression coefficients (H3, the D4 causal flag). All statistics of one
+    analysis use the same resamples, so differences have proper intervals.
+    Also by Amendment 4: the fragility distribution (v1, v2, relative) is summarised and plotted before
+    H3, and the primary H3 is repeated without othello_transformer_small_synthetic_s0, the model whose
+    fragility v1 output motivated Amendment 3.
 
 Run (repo root):
     python src/analysis/hypotheses.py --domain othello
@@ -157,8 +163,30 @@ def residual_rank_w(M: np.ndarray, c: np.ndarray) -> float:
     return kendall_w(E)
 
 
-def boot_indices(n: int, n_boot: int = N_BOOT, seed: int = BOOT_SEED) -> np.ndarray:
-    return np.random.default_rng(seed).integers(0, n, size=(n_boot, n))
+def config_key(r: dict[str, Any]) -> tuple[str, str, str]:
+    return (r["arch"], r["scale"], r["distribution"])
+
+
+def clusters(rows: list[dict[str, Any]]) -> list[np.ndarray]:
+    """Row positions grouped by configuration (arch, scale, distribution), in first seen order."""
+    groups: dict[tuple, list[int]] = {}
+    for i, r in enumerate(rows):
+        groups.setdefault(config_key(r), []).append(i)
+    return [np.array(v) for v in groups.values()]
+
+
+def boot_indices(rows: list[dict[str, Any]], n_boot: int = N_BOOT, seed: int = BOOT_SEED) -> list[np.ndarray]:
+    """Amendment 4: cluster bootstrap. Each resample draws as many configurations as there are, with
+    replacement, and takes every model (seed) of each drawn configuration."""
+    groups = clusters(rows)
+    rng = np.random.default_rng(seed)
+    picks = rng.integers(0, len(groups), size=(n_boot, len(groups)))
+    return [np.concatenate([groups[k] for k in row]) for row in picks]
+
+
+def coef_interval(y: np.ndarray, X: np.ndarray, j: int, idx: list[np.ndarray]) -> list[float] | None:
+    """Cluster bootstrap interval of coefficient j (0 is the intercept) of a least squares fit."""
+    return interval(np.array([ols(y[i], X[i])["beta"][j] for i in idx], dtype=float))
 
 
 def interval(values: np.ndarray) -> list[float] | None:
@@ -295,7 +323,7 @@ def h1(rows: list[dict[str, Any]]) -> dict[str, Any]:
         return out
     S = {d: column(rows, d) for d in DIAGS}
     c = column(rows, "competence")
-    idx = boot_indices(n)
+    idx = boot_indices(rows)
     tau_c = {d: kendall_tau(S[d], c) for d in DIAGS}
     a5 = tau_c["D1"] >= A5_LIMIT if np.isfinite(tau_c["D1"]) else False
     out["tau_with_competence"] = tau_c
@@ -405,8 +433,8 @@ def h3_primary(rows: list[dict[str, Any]], outcome: str) -> dict[str, Any]:
         return {"n_models": n, "outcome": outcome, "note": "fewer than 6 models: not computed"}
     y = column(rows, outcome)
     S = {d: column(rows, d) for d in DIAGS}
-    idx = boot_indices(n)
-    out: dict[str, Any] = {"n_models": n, "outcome": outcome}
+    idx = boot_indices(rows)
+    out: dict[str, Any] = {"n_models": n, "n_configurations": len(clusters(rows)), "outcome": outcome}
     d1 = S["D1"]
     out["D1_reference"] = {"spearman": spearman(d1, y),
                            "ci": interval(boot(lambda i: spearman(d1[i], y[i]), idx))}
@@ -418,13 +446,14 @@ def h3_primary(rows: list[dict[str, Any]], outcome: str) -> dict[str, Any]:
         x = S[d]
         part[d] = partial_spearman(x, y, d1)
         part_boot[d] = boot(lambda i: partial_spearman(x[i], y[i], d1[i]), idx)
-        fit = ols(y, np.column_stack([d1, x, cov]))
+        X = np.column_stack([d1, x, cov])
+        fit = ols(y, X)
         b, se, dof = float(fit["beta"][2]), float(fit["se"][2]), fit["dof"]
         tq = float(stats.t.ppf(0.975, dof)) if dof > 0 else float("nan")
         ci = interval(part_boot[d])
         out[d] = {"partial_spearman_given_D1": part[d], "ci": ci, "adds_to_D1": excludes_zero(ci),
-                  "regression_coef": b, "regression_se": se, "regression_ci": [b - tq * se, b + tq * se],
-                  "regression_dof": int(dof)}
+                  "regression_coef": b, "regression_se": se, "regression_ci": coef_interval(y, X, 2, idx),
+                  "regression_ci_model_based_t": [b - tq * se, b + tq * se], "regression_dof": int(dof)}
     best = min(part, key=lambda d: part[d] if np.isfinite(part[d]) else np.inf)
     diffs = {}
     wins = np.isfinite(part[best]) and part[best] < 0
@@ -445,7 +474,7 @@ def h3_secondary(rows: list[dict[str, Any]]) -> dict[str, Any]:
     n = len(rows)
     if n < 6:
         return {"n_models": n, "note": "fewer than 6 models: not computed"}
-    idx = boot_indices(n)
+    idx = boot_indices(rows)
     out: dict[str, Any] = {"n_models": n}
     archs = np.array([r["arch"] for r in rows])
     scales = np.array([r["scale"] for r in rows])
@@ -456,9 +485,11 @@ def h3_secondary(rows: list[dict[str, Any]]) -> dict[str, Any]:
         for d in DIAGS:
             x = column(rows, d)
             bootv[d] = boot(lambda i: spearman(x[i], y[i]), idx)
-            fit = ols(y, np.column_stack([x, cov]))
+            X = np.column_stack([x, cov])
+            fit = ols(y, X)
             res[d] = {"spearman": spearman(x, y), "ci": interval(bootv[d]),
-                      "regression_coef": float(fit["beta"][1]), "regression_se": float(fit["se"][1])}
+                      "regression_coef": float(fit["beta"][1]), "regression_se": float(fit["se"][1]),
+                      "regression_ci": coef_interval(y, X, 1, idx)}
         best = min(res, key=lambda d: res[d]["spearman"] if np.isfinite(res[d]["spearman"]) else np.inf)
         wins = np.isfinite(res[best]["spearman"])
         diffs = {}
@@ -484,14 +515,16 @@ def causal_and_occupancy(rows: list[dict[str, Any]], outcome: str = "rel_frag_v2
         d4 = column(use, "D4")
         flag = np.array([1.0 if r["causal_label"] == CAUSAL else 0.0 for r in use])
         if 0 < flag.sum() < len(flag):
-            fit = ols(y, np.column_stack([d4, flag]))
+            X = np.column_stack([d4, flag])
+            fit = ols(y, X)
             dof = fit["dof"]
             tq = float(stats.t.ppf(0.975, dof)) if dof > 0 else float("nan")
             b, se = float(fit["beta"][2]), float(fit["se"][2])
-            idx = boot_indices(len(use))
+            idx = boot_indices(use)
             ci = interval(boot(lambda i: partial_spearman(flag[i], y[i], d4[i]), idx))
             out["flag_beyond_D4"] = {"n_models": len(use), "n_causal": int(flag.sum()),
-                                     "regression_coef": b, "regression_ci": [b - tq * se, b + tq * se],
+                                     "regression_coef": b, "regression_ci": coef_interval(y, X, 2, idx),
+                                     "regression_ci_model_based_t": [b - tq * se, b + tq * se],
                                      "partial_spearman_given_D4": partial_spearman(flag, y, d4),
                                      "partial_ci": ci, "adds_to_D4": excludes_zero(ci)}
         else:
@@ -499,10 +532,31 @@ def causal_and_occupancy(rows: list[dict[str, Any]], outcome: str = "rel_frag_v2
     occ = [r for r in rows if r["occupancy_shortcut"] is not None]
     if len(occ) >= 6:
         x, s = column(occ, "D3"), column(occ, "occupancy_shortcut")
-        idx = boot_indices(len(occ))
+        idx = boot_indices(occ)
         out["D3_vs_occupancy_shortcut"] = {"n_models": len(occ), "spearman": spearman(x, s),
                                            "ci": interval(boot(lambda i: spearman(x[i], s[i]), idx)),
                                            "mean_shortcut_rate": float(s.mean())}
+    return out
+
+
+TEST_MODEL = "othello_transformer_small_synthetic_s0"   # its fragility v1 output motivated Amendment 3
+
+
+def fragility_distribution(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Amendment 4: the outcome's distribution, reported before any H3 statistic (Critique 4)."""
+    out: dict[str, Any] = {}
+    for key in ("frag_v1", "rel_frag_v1", "frag_v2", "rel_frag_v2"):
+        v = np.array([r[key] for r in rows if r[key] is not None], dtype=float)
+        if len(v) == 0:
+            continue
+        q = np.percentile(v, [5, 25, 50, 75, 95])
+        by_arch = {a: float(np.mean([r[key] for r in rows if r[key] is not None and r["arch"] == a]))
+                   for a in sorted({r["arch"] for r in rows if r[key] is not None})}
+        out[key] = {"n": int(len(v)), "mean": float(v.mean()), "sd": float(v.std(ddof=1)) if len(v) > 1 else None,
+                    "min": float(v.min()), "max": float(v.max()),
+                    "p05_p25_p50_p75_p95": [float(x) for x in q],
+                    "share_negative": float((v < 0).mean()), "share_within_0.01_of_0": float((np.abs(v) < 0.01).mean()),
+                    "mean_by_arch": by_arch}
     return out
 
 
@@ -523,12 +577,17 @@ def analyse(domain: str, root: Path = ROOT) -> dict[str, Any]:
                    "not_admitted": len(trained) - len(admitted), "all_four_scores": len(complete),
                    "with_fragility_v2": len(with_v2), "with_fragility_v1": len(with_v1)},
         "missing_scores": {d: [r["model_id"] for r in admitted if r[d] is None] for d in DIAGS},
-        "bootstrap": {"resamples": N_BOOT, "seed": BOOT_SEED, "level": 0.95},
+        "bootstrap": {"resamples": N_BOOT, "seed": BOOT_SEED, "level": 0.95,
+                      "unit": "configuration (arch, scale, distribution), seeds kept together (Amendment 4)",
+                      "n_configurations": len(clusters(complete))},
     }
     summary["H1"] = h1(complete)
     summary["A3"] = a3(admitted, complete)
     summary["H2"] = h2(complete)
+    summary["fragility_distribution"] = fragility_distribution(with_v2)
     summary["H3"] = h3_primary(with_v2, "rel_frag_v2")
+    summary["H3_without_test_model"] = h3_primary([r for r in with_v2 if r["model_id"] != TEST_MODEL],
+                                                  "rel_frag_v2")
     summary["H3_secondary"] = h3_secondary(with_v2)
     summary["H3_secondary_v1"] = h3_primary(with_v1, "rel_frag_v1")
     summary["H3_causal_and_occupancy"] = causal_and_occupancy(with_v2)
@@ -703,6 +762,35 @@ def _figures(summary: dict[str, Any], rows: list[dict[str, Any]], fig_dir: Path)
         axes[0].legend(frameon=False, fontsize=8)
         fig.suptitle("H3: diagnostic score against relative fragility (higher = breaks more)", fontsize=11)
         p = fig_dir / "h3_scatter.png"
+        fig.savefig(p, dpi=200)
+        plt.close(fig)
+        written.append(p)
+
+    fr = [r for r in rows if r.get("rel_frag_v2") is not None and r["admitted"]]
+    if fr:
+        fig, axes = plt.subplots(1, 2, figsize=(10, 3.4), sharey=True, constrained_layout=True)
+        for ax, key, title in ((axes[0], "rel_frag_v2", "relative fragility v2 (H3 outcome)"),
+                               (axes[1], "rel_frag_v1", "relative fragility v1 (secondary)")):
+            _style(ax)
+            vals = [r[key] for r in fr if r.get(key) is not None]
+            if not vals:
+                continue
+            lo, hi = min(vals + [0.0]), max(vals + [0.0])
+            bins = np.linspace(lo, hi, 21) if hi > lo else np.linspace(lo - 0.01, hi + 0.01, 21)
+            bottom = np.zeros(len(bins) - 1)
+            for arch, col in ARCH_COLOR.items():
+                v = [r[key] for r in fr if r["arch"] == arch and r.get(key) is not None]
+                h, _ = np.histogram(v, bins=bins)
+                ax.bar(bins[:-1], h, width=np.diff(bins), bottom=bottom, align="edge", color=col,
+                       label=arch, edgecolor=SURFACE, linewidth=1)
+                bottom += h
+            ax.axvline(0, color=INK2, linewidth=1, linestyle="--")
+            ax.set_xlabel(title)
+        axes[0].set_ylabel("models")
+        axes[0].legend(frameon=False, fontsize=8)
+        fig.suptitle("Fragility distribution before H3 (higher = breaks more; below 0 = better under shift)",
+                     fontsize=11)
+        p = fig_dir / "fragility_distribution.png"
         fig.savefig(p, dpi=200)
         plt.close(fig)
         written.append(p)
