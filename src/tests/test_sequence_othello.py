@@ -96,3 +96,12 @@ def test_batch_size_does_not_change_results():
     data = oth.build(oth.random_games(12, seed=4), legal=True)
     assert seq.teacher_forced(model, data, batch=3) == seq.teacher_forced(model, data, batch=100)
     assert seq.free_play(model, n_games=12, seed=5, batch=5) == seq.free_play(model, n_games=12, seed=5, batch=100)
+
+
+def test_free_play_games_are_diverse():
+    """v1 played the top legal move, so 1,000 games were at most 4 distinct games. v2 samples."""
+    train = _load("zoo_train", "src/zoo/train.py")
+    torch.manual_seed(0)
+    model = train.GPT(n_layers=1, d_model=16, n_heads=2).eval()
+    fp = seq.free_play(model, n_games=40, seed=0)
+    assert fp["n_distinct_games"] > 30

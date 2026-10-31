@@ -17,9 +17,12 @@ whole game fits, so the history only grows and nothing is ever dropped.
    score, which the script checks.
 2. Free play. The model plays 1,000 whole games against itself from its own moves (play seed 0).
    The first move is a uniformly random legal move (the model is never asked to open), as in
-   fragility v2. At each later move the model's top move is checked against the true rules. If it
-   is legal it is played; if not, the error is counted and the model's best legal move is played
-   instead, so the game goes on to its natural end. Passes are not tokens (as in Othello GPT):
+   fragility v2. At each later move the model's top move is checked against the true rules (an
+   illegal top move is counted as an error). The move actually played is drawn from the model's
+   own probabilities over the legal moves only (play seed 0), so every game is the model's own
+   game and continues to its natural end. Version 1 always played the top legal move instead;
+   because that choice is deterministic, its 1,000 games collapsed into at most 4 distinct games
+   (one per opening move), so v1 results are not used. Passes are not tokens (as in Othello GPT):
    when the player to move has no legal move the other player moves again. Reported: legal rate
    per move number, the share of games with no illegal top move at all (full game rate), errors per
    game, and the move number of the first error.
@@ -62,7 +65,7 @@ OUT_DIR = ROOT / "results" / "exploratory" / "sequence"
 ANALYSIS_DIR = ROOT / "results" / "analysis" / "othello"
 FIG_DIR = ROOT / "reports" / "figures" / "othello"
 LATEX_FIG_DIR = ROOT / "reports" / "Latex_report" / "fig"
-VERSION = "sequence-v1"
+VERSION = "sequence-v2"   # v1 played the top legal move: only 4 distinct games (see docstring)
 N_GAMES = 1000
 DATA_SEED = 0
 PLAY_SEED = 0
@@ -172,12 +175,14 @@ def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str 
             n[mv] += 1
             if top_sq in legal:
                 ok[mv] += 1
-                sq = top_sq
             else:
                 errors[g] += 1
                 if first_error[g] == 0:
                     first_error[g] = mv
-                sq = max(legal, key=lambda s: probs[r, oth.SQ_TO_TOKEN[s]])
+            # The move played: drawn from the model's probabilities over the legal moves only
+            w = np.array([probs[r, oth.SQ_TO_TOKEN[s]] for s in legal], dtype=np.float64)
+            w = w / w.sum() if w.sum() > 0 else np.full(len(legal), 1.0 / len(legal))
+            sq = int(legal[int(rng.choice(len(legal), p=w))])
             if t < oth.N_CTX:
                 play(g, sq, t)
                 length[g] = t + 1
@@ -185,7 +190,8 @@ def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str 
                 alive[g] = False
                 length[g] = oth.MAX_MOVES
     had_error = first_error > 0
-    return {"overall": float(ok.sum() / max(n.sum(), 1)),
+    distinct = len({tokens[g].tobytes() for g in range(n_games)})
+    return {"n_distinct_games": distinct,"overall": float(ok.sum() / max(n.sum(), 1)),
             "full_game_rate": float((~had_error).mean()),
             "mean_errors_per_game": float(errors.mean()),
             "mean_first_error_move": float(first_error[had_error].mean()) if had_error.any() else None,
