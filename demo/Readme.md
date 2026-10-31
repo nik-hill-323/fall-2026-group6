@@ -34,4 +34,8 @@ The two published Othello GPTs appear in the picker when their weights are under
 
 Status, October 20: every page works on the full scored zoo (81 of 81) and the analysis of #122.
 
-The `fig/` folder is for the one minute project video (`demo.gif`) and demo screenshots.
+The `fig/` folder is for the one minute project video (`demo.gif`) and demo screenshots. Both images in it
+are screenshots of this app, not result figures (the result figures are SVG files in `reports/figures/`):
+
+* `demo_d3_screenshot.jpg`: screenshot of the D3 page ("is this square mine?" on one position)
+* `demo_zoo_board_screenshot.jpg`: screenshot of the Model zoo page (the 81 models as discs, coloured by D1)

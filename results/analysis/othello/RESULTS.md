@@ -73,7 +73,7 @@ within each training distribution, or controlling for it, D4 no longer predicts 
   baseline by 0.041 on average, and for some models not at all (minimum -0.083). Causal score 0.126 (0.009
   to 0.256); 10 of 81 models pass the 0.20 rule.
 
-## H1: do the diagnostics agree? (preregistered; `h1_pairs.csv`, `h1_concordance.png`)
+## H1: do the diagnostics agree? (preregistered; `h1_pairs.csv`, `h1_concordance.svg`)
 
 | Pair | Kendall tau [95% CI] | category | partial tau given competence [95% CI] | category |
 |---|---|---|---|---|
@@ -93,16 +93,16 @@ within each training distribution, or controlling for it, D4 no longer predicts 
   the rest disagree; with competence controlled only D1 and D2 still agree (0.532 [0.088, 0.838]; tau(D1,
   competence) is 0.855 in this subset, so A5 does not apply). W 0.830, on residual ranks 0.466.
 
-## H2: is the disagreement systematic? (preregistered; `h2_disagreement.png`)
+## H2: is the disagreement systematic? (preregistered; `h2_disagreement.svg`)
 
 * Mean disagreement (SD of the four rank percentiles) 0.089; seed noise floor of the disagreement 0.028.
 * F tests: architecture p 0.783, scale p 0.027 (Holm 0.081), distribution p 0.171 (Holm 0.341).
 * **Verdict:** consistent with noise; no factor is significant after Holm. Scale comes closest
   (disagreement 0.110 small, 0.083 medium, 0.073 large).
 
-## H3: which diagnostic predicts fragility? (preregistered; `h3.csv`, `h3_scatter.png`)
+## H3: which diagnostic predicts fragility? (preregistered; `h3.csv`, `h3_scatter.svg`)
 
-Fragility first (Amendment 4, F3; `fragility_distribution.png`): relative fragility v2 has mean 0.015,
+Fragility first (Amendment 4, F3; `fragility_distribution.svg`): relative fragility v2 has mean 0.015,
 sd 0.070, range -0.124 to 0.215, and 52% of models are below 0 (better under the shifted tests than on
 their own test games).
 
@@ -155,6 +155,23 @@ Mean drop per fragility v2 variant, by training data:
   not that probing predicts fragility among comparable models. With 9 configurations per distribution the
   within distribution estimates are imprecise; the honest summary is that no diagnostic shows a reliable
   within distribution link to fragility on Othello.
+
+### How much of H3 rests on the most fragile models? (exploratory, `exploratory.json`, h3_sensitivity)
+
+All 20 models with relative fragility v2 above 0.05 were trained on championship games, and the nine most
+fragile configurations are exactly the nine championship ones (the three LSTM ones first: 0.197, 0.176, 0.134).
+
+| Left out | Models kept | D4 partial Spearman given D1 [95% CI] |
+|---|---|---|
+| none (preregistered) | 81 | -0.554 [-0.734, -0.124] |
+| most fragile configuration (LSTM medium championship) | 78 | -0.521 [-0.722, -0.074] |
+| 3 most fragile (the championship LSTMs) | 72 | -0.379 [-0.642, 0.075] |
+| 5 most fragile | 66 | -0.243 [-0.560, 0.215] |
+| 9 most fragile (every championship configuration) | 54 | +0.259 [-0.136, 0.505] |
+| any one configuration, in turn | 78 | -0.628 to -0.485 |
+
+* The result survives leaving out any single configuration, but not the three championship LSTMs: the
+  preregistered D4 signal is carried by the championship configurations, mostly the LSTM ones.
 
 ## What to say
 
