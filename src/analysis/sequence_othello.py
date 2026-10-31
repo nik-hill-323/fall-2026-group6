@@ -119,8 +119,10 @@ def teacher_forced(model, data: dict, batch: int = BATCH) -> dict[str, Any]:
 # ==========================================================================
 
 @torch.no_grad()
-def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str | None = None) -> dict[str, Any]:
-    """The model plays whole games from its own moves (module docstring, part 2)."""
+def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str | None = None,
+              batch: int = BATCH) -> dict[str, Any]:
+    """The model plays whole games from its own moves (module docstring, part 2). Games are run
+    through the model `batch` at a time; the batch size changes memory use, not the result."""
     rng = np.random.default_rng(seed)
     boards = [oth.start_board() for _ in range(n_games)]
     to_move = [oth.BLACK] * n_games
@@ -161,8 +163,9 @@ def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str 
         if not live:
             break
         rows = np.array([g for g, _ in live])
-        logits = model(torch.as_tensor(tokens[rows, :t]))[:, -1].float()
-        probs = torch.softmax(logits, dim=-1).cpu().numpy()
+        probs = np.concatenate([
+            torch.softmax(model(torch.as_tensor(tokens[rows[i:i + batch], :t]))[:, -1].float(), dim=-1).cpu().numpy()
+            for i in range(0, len(rows), batch)])
         for r, (g, legal) in enumerate(live):
             top_sq = oth.TOKEN_TO_SQ.get(int(probs[r].argmax()))
             mv = t + 1
@@ -211,13 +214,13 @@ def distribution_of(model) -> str:
 
 
 def measure(model, n_games: int = N_GAMES, data_seed: int = DATA_SEED, play_seed: int = PLAY_SEED,
-            data: dict | None = None) -> dict[str, Any]:
+            data: dict | None = None, batch: int = BATCH) -> dict[str, Any]:
     t0 = time.time()
     dist = distribution_of(model)
     if data is None:
         data = oth.build(oth.load_distribution(dist, "test", n_games, seed=data_seed), legal=True)
-    tf = teacher_forced(model, data)
-    fp = free_play(model, n_games=n_games, seed=play_seed)
+    tf = teacher_forced(model, data, batch=batch)
+    fp = free_play(model, n_games=n_games, seed=play_seed, batch=batch)
     d1_path = ROOT / "results" / "D1_next_token" / f"{model.model_id}.json"
     d1 = json.loads(d1_path.read_text()).get("score") if d1_path.exists() else None
     return {"model_id": model.model_id, "exploratory": True, "version": VERSION,
@@ -386,6 +389,8 @@ def main() -> None:
     ap.add_argument("--all", action="store_true", help="every zoo model whose checkpoint is on this machine")
     ap.add_argument("--anchors", action="store_true", help="also the two reference Othello GPTs")
     ap.add_argument("--n_games", type=int, default=N_GAMES)
+    ap.add_argument("--batch", type=int, default=BATCH,
+                    help="games per forward pass; lower it if the GPU runs out of memory (result unchanged)")
     ap.add_argument("--overwrite", action="store_true")
     ap.add_argument("--summarize", action="store_true", help="only build the table, summary and figures")
     ap.add_argument("--smoke", action="store_true")
@@ -410,11 +415,16 @@ def main() -> None:
             skipped += 1
             continue
         try:
-            res = measure(load_any(mid), n_games=args.n_games)
+            model = load_any(mid)
+            res = measure(model, n_games=args.n_games, batch=args.batch)
         except Exception as e:   # one bad model must not stop the sweep
             log.warning("[FAIL] %s: %s: %s", mid, type(e).__name__, e)
             failed += 1
             continue
+        finally:
+            model = None                       # free this model's GPU memory before the next one
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         path.write_text(json.dumps(res, indent=2) + "\n")
         log.info("[done] %s  tf %.4f (D1 match %s)  free play %.4f  full games %.3f  %.0f s", mid,
                  res["teacher_forced"]["overall"], res["matches_d1"], res["free_play"]["overall"],

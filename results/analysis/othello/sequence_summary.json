@@ -1,0 +1,266 @@
+{
+  "exploratory": true,
+  "version": "sequence-v1",
+  "n_models": 81,
+  "missing": [],
+  "matches_d1_all": false,
+  "means": {
+    "transformer small": {
+      "competence": 0.8406,
+      "tf_overall": 0.843147,
+      "tf_full_game": 0.000333,
+      "fp_overall": 0.759804,
+      "fp_full_game": 0.0,
+      "fp_errors_per_game": 14.171556,
+      "n": 9
+    },
+    "transformer medium": {
+      "competence": 0.915167,
+      "tf_overall": 0.917155,
+      "tf_full_game": 0.040556,
+      "fp_overall": 0.847237,
+      "fp_full_game": 0.025333,
+      "fp_errors_per_game": 9.010667,
+      "n": 9
+    },
+    "transformer large": {
+      "competence": 0.931922,
+      "tf_overall": 0.933349,
+      "tf_full_game": 0.116444,
+      "fp_overall": 0.858959,
+      "fp_full_game": 0.0,
+      "fp_errors_per_game": 8.305444,
+      "n": 9
+    },
+    "lstm small": {
+      "competence": 0.582667,
+      "tf_overall": 0.583751,
+      "tf_full_game": 0.0,
+      "fp_overall": 0.291166,
+      "fp_full_game": 0.0,
+      "fp_errors_per_game": 41.821222,
+      "n": 9
+    },
+    "lstm medium": {
+      "competence": 0.687711,
+      "tf_overall": 0.690041,
+      "tf_full_game": 0.0,
+      "fp_overall": 0.388535,
+      "fp_full_game": 0.0,
+      "fp_errors_per_game": 36.076444,
+      "n": 9
+    },
+    "lstm large": {
+      "competence": 0.778133,
+      "tf_overall": 0.77969,
+      "tf_full_game": 0.0,
+      "fp_overall": 0.546205,
+      "fp_full_game": 0.0,
+      "fp_errors_per_game": 26.773889,
+      "n": 9
+    },
+    "mamba small": {
+      "competence": 0.834589,
+      "tf_overall": 0.836742,
+      "tf_full_game": 0.000556,
+      "fp_overall": 0.786845,
+      "fp_full_game": 0.025333,
+      "fp_errors_per_game": 12.569,
+      "n": 9
+    },
+    "mamba medium": {
+      "competence": 0.896833,
+      "tf_overall": 0.898506,
+      "tf_full_game": 0.015222,
+      "fp_overall": 0.820701,
+      "fp_full_game": 0.0,
+      "fp_errors_per_game": 10.578667,
+      "n": 9
+    },
+    "mamba large": {
+      "competence": 0.924444,
+      "tf_overall": 0.925159,
+      "tf_full_game": 0.079111,
+      "fp_overall": 0.847478,
+      "fp_full_game": 0.054556,
+      "fp_errors_per_game": 8.998778,
+      "n": 9
+    },
+    "synthetic": {
+      "competence": 0.83133,
+      "tf_overall": 0.832111,
+      "tf_full_game": 0.060074,
+      "fp_overall": 0.734099,
+      "fp_full_game": 0.016889,
+      "fp_errors_per_game": 15.688148,
+      "n": 27
+    },
+    "championship": {
+      "competence": 0.811789,
+      "tf_overall": 0.81363,
+      "tf_full_game": 0.003037,
+      "fp_overall": 0.568867,
+      "fp_full_game": 0.0,
+      "fp_errors_per_game": 25.429148,
+      "n": 27
+    },
+    "mixed": {
+      "competence": 0.820904,
+      "tf_overall": 0.823439,
+      "tf_full_game": 0.020963,
+      "fp_overall": 0.746011,
+      "fp_full_game": 0.018185,
+      "fp_errors_per_game": 14.984593,
+      "n": 27
+    }
+  },
+  "correlations": {
+    "competence vs fp_full_game": {
+      "spearman": 0.200211,
+      "ci": [
+        0.019131,
+        0.334824
+      ]
+    },
+    "competence vs tf_full_game": {
+      "spearman": 0.917662,
+      "ci": [
+        0.797635,
+        0.961473
+      ]
+    },
+    "competence vs fp_overall": {
+      "spearman": 0.898893,
+      "ci": [
+        0.747397,
+        0.944038
+      ]
+    },
+    "D1 vs fp_full_game": {
+      "spearman": 0.217418,
+      "ci": [
+        0.014349,
+        0.371787
+      ]
+    },
+    "D1 vs tf_full_game": {
+      "spearman": 0.918758,
+      "ci": [
+        0.794777,
+        0.967455
+      ]
+    },
+    "D1 vs fp_overall": {
+      "spearman": 0.90538,
+      "ci": [
+        0.75331,
+        0.948172
+      ]
+    },
+    "D2 vs fp_full_game": {
+      "spearman": 0.161949,
+      "ci": [
+        -0.105513,
+        0.343827
+      ]
+    },
+    "D2 vs tf_full_game": {
+      "spearman": 0.858651,
+      "ci": [
+        0.665891,
+        0.946296
+      ]
+    },
+    "D2 vs fp_overall": {
+      "spearman": 0.890312,
+      "ci": [
+        0.735979,
+        0.938188
+      ]
+    },
+    "D3 vs fp_full_game": {
+      "spearman": 0.168446,
+      "ci": [
+        0.008847,
+        0.306392
+      ]
+    },
+    "D3 vs tf_full_game": {
+      "spearman": 0.743337,
+      "ci": [
+        0.529387,
+        0.853771
+      ]
+    },
+    "D3 vs fp_overall": {
+      "spearman": 0.636156,
+      "ci": [
+        0.337663,
+        0.804257
+      ]
+    },
+    "D4 vs fp_full_game": {
+      "spearman": 0.260611,
+      "ci": [
+        0.090876,
+        0.404513
+      ]
+    },
+    "D4 vs tf_full_game": {
+      "spearman": 0.900613,
+      "ci": [
+        0.776136,
+        0.949244
+      ]
+    },
+    "D4 vs fp_overall": {
+      "spearman": 0.946251,
+      "ci": [
+        0.846764,
+        0.970619
+      ]
+    },
+    "rel_frag_v2 vs fp_full_game": {
+      "spearman": 0.082659,
+      "ci": [
+        -0.034439,
+        0.228952
+      ]
+    },
+    "rel_frag_v2 vs tf_full_game": {
+      "spearman": 0.015334,
+      "ci": [
+        -0.367927,
+        0.418006
+      ]
+    },
+    "rel_frag_v2 vs fp_overall": {
+      "spearman": -0.004855,
+      "ci": [
+        -0.458714,
+        0.514879
+      ]
+    },
+    "D2 vs fp_full_game given D1": {
+      "partial_spearman": -0.160132,
+      "ci": [
+        -0.447196,
+        0.042115
+      ]
+    },
+    "D3 vs fp_full_game given D1": {
+      "partial_spearman": -0.00212,
+      "ci": [
+        -0.182864,
+        0.136291
+      ]
+    },
+    "D4 vs fp_full_game given D1": {
+      "partial_spearman": 0.172795,
+      "ci": [
+        0.010883,
+        0.319308
+      ]
+    }
+  }
+}

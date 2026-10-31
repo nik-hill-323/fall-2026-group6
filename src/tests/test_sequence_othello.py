@@ -87,3 +87,12 @@ def test_free_play_is_reproducible():
     a = seq.free_play(model, n_games=8, seed=3)
     b = seq.free_play(model, n_games=8, seed=3)
     assert a == b
+
+
+def test_batch_size_does_not_change_results():
+    train = _load("zoo_train", "src/zoo/train.py")
+    torch.manual_seed(0)
+    model = train.GPT(n_layers=1, d_model=16, n_heads=2).eval()
+    data = oth.build(oth.random_games(12, seed=4), legal=True)
+    assert seq.teacher_forced(model, data, batch=3) == seq.teacher_forced(model, data, batch=100)
+    assert seq.free_play(model, n_games=12, seed=5, batch=5) == seq.free_play(model, n_games=12, seed=5, batch=100)
