@@ -173,6 +173,35 @@ fragile configurations are exactly the nine championship ones (the three LSTM on
 * The result survives leaving out any single configuration, but not the three championship LSTMs: the
   preregistered D4 signal is carried by the championship configurations, mostly the LSTM ones.
 
+## Exploratory, not preregistered: next move versus whole game (`sequence.csv`, `sequence_summary.json`, `sequence_by_move.svg`)
+
+Script: `src/analysis/sequence_othello.py` (version sequence-v2). Teacher forced = D1 split by move number on the
+same test games (matches D1 except 1 of about 58,000 positions in two Mamba large models). Free play = 1,000
+games the model plays itself; top move scored, played move drawn from the model's probabilities over the legal
+moves (at least 978 distinct games per model). Version 1 played the top legal move, which gave at most 4
+distinct games, and was replaced before any result was used.
+
+| | teacher forced legal (D1) | free play legal | free play full games | errors per game | first error (move) |
+|---|---|---|---|---|---|
+| synthetic | 0.832 | 0.802 | 0.045 | 11.7 | 18.2 |
+| championship | 0.814 | 0.572 | 0.000 | 25.2 | 7.2 |
+| mixed | 0.823 | 0.808 | 0.029 | 11.3 | 17.3 |
+| Othello GPT synthetic | 0.9996 | 0.999 | 0.965 | 0.04 | 54.6 |
+| Othello GPT championship | 0.896 | 0.949 | 0.466 | 3.0 | 28.1 |
+
+* Championship trained models collapse in their own games (0.81 -> 0.57, first error at move 7): off the human
+  lines they fail, as the fragility suite found.
+* LSTMs drift: in free play their legal rate falls steadily over the game (LSTM large 0.74 at move 10, 0.43 at
+  move 58); transformers and Mamba stay flat.
+* A whole game with no illegal move is rare (41 of 81 models never manage one; zoo maximum 0.216), so the free
+  play legal rate is the informative number.
+* Whole game measures rank models like D1 (free play rate vs D1: Spearman 0.886 [0.721, 0.951]) and are not
+  related to relative fragility v2. With D1 controlled, only D4 relates to the full game rate (partial 0.354
+  [0.169, 0.526]).
+* Found while building this: fragility v2's undisturbed detour reference (p = 0) plays the best legal move after
+  a random first move, so it is at most 4 distinct games. The preregistered suite is unchanged; navigation will
+  sample its undisturbed games.
+
 ## What to say
 
 1. The four diagnostics agree on which Othello models are better (W 0.87), but that agreement is competence;

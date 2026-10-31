@@ -344,8 +344,8 @@ def _figure(seq: dict[str, dict], rows: list[dict[str, Any]]) -> None:
     import matplotlib.pyplot as plt
     hyp = _load("hypotheses", "src/analysis/hypotheses.py")
     plt.rcParams.update({"font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
-                         "savefig.bbox": "tight", "svg.fonttype": "none"})
-    fig, axes = plt.subplots(1, 2, figsize=(9, 3.4), sharey=True)
+                         "savefig.bbox": "tight", "svg.fonttype": "none", "svg.hashsalt": "wmconcord"})
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 3.4), sharey=True)
     styles = {"small": ":", "medium": "--", "large": "-"}
     moves = np.arange(MOVES)
     for ax, part, title in ((axes[0], "teacher_forced", "Teacher forced (real history)"),
@@ -364,11 +364,11 @@ def _figure(seq: dict[str, dict], rows: list[dict[str, Any]]) -> None:
         ax.set_xlabel("move number")
         ax.set_xlim(2, 60)
     axes[0].set_ylabel("share of top moves that are legal")
-    axes[1].legend(fontsize=7, ncol=1, frameon=False, loc="lower left")
+    axes[1].legend(fontsize=7, ncol=1, frameon=False, loc="center left", bbox_to_anchor=(1.02, 0.5))
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     LATEX_FIG_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(FIG_DIR / "sequence_by_move.svg")
-    fig.savefig(LATEX_FIG_DIR / "othello_sequence.pdf")
+    fig.savefig(FIG_DIR / "sequence_by_move.svg", metadata={"Date": None})
+    fig.savefig(LATEX_FIG_DIR / "othello_sequence.pdf", metadata={"CreationDate": None})
     plt.close(fig)
 
 

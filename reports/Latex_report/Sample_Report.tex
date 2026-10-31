@@ -636,12 +636,14 @@ To answer this directly we add two whole game measures, decided after the Othell
 therefore reported as exploratory (\texttt{src/analysis/sequence\_othello.py}). \emph{Legality by move
 number} splits the D1 rate by the move being predicted, on the same test games and positions, so its overall
 value equals D1 exactly. \emph{Free play} lets the model play 1,000 whole games against itself from its own
-moves (the first move is random): its top move is checked against the rules at every step; if it is illegal
-the error is counted and its best legal move is played instead, so the game continues to its natural end.
+moves (the first move is random): its top move is checked against the rules at every step, and the move
+actually played is drawn from the model's own probabilities over the legal moves, so every game continues to
+its natural end and the games differ from one another. (A first version played the top legal move instead;
+because that choice is deterministic, its 1,000 games collapsed into at most four distinct games, one per
+opening move, and it was replaced before any result was used.)
 We report the legal rate per move number, the share of games with no illegal top move at all (the full game
-rate), and the move at which the first error happens. The fragility suite already plays whole games in its
-detour settings, and its undisturbed self play rate is a cross check of the free play rate. Both measures will
-be preregistered for navigation and the interpreter before any of their models is scored.
+rate), and the move at which the first error happens. Both measures will be preregistered for navigation and the interpreter before any of their models is
+scored.
 
 \subsection{Analysis plan and preregistration}
 \label{sec:analysis}
@@ -1032,6 +1034,82 @@ championship configurations, and mostly by the three championship LSTMs (explora
     \label{tab:h3sens}
 \end{table}
 
+\subsection{Exploratory: next move versus whole game}
+\label{sec:sequence_results}
+
+All 81 zoo models and both anchors were measured as described in Section~\ref{sec:sequence_method}. The teacher
+forced rate reproduces each model's D1 score, except for one position out of about 58,000 in two Mamba large
+models, a near tie in the top move that the GPU breaks differently at a different batch size. In free play,
+each model played at least 978 distinct games out of 1,000.
+
+\begin{table}[H]
+    \centering
+    \small
+    \setlength{\tabcolsep}{3.5pt}
+    \begin{tabular}{llrrrrrr}
+    \toprule
+    & & \multicolumn{2}{c}{Teacher forced} & \multicolumn{4}{c}{Free play (own moves)} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-8}
+    Architecture & Scale & legal (D1) & full games & legal & full games & errors/game & 1st error \\
+    \midrule
+    Transformer & small  & 0.843 & 0.000 & 0.768 & 0.000 & 13.7 & 11.6 \\
+    Transformer & medium & 0.917 & 0.041 & 0.863 & 0.023 &  8.1 & 18.4 \\
+    Transformer & large  & 0.933 & 0.116 & 0.888 & 0.111 &  6.6 & 22.9 \\
+    LSTM        & small  & 0.584 & 0.000 & 0.412 & 0.000 & 34.7 &  5.8 \\
+    LSTM        & medium & 0.690 & 0.000 & 0.489 & 0.000 & 30.1 &  8.4 \\
+    LSTM        & large  & 0.780 & 0.000 & 0.639 & 0.000 & 21.3 & 11.0 \\
+    Mamba       & small  & 0.837 & 0.001 & 0.789 & 0.001 & 12.5 & 10.9 \\
+    Mamba       & medium & 0.899 & 0.015 & 0.837 & 0.012 &  9.6 & 16.7 \\
+    Mamba       & large  & 0.925 & 0.079 & 0.864 & 0.075 &  8.0 & 22.4 \\
+    \midrule
+    \multicolumn{2}{l}{trained on synthetic}    & 0.832 & 0.060 & 0.802 & 0.045 & 11.7 & 18.2 \\
+    \multicolumn{2}{l}{trained on championship} & 0.814 & 0.003 & 0.572 & 0.000 & 25.2 &  7.2 \\
+    \multicolumn{2}{l}{trained on mixed}        & 0.823 & 0.021 & 0.808 & 0.029 & 11.3 & 17.3 \\
+    \midrule
+    \multicolumn{2}{l}{Othello GPT synthetic}    & 0.9996 & 0.981 & 0.999 & 0.965 & 0.04 & 54.6 \\
+    \multicolumn{2}{l}{Othello GPT championship} & 0.896 & 0.019 & 0.949 & 0.466 & 3.0 & 28.1 \\
+    \bottomrule
+    \end{tabular}
+    \caption{Whole game measures (exploratory), means over 9 models per architecture and scale and over 27 per
+    training distribution. Full games: share of games in which every top move is legal. First error: mean
+    move number of the first illegal top move, over games that have one.}
+    \label{tab:sequence}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{othello_sequence.pdf}
+    \caption{Share of top moves that are legal at each move number, with the real history (left) and in games
+    the model plays itself (right); mean over the 9 models of each architecture and scale (exploratory).}
+    \label{fig:sequence}
+\end{figure}
+
+Three things answer the question from the presentation (Table~\ref{tab:sequence}, Figure~\ref{fig:sequence}).
+First, \textbf{playing its own games is much harder than following real ones for the models trained on human
+games}: on average the free play rate is below the teacher forced rate by 0.03 for synthetic and 0.015 for
+mixed training (18 synthetic or mixed transformers and Mamba are even slightly higher in free play, by at most
+0.024), but by 0.24 for championship training, and lower for all 27 championship models. Models trained on human games are legal 81\% of the time on
+human test games but only 57\% in their own games, and make their first illegal move at move 7 on average:
+as soon as the random opening takes them off the human lines, they fail, which is the same weakness the
+fragility suite found on random games and rotated boards. Second, \textbf{the LSTMs lose track of the board
+over a long game}: with the real history their legal rate is flat after the opening, but in their own games it
+falls steadily (for LSTM large, from 0.74 at move 10 to 0.64 at move 30 and 0.43 at move 58), while the transformers and
+Mamba stay flat, so the per move D1 score understates how much worse the LSTMs are at playing a whole game.
+Third, a whole game without any illegal move is rare: besides the two anchors, only the large transformers
+trained on synthetic or mixed games and the large Mamba models trained on synthetic games reach it in more
+than 10\% of games (at most 0.216 in the zoo, 0.965 for Othello GPT
+synthetic), and 41 of the 81 models never manage one, so this share sits at its floor for most of the zoo and
+the free play legal rate is the more informative number.
+
+The whole game view ranks the models much as D1 does: the free play legal rate has Spearman 0.886 [0.721,
+0.951] with D1 and 0.879 [0.710, 0.946] with competence, and neither whole game measure is related to
+relative fragility v2 ($-0.179$ [$-0.599$, 0.366] for the free play rate). With D1 controlled, D4 is the only
+diagnostic that relates to the full game rate (partial Spearman 0.354 [0.169, 0.526]; D2 0.022, D3 0.063, both
+intervals including 0), which fits the causal check: models whose board can be read and used play cleaner whole
+games. This is exploratory and is one of the measures we preregister for navigation. In short, whole game
+measures do not change the H1 to H3 answers, but they show two failures the next move unit misses: models
+trained on human games break once they leave human lines, and LSTMs drift over long games.
+
 \subsection{Held out domain (H4)}
 H4 is not yet tested. It requires H1 to H3 to be fixed on Othello and navigation first; the interpreter models
 are then trained and scored with the same code, and the Othello answers above are the first half of what they
@@ -1072,6 +1150,12 @@ exists.
     al.~\cite{vafa2024evaluating}, and its same board pairs come mostly from the opening.
     \item \textbf{D3 measures help from pretraining with 64 examples}, not closeness to a perfect answer, and
     part of it reflects an occupancy shortcut.
+    \item \textbf{The detour reference of fragility v2.} The undisturbed self play run that each detour drop is
+    measured against plays the model's best legal move after a random first move, so its games are
+    deterministic and collapse into at most four distinct games; the detour drops therefore compare the
+    detoured games with a very small reference. We found this after scoring, while building the free play
+    measure. The preregistered suite is kept unchanged and reported as computed, and the navigation suite will
+    draw its undisturbed games from the model's probabilities over the legal moves, as free play does.
     \item \textbf{Fragility is small on most models}, so H3 rests on the minority of fragile models; version 1
     of the suite had two parts that could not measure fragility on this zoo, corrected in version 2 before
     scoring.
