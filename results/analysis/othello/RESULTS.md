@@ -176,8 +176,7 @@ fragile configurations are exactly the nine championship ones (the three LSTM on
 ## Exploratory, not preregistered: next move versus whole game (`sequence.csv`, `sequence_summary.json`, `sequence_by_move.svg`)
 
 Script: `src/analysis/sequence_othello.py` (version sequence-v2). Teacher forced = D1 split by move number on the
-same test games (matches D1 except 1 of about 58,000 positions in three models: LSTM large synthetic s1,
-Mamba large synthetic s1, Mamba large mixed s1). Free play = 1,000
+same test games (matches D1 exactly for all 81 models, both at batch 256; results from commit ab140fa). Free play = 1,000
 games the model plays itself; top move scored, played move drawn from the model's probabilities over the legal
 moves (at least 978 distinct games per model). Version 1 played the top legal move, which gave at most 4
 distinct games, and was replaced before any result was used.

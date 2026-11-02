@@ -1038,9 +1038,9 @@ championship configurations, and mostly by the three championship LSTMs (explora
 \label{sec:sequence_results}
 
 All 81 zoo models and both anchors were measured as described in Section~\ref{sec:sequence_method}. The teacher
-forced rate reproduces each model's D1 score, except for one position out of about 58,000 in three models
-(LSTM large synthetic seed 1, Mamba large synthetic seed 1 and Mamba large mixed seed 1), a near tie in the
-top move that the GPU breaks differently at a different batch size. In free play,
+forced rate reproduces the D1 score of every model exactly (both are computed with batches of 256 games; with
+a different batch size, a near tie in the top move at one position out of about 58,000 was broken differently
+in three models). In free play,
 each model played at least 978 distinct games out of 1,000.
 
 \begin{table}[H]
