@@ -64,8 +64,8 @@
 	    Four families of diagnostics are used to claim that a sequence model has, or lacks, a ``world
 	    model'': next token validity, state equivalence based on the Myhill Nerode theorem, inductive bias
 	    probes, and representation probing. We find that on Othello \textbf{they agree mainly because they
-	    all track how competent a model is and what data it was trained on, and none of them reliably
-	    predicts when a model will break}. WM-Concord runs all four on one controlled zoo of 81 small
+	    all track how competent a model is, none of them reliably predicts when a model will break, and
+	    the one link to fragility comes from the training data}. WM-Concord runs all four on one controlled zoo of 81 small
 	    sequence models (transformer, LSTM and Mamba; three scales; three training distributions; three
 	    seeds) with a known ground truth, under a preregistered analysis. Raw agreement is strong (Kendall W
 	    0.87), but with the validation legal move rate controlled it falls to W 0.27, and no pair among the
@@ -105,8 +105,8 @@ new diagnostic. It measures whether the existing ones agree, and which one can b
 \end{itemize}
 
 \paragraph{What we found so far.} The headline is a confound: \textbf{the four diagnostics agree because they
-all track competence and training data, and none of them reliably predicts fragility once training data is
-accounted for.} On the first domain, Othello, we trained 81 models (three architectures,
+all track competence, and none of them reliably predicts fragility; the one link to fragility we find comes
+from the training data.} On the first domain, Othello, we trained 81 models (three architectures,
 three scales, three training distributions, three seeds), all of which passed a preregistered admission rule,
 and scored every one with all four diagnostics and two versions of a fragility suite. The diagnostics agree on
 which models are better, but they agree because all of them follow competence, the model's legal move rate:
@@ -1038,8 +1038,9 @@ championship configurations, and mostly by the three championship LSTMs (explora
 \label{sec:sequence_results}
 
 All 81 zoo models and both anchors were measured as described in Section~\ref{sec:sequence_method}. The teacher
-forced rate reproduces each model's D1 score, except for one position out of about 58,000 in two Mamba large
-models, a near tie in the top move that the GPU breaks differently at a different batch size. In free play,
+forced rate reproduces each model's D1 score, except for one position out of about 58,000 in three models
+(LSTM large synthetic seed 1, Mamba large synthetic seed 1 and Mamba large mixed seed 1), a near tie in the
+top move that the GPU breaks differently at a different batch size. In free play,
 each model played at least 978 distinct games out of 1,000.
 
 \begin{table}[H]
@@ -1173,8 +1174,9 @@ exists.
 % ------------------------------------------------------------------------------------------------------------------------
 \section{Conclusion and Future Work}
 
-In one sentence: on Othello, the four world model diagnostics agree mainly because they all track competence and
-training data, and none of them reliably predicts when a model will break. In detail, on 81 Othello models and
+In one sentence: on Othello, the four world model diagnostics agree mainly because they all track competence,
+none of them reliably predicts when a model will break, and the one link to fragility comes from the training
+data. In detail, on 81 Othello models and
 under a preregistered analysis: \textbf{H1}, the four diagnostics agree on which models
 are better, but almost entirely through competence, and the diagnostics that can be separated from competence
 do not agree once it is controlled. \textbf{H2}, their disagreement is not systematic in architecture, scale or

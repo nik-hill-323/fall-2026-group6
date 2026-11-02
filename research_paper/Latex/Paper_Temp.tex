@@ -30,8 +30,8 @@
 \begin{abstract}
 Four families of diagnostics are used to claim that a sequence model has, or lacks, a world model: next token
 validity, state equivalence, inductive bias probes and representation probing. We find that on Othello they
-agree mainly because they all track how competent a model is and what data it was trained on, and none of them
-reliably predicts when a model will break. We run all four on the same controlled zoo of 81 Othello models
+agree mainly because they all track how competent a model is, none of them reliably predicts when a model will
+break, and the one link to fragility comes from the training data. We run all four on the same controlled zoo of 81 Othello models
 (three architectures, three scales, three training distributions, three seeds) under a preregistered analysis,
 and judge them against a fragility suite frozen before any score. Raw agreement is strong (Kendall W 0.87), but
 with the legal move rate controlled W falls to 0.27 and no pair of the diagnostics that can be separated from
@@ -56,8 +56,8 @@ Wallach~\cite{jacobs2021measurement}, we treat ``has a world model'' as a constr
 competing measures of it, and ask whether they agree (convergent validity) and which predicts failure on shifted
 tasks (predictive validity). We propose no new diagnostic.
 
-Our headline result is a confound: the diagnostics agree because they share competence and training data,
-not because they measure the same internal structure. Our contributions are: the first head to head comparison of four world model diagnostics on the same models and
+Our headline result is a confound: the diagnostics agree because they share competence, not because they
+measure the same internal structure, and the one link to fragility we find comes from the training data. Our contributions are: the first head to head comparison of four world model diagnostics on the same models and
 ground truth; a test of their predictive validity against a fragility suite frozen before any score; and an open
 benchmark with a common interface to which future diagnostics can be added.
 

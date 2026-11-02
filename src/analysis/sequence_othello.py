@@ -69,7 +69,7 @@ VERSION = "sequence-v2"   # v1 played the top legal move: only 4 distinct games 
 N_GAMES = 1000
 DATA_SEED = 0
 PLAY_SEED = 0
-BATCH = 250
+BATCH = 256   # the same as D1 (src/diagnostics/d1/next_token.py), so the teacher forced rate matches D1 exactly
 ANCHORS = ["othello_gpt_synthetic", "othello_gpt_championship"]
 MOVES = 61   # index = move number 1 to 60; index 0 unused
 
@@ -213,6 +213,17 @@ def _commit() -> str:
         return "unknown"
 
 
+def uncommitted_code() -> list[str]:
+    """Files under src/ that differ from the commit: results must come from committed code, so that the
+    git_commit they record is the code that produced them (PR #131 review: v2 results recorded the v1 commit)."""
+    try:
+        out = subprocess.run(["git", "status", "--porcelain", "--", "src"], cwd=ROOT, capture_output=True,
+                             text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return ["(git status failed)"]
+    return [line[3:] for line in out.splitlines() if line.strip()]
+
+
 def distribution_of(model) -> str:
     results = _load("results", "src/component/results.py")
     row = results.load_models().get(model.model_id)
@@ -235,7 +246,7 @@ def measure(model, n_games: int = N_GAMES, data_seed: int = DATA_SEED, play_seed
             "teacher_forced": tf, "free_play": fp,
             "d1_score": d1,
             "matches_d1": None if d1 is None else bool(abs(d1 - tf["overall"]) < 1e-6),
-            "provenance": {"git_commit": _commit(), "device": str(model.device),
+            "provenance": {"git_commit": _commit(), "uncommitted_src": uncommitted_code(), "device": str(model.device),
                            "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu",
                            "torch": torch.__version__, "host": platform.node(),
                            "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())},
@@ -398,6 +409,8 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=BATCH,
                     help="games per forward pass; lower it if the GPU runs out of memory (result unchanged)")
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--allow_uncommitted", action="store_true",
+                    help="run even if files under src/ are not committed (tests only; never for results)")
     ap.add_argument("--summarize", action="store_true", help="only build the table, summary and figures")
     ap.add_argument("--smoke", action="store_true")
     args = ap.parse_args()
@@ -412,6 +425,10 @@ def main() -> None:
     ids = list(args.models) + (zoo_ids_here() if args.all else []) + (ANCHORS if args.anchors else [])
     if not ids:
         sys.exit("nothing to do: pass --models, --all and/or --anchors (or --summarize)")
+    dirty = uncommitted_code()
+    if dirty and not args.allow_uncommitted:
+        sys.exit(f"refusing to run: these files under src/ are not committed: {dirty}. Commit them first, so "
+                 "that the git_commit each result records is the code that produced it.")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     done = failed = skipped = 0
     for mid in ids:
