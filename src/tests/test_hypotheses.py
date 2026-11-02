@@ -239,8 +239,8 @@ def test_causal_flag_and_outputs(tmp_path: Path) -> None:
     assert "D3_vs_occupancy_shortcut" in c
     paths = hy.write_outputs(s, tmp_path / "out", tmp_path / "fig")
     names = {p.name for p in paths}
-    assert {"summary.json", "model_table.csv", "h1_pairs.csv", "h3.csv", "h1_concordance.png",
-            "a3_competence.png", "h3_scatter.png", "h2_disagreement.png", "fragility_distribution.png"} <= names
+    assert {"summary.json", "model_table.csv", "h1_pairs.csv", "h3.csv", "h1_concordance.svg",
+            "a3_competence.svg", "h3_scatter.svg", "h2_disagreement.svg", "fragility_distribution.svg"} <= names
     json.loads((tmp_path / "out" / "summary.json").read_text())   # valid JSON, no NaN
 
 

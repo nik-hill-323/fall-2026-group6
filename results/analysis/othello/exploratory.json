@@ -341,6 +341,101 @@
       }
     }
   },
+  "h3_sensitivity": {
+    "most_fragile_configurations": [
+      {
+        "configuration": "lstm medium championship",
+        "mean_rel_frag_v2": 0.19713
+      },
+      {
+        "configuration": "lstm small championship",
+        "mean_rel_frag_v2": 0.175523
+      },
+      {
+        "configuration": "lstm large championship",
+        "mean_rel_frag_v2": 0.13378
+      },
+      {
+        "configuration": "transformer small championship",
+        "mean_rel_frag_v2": 0.074446
+      },
+      {
+        "configuration": "transformer medium championship",
+        "mean_rel_frag_v2": 0.070186
+      },
+      {
+        "configuration": "transformer large championship",
+        "mean_rel_frag_v2": 0.057912
+      },
+      {
+        "configuration": "mamba small championship",
+        "mean_rel_frag_v2": 0.045424
+      },
+      {
+        "configuration": "mamba medium championship",
+        "mean_rel_frag_v2": 0.030014
+      },
+      {
+        "configuration": "mamba large championship",
+        "mean_rel_frag_v2": 0.023276
+      }
+    ],
+    "leave_out_most_fragile": {
+      "1": {
+        "n_models": 78,
+        "n_configurations": 26,
+        "partial_given_D1": -0.521086,
+        "ci": [
+          -0.721563,
+          -0.073765
+        ]
+      },
+      "3": {
+        "n_models": 72,
+        "n_configurations": 24,
+        "partial_given_D1": -0.378889,
+        "ci": [
+          -0.642358,
+          0.07512
+        ]
+      },
+      "5": {
+        "n_models": 66,
+        "n_configurations": 22,
+        "partial_given_D1": -0.243072,
+        "ci": [
+          -0.559828,
+          0.214693
+        ]
+      },
+      "9": {
+        "n_models": 54,
+        "n_configurations": 18,
+        "partial_given_D1": 0.258784,
+        "ci": [
+          -0.135963,
+          0.504979
+        ]
+      }
+    },
+    "leave_one_configuration_out": {
+      "min": -0.628119,
+      "min_without": "mamba small synthetic",
+      "max": -0.485494,
+      "max_without": "lstm medium synthetic"
+    },
+    "models_above_0.05": {
+      "n": 20,
+      "by_distribution": {
+        "championship": 20
+      },
+      "by_architecture": {
+        "transformer": 8,
+        "lstm": 9,
+        "mamba": 3
+      }
+    }
+  },
   "diagnostic_details": {
     "D2_compression_error": {
       "mean": 0.146235,

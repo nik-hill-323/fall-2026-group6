@@ -28,17 +28,18 @@
 \maketitle
 
 \begin{abstract}
-Claims that sequence models learn a world model of their domain rest on four families of diagnostics: next
-token validity, state equivalence, inductive bias probes and representation probing. Each published study uses
-one of them, on its own models, and on Othello they reach opposite conclusions. We run all four on the same
-controlled zoo of 81 Othello models (three architectures, three scales, three training distributions, three
-seeds) under a preregistered analysis, and judge them against a fragility suite frozen before any score. The
-diagnostics agree strongly on raw scores (Kendall W 0.87), but almost all of this agreement is shared
-competence: with the legal move rate controlled, W falls to 0.27 and no pair of the diagnostics that can be
-separated from competence agrees. Their disagreement is not explained by architecture, scale or training data.
-Only the representation probe adds to the legal move rate in predicting fragility, and an exploratory analysis
-shows that this signal is a difference between training distributions, not a relation among comparable models.
-Navigation and a held out program interpreter test whether these findings generalize.
+Four families of diagnostics are used to claim that a sequence model has, or lacks, a world model: next token
+validity, state equivalence, inductive bias probes and representation probing. We find that on Othello they
+agree mainly because they all track how competent a model is, none of them reliably predicts when a model will
+break, and the one link to fragility comes from the training data. We run all four on the same controlled zoo of 81 Othello models
+(three architectures, three scales, three training distributions, three seeds) under a preregistered analysis,
+and judge them against a fragility suite frozen before any score. Raw agreement is strong (Kendall W 0.87), but
+with the legal move rate controlled W falls to 0.27 and no pair of the diagnostics that can be separated from
+competence agrees. Their disagreement is not explained by architecture, scale or training data. Only the
+representation probe adds to the legal move rate in predicting fragility, and an exploratory analysis traces
+this to the models trained on human games, which are both the most fragile and the least probe readable; among
+comparable models the link disappears. Navigation and a held out program interpreter test whether these
+findings generalize.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -55,7 +56,8 @@ Wallach~\cite{jacobs2021measurement}, we treat ``has a world model'' as a constr
 competing measures of it, and ask whether they agree (convergent validity) and which predicts failure on shifted
 tasks (predictive validity). We propose no new diagnostic.
 
-Our contributions are: the first head to head comparison of four world model diagnostics on the same models and
+Our headline result is a confound: the diagnostics agree because they share competence, not because they
+measure the same internal structure, and the one link to fragility we find comes from the training data. Our contributions are: the first head to head comparison of four world model diagnostics on the same models and
 ground truth; a test of their predictive validity against a fragility suite frozen before any score; and an open
 benchmark with a common interface to which future diagnostics can be added.
 

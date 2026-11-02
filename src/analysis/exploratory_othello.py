@@ -15,6 +15,11 @@ What it computes
                      v2 given D1), within each training distribution, and over all models with the
                      training distribution added as a control (the preregistered A2 controls only for
                      D1 in the partial correlation and for architecture and scale in the regression)
+    h3_sensitivity   how much the preregistered D4 result rests on the most fragile models (Instructor
+                     Review #6): D4 partial Spearman given D1 after leaving out the 1, 3, 5 and 9 most
+                     fragile configurations (by mean relative fragility v2 over seeds), after leaving
+                     out each configuration in turn, and which configurations hold the models with
+                     relative fragility above 0.05
     diagnostic_details  D2 compression and distinction errors; D3 balanced accuracies, symbolic recovery
                      and occupancy shortcut rates; D4 linear vs MLP selectivity, best layer depth, gain
                      over the occupancy only baseline, causal scores
@@ -114,6 +119,38 @@ def h3_by_distribution(rows):
     return out
 
 
+def _d4_partial(rs):
+    x, y, d1 = hy.column(rs, "D4"), hy.column(rs, "rel_frag_v2"), hy.column(rs, "D1")
+    idx = hy.boot_indices(rs)
+    return {"n_models": len(rs), "n_configurations": len(hy.clusters(rs)),
+            "partial_given_D1": hy.partial_spearman(x, y, d1),
+            "ci": hy.interval(hy.boot(lambda i: hy.partial_spearman(x[i], y[i], d1[i]), idx))}
+
+
+def h3_sensitivity(rows, high=0.05):
+    by_cfg = collections.defaultdict(list)
+    for r in rows:
+        by_cfg[hy.config_key(r)].append(r["rel_frag_v2"])
+    order = sorted(by_cfg, key=lambda k: -float(np.mean(by_cfg[k])))
+    out = {"most_fragile_configurations": [{"configuration": " ".join(k), "mean_rel_frag_v2": float(np.mean(by_cfg[k]))}
+                                           for k in order[:9]],
+           "leave_out_most_fragile": {}}
+    for n in (1, 3, 5, 9):
+        drop = set(order[:n])
+        out["leave_out_most_fragile"][str(n)] = _d4_partial([r for r in rows if hy.config_key(r) not in drop])
+    loo = []
+    for k in order:
+        rs = [r for r in rows if hy.config_key(r) != k]
+        loo.append((hy.partial_spearman(hy.column(rs, "D4"), hy.column(rs, "rel_frag_v2"), hy.column(rs, "D1")), k))
+    lo, hi = min(loo), max(loo)
+    out["leave_one_configuration_out"] = {"min": lo[0], "min_without": " ".join(lo[1]),
+                                          "max": hi[0], "max_without": " ".join(hi[1])}
+    frag = [r for r in rows if r["rel_frag_v2"] > high]
+    out[f"models_above_{high}"] = {"n": len(frag), "by_distribution": dict(collections.Counter(r["distribution"] for r in frag)),
+                                   "by_architecture": dict(collections.Counter(r["arch"] for r in frag))}
+    return out
+
+
 def diagnostic_details(rows):
     det = collections.defaultdict(list)
     for r in rows:
@@ -146,6 +183,7 @@ def main():
     out = {"note": "Exploratory, not preregistered; decided after the preregistered analysis was read.",
            "n_models": len(rows), "descriptives": desc, "fragility_v2_mean_drop_by_training_distribution":
            fragility_parts(rows), "h3_by_distribution": h3_by_distribution(rows),
+           "h3_sensitivity": h3_sensitivity(rows),
            "diagnostic_details": diagnostic_details(rows),
            "decodable_and_causal_models": [r["model_id"] for r in rows if r["causal_label"] == hy.CAUSAL]}
     OUT.mkdir(parents=True, exist_ok=True)
@@ -161,6 +199,9 @@ def main():
         print(f"  within {d:12s} D4 partial given D1 {e['D4']['partial_given_D1']:+.3f} {e['D4']['ci']}")
     c = h["controlling_distribution"]["D4"]
     print(f"  D4 partial given D1 and distribution {c['partial_given_D1_and_distribution']:+.3f} {c['ci']}")
+    hs = out["h3_sensitivity"]["leave_out_most_fragile"]
+    for n, e in hs.items():
+        print(f"  without the {n} most fragile configurations: D4 partial {e['partial_given_D1']:+.3f} {e['ci']}")
     print("wrote", (OUT / "exploratory.json").relative_to(ROOT), "and", (OUT / "descriptives.csv").relative_to(ROOT))
 
 

@@ -73,7 +73,7 @@ within each training distribution, or controlling for it, D4 no longer predicts 
   baseline by 0.041 on average, and for some models not at all (minimum -0.083). Causal score 0.126 (0.009
   to 0.256); 10 of 81 models pass the 0.20 rule.
 
-## H1: do the diagnostics agree? (preregistered; `h1_pairs.csv`, `h1_concordance.png`)
+## H1: do the diagnostics agree? (preregistered; `h1_pairs.csv`, `h1_concordance.svg`)
 
 | Pair | Kendall tau [95% CI] | category | partial tau given competence [95% CI] | category |
 |---|---|---|---|---|
@@ -93,16 +93,16 @@ within each training distribution, or controlling for it, D4 no longer predicts 
   the rest disagree; with competence controlled only D1 and D2 still agree (0.532 [0.088, 0.838]; tau(D1,
   competence) is 0.855 in this subset, so A5 does not apply). W 0.830, on residual ranks 0.466.
 
-## H2: is the disagreement systematic? (preregistered; `h2_disagreement.png`)
+## H2: is the disagreement systematic? (preregistered; `h2_disagreement.svg`)
 
 * Mean disagreement (SD of the four rank percentiles) 0.089; seed noise floor of the disagreement 0.028.
 * F tests: architecture p 0.783, scale p 0.027 (Holm 0.081), distribution p 0.171 (Holm 0.341).
 * **Verdict:** consistent with noise; no factor is significant after Holm. Scale comes closest
   (disagreement 0.110 small, 0.083 medium, 0.073 large).
 
-## H3: which diagnostic predicts fragility? (preregistered; `h3.csv`, `h3_scatter.png`)
+## H3: which diagnostic predicts fragility? (preregistered; `h3.csv`, `h3_scatter.svg`)
 
-Fragility first (Amendment 4, F3; `fragility_distribution.png`): relative fragility v2 has mean 0.015,
+Fragility first (Amendment 4, F3; `fragility_distribution.svg`): relative fragility v2 has mean 0.015,
 sd 0.070, range -0.124 to 0.215, and 52% of models are below 0 (better under the shifted tests than on
 their own test games).
 
@@ -155,6 +155,52 @@ Mean drop per fragility v2 variant, by training data:
   not that probing predicts fragility among comparable models. With 9 configurations per distribution the
   within distribution estimates are imprecise; the honest summary is that no diagnostic shows a reliable
   within distribution link to fragility on Othello.
+
+### How much of H3 rests on the most fragile models? (exploratory, `exploratory.json`, h3_sensitivity)
+
+All 20 models with relative fragility v2 above 0.05 were trained on championship games, and the nine most
+fragile configurations are exactly the nine championship ones (the three LSTM ones first: 0.197, 0.176, 0.134).
+
+| Left out | Models kept | D4 partial Spearman given D1 [95% CI] |
+|---|---|---|
+| none (preregistered) | 81 | -0.554 [-0.734, -0.124] |
+| most fragile configuration (LSTM medium championship) | 78 | -0.521 [-0.722, -0.074] |
+| 3 most fragile (the championship LSTMs) | 72 | -0.379 [-0.642, 0.075] |
+| 5 most fragile | 66 | -0.243 [-0.560, 0.215] |
+| 9 most fragile (every championship configuration) | 54 | +0.259 [-0.136, 0.505] |
+| any one configuration, in turn | 78 | -0.628 to -0.485 |
+
+* The result survives leaving out any single configuration, but not the three championship LSTMs: the
+  preregistered D4 signal is carried by the championship configurations, mostly the LSTM ones.
+
+## Exploratory, not preregistered: next move versus whole game (`sequence.csv`, `sequence_summary.json`, `sequence_by_move.svg`)
+
+Script: `src/analysis/sequence_othello.py` (version sequence-v2). Teacher forced = D1 split by move number on the
+same test games (matches D1 exactly for all 81 models, both at batch 256; results from commit ab140fa). Free play = 1,000
+games the model plays itself; top move scored, played move drawn from the model's probabilities over the legal
+moves (at least 978 distinct games per model). Version 1 played the top legal move, which gave at most 4
+distinct games, and was replaced before any result was used.
+
+| | teacher forced legal (D1) | free play legal | free play full games | errors per game | first error (move) |
+|---|---|---|---|---|---|
+| synthetic | 0.832 | 0.802 | 0.045 | 11.7 | 18.2 |
+| championship | 0.814 | 0.572 | 0.000 | 25.2 | 7.2 |
+| mixed | 0.823 | 0.808 | 0.029 | 11.3 | 17.3 |
+| Othello GPT synthetic | 0.9996 | 0.999 | 0.965 | 0.04 | 54.6 |
+| Othello GPT championship | 0.896 | 0.949 | 0.466 | 3.0 | 28.1 |
+
+* Championship trained models collapse in their own games (0.81 -> 0.57, first error at move 7): off the human
+  lines they fail, as the fragility suite found.
+* LSTMs drift: in free play their legal rate falls steadily over the game (LSTM large 0.74 at move 10, 0.43 at
+  move 58); transformers and Mamba stay flat.
+* A whole game with no illegal move is rare (41 of 81 models never manage one; zoo maximum 0.216), so the free
+  play legal rate is the informative number.
+* Whole game measures rank models like D1 (free play rate vs D1: Spearman 0.886 [0.721, 0.951]) and are not
+  related to relative fragility v2. With D1 controlled, only D4 relates to the full game rate (partial 0.354
+  [0.169, 0.526]).
+* Found while building this: fragility v2's undisturbed detour reference (p = 0) plays the best legal move after
+  a random first move, so it is at most 4 distinct games. The preregistered suite is unchanged; navigation will
+  sample its undisturbed games.
 
 ## What to say
 

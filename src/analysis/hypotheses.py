@@ -690,7 +690,8 @@ def _figures(summary: dict[str, Any], rows: list[dict[str, Any]], fig_dir: Path)
     fig_dir.mkdir(parents=True, exist_ok=True)
     written = []
     plt.rcParams.update({"font.size": 10, "text.color": INK, "axes.labelcolor": INK2,
-                         "figure.facecolor": SURFACE, "savefig.facecolor": SURFACE})
+                         "figure.facecolor": SURFACE, "savefig.facecolor": SURFACE,
+                         "svg.fonttype": "none", "svg.hashsalt": "wmconcord"})  # text stays text; same file every run
     cmap = LinearSegmentedColormap.from_list("div", ["#e34948", "#f0efec", "#2a78d6"])
 
     pairs = summary["H1"].get("pairs") or []
@@ -717,8 +718,8 @@ def _figures(summary: dict[str, Any], rows: list[dict[str, Any]], fig_dir: Path)
         fig.colorbar(im, ax=axes, shrink=0.8, label="rank correlation")
         fig.suptitle(f"H1: agreement between diagnostics ({summary['H1']['n_models']} admitted models)",
                      fontsize=11, color=INK)
-        p = fig_dir / "h1_concordance.png"
-        fig.savefig(p, dpi=200)
+        p = fig_dir / "h1_concordance.svg"
+        fig.savefig(p, metadata={"Date": None})  # vector (SVG), Review #6
         plt.close(fig)
         written.append(p)
 
@@ -740,8 +741,8 @@ def _figures(summary: dict[str, Any], rows: list[dict[str, Any]], fig_dir: Path)
         ax.set_ylabel("models")
         ax.legend(frameon=False, fontsize=8)
         ax.set_title(f"A3: competence of the {len(adm)} admitted models", fontsize=10)
-        p = fig_dir / "a3_competence.png"
-        fig.savefig(p, dpi=200)
+        p = fig_dir / "a3_competence.svg"
+        fig.savefig(p, metadata={"Date": None})  # vector (SVG), Review #6
         plt.close(fig)
         written.append(p)
 
@@ -761,8 +762,8 @@ def _figures(summary: dict[str, Any], rows: list[dict[str, Any]], fig_dir: Path)
         axes[0].set_ylabel("relative fragility v2")
         axes[0].legend(frameon=False, fontsize=8)
         fig.suptitle("H3: diagnostic score against relative fragility (higher = breaks more)", fontsize=11)
-        p = fig_dir / "h3_scatter.png"
-        fig.savefig(p, dpi=200)
+        p = fig_dir / "h3_scatter.svg"
+        fig.savefig(p, metadata={"Date": None})  # vector (SVG), Review #6
         plt.close(fig)
         written.append(p)
 
@@ -790,8 +791,8 @@ def _figures(summary: dict[str, Any], rows: list[dict[str, Any]], fig_dir: Path)
         axes[0].legend(frameon=False, fontsize=8)
         fig.suptitle("Fragility distribution before H3 (higher = breaks more; below 0 = better under shift)",
                      fontsize=11)
-        p = fig_dir / "fragility_distribution.png"
-        fig.savefig(p, dpi=200)
+        p = fig_dir / "fragility_distribution.svg"
+        fig.savefig(p, metadata={"Date": None})  # vector (SVG), Review #6
         plt.close(fig)
         written.append(p)
 
@@ -813,8 +814,8 @@ def _figures(summary: dict[str, Any], rows: list[dict[str, Any]], fig_dir: Path)
         ax.set_ylabel("mean disagreement (SD of rank percentiles)")
         ax.legend(frameon=False, fontsize=8)
         ax.set_title("H2: disagreement by architecture and scale", fontsize=10)
-        p = fig_dir / "h2_disagreement.png"
-        fig.savefig(p, dpi=200)
+        p = fig_dir / "h2_disagreement.svg"
+        fig.savefig(p, metadata={"Date": None})  # vector (SVG), Review #6
         plt.close(fig)
         written.append(p)
     return written
