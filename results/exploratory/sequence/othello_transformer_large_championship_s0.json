@@ -283,12 +283,13 @@
   "d1_score": 0.9003904900131315,
   "matches_d1": true,
   "provenance": {
-    "git_commit": "92d7ea9",
+    "git_commit": "ab140fa",
+    "uncommitted_src": [],
     "device": "cuda",
     "gpu": "NVIDIA A10G",
     "torch": "2.13.0+cu130",
     "host": "ip-10-0-2-159",
-    "time_utc": "2026-10-31T21:00:33Z"
+    "time_utc": "2026-11-02T21:26:58Z"
   },
-  "runtime_sec": 22.5
+  "runtime_sec": 19.9
 }

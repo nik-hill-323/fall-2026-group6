@@ -8,7 +8,7 @@
   "data_seed": 0,
   "play_seed": 0,
   "teacher_forced": {
-    "overall": 0.9616566005176876,
+    "overall": 0.9616738567730803,
     "full_game_rate": 0.178,
     "n_games": 1000,
     "n_positions": 57950,
@@ -63,7 +63,7 @@
         935,
         954,
         947,
-        956,
+        957,
         943,
         956,
         957,
@@ -281,14 +281,15 @@
     }
   },
   "d1_score": 0.9616738567730803,
-  "matches_d1": false,
+  "matches_d1": true,
   "provenance": {
-    "git_commit": "92d7ea9",
+    "git_commit": "ab140fa",
+    "uncommitted_src": [],
     "device": "cuda",
     "gpu": "NVIDIA A10G",
     "torch": "2.13.0+cu130",
     "host": "ip-10-0-2-159",
-    "time_utc": "2026-10-31T21:25:06Z"
+    "time_utc": "2026-11-02T21:48:29Z"
   },
-  "runtime_sec": 99.0
+  "runtime_sec": 95.8
 }

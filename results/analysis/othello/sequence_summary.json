@@ -3,15 +3,15 @@
   "version": "sequence-v2",
   "n_models": 81,
   "missing": [],
-  "matches_d1_all": false,
+  "matches_d1_all": true,
   "means": {
     "transformer small": {
       "competence": 0.8406,
       "tf_overall": 0.843147,
       "tf_full_game": 0.000333,
-      "fp_overall": 0.767707,
+      "fp_overall": 0.7677,
       "fp_full_game": 0.000222,
-      "fp_errors_per_game": 13.698667,
+      "fp_errors_per_game": 13.699111,
       "n": 9
     },
     "transformer medium": {
@@ -36,9 +36,9 @@
       "competence": 0.582667,
       "tf_overall": 0.583751,
       "tf_full_game": 0.0,
-      "fp_overall": 0.411893,
+      "fp_overall": 0.411949,
       "fp_full_game": 0.0,
-      "fp_errors_per_game": 34.658556,
+      "fp_errors_per_game": 34.655333,
       "n": 9
     },
     "lstm medium": {
@@ -52,11 +52,11 @@
     },
     "lstm large": {
       "competence": 0.778133,
-      "tf_overall": 0.779692,
+      "tf_overall": 0.77969,
       "tf_full_game": 0.0,
-      "fp_overall": 0.639171,
+      "fp_overall": 0.639176,
       "fp_full_game": 0.000111,
-      "fp_errors_per_game": 21.279667,
+      "fp_errors_per_game": 21.279333,
       "n": 9
     },
     "mamba small": {
@@ -72,45 +72,45 @@
       "competence": 0.896833,
       "tf_overall": 0.898506,
       "tf_full_game": 0.015222,
-      "fp_overall": 0.836939,
-      "fp_full_game": 0.012222,
-      "fp_errors_per_game": 9.606111,
+      "fp_overall": 0.836943,
+      "fp_full_game": 0.012333,
+      "fp_errors_per_game": 9.605889,
       "n": 9
     },
     "mamba large": {
       "competence": 0.924444,
-      "tf_overall": 0.925159,
+      "tf_overall": 0.925163,
       "tf_full_game": 0.079111,
-      "fp_overall": 0.86353,
-      "fp_full_game": 0.075333,
-      "fp_errors_per_game": 8.042111,
+      "fp_overall": 0.863536,
+      "fp_full_game": 0.075444,
+      "fp_errors_per_game": 8.041778,
       "n": 9
     },
     "synthetic": {
       "competence": 0.83133,
       "tf_overall": 0.832111,
       "tf_full_game": 0.060074,
-      "fp_overall": 0.802255,
-      "fp_full_game": 0.045222,
-      "fp_errors_per_game": 11.663074,
+      "fp_overall": 0.802259,
+      "fp_full_game": 0.045259,
+      "fp_errors_per_game": 11.662889,
       "n": 27
     },
     "championship": {
       "competence": 0.811789,
       "tf_overall": 0.81363,
       "tf_full_game": 0.003037,
-      "fp_overall": 0.572445,
+      "fp_overall": 0.572459,
       "fp_full_game": 0.000444,
-      "fp_errors_per_game": 25.196667,
+      "fp_errors_per_game": 25.195889,
       "n": 27
     },
     "mixed": {
       "competence": 0.820904,
-      "tf_overall": 0.823439,
+      "tf_overall": 0.82344,
       "tf_full_game": 0.020963,
-      "fp_overall": 0.808013,
-      "fp_full_game": 0.028667,
-      "fp_errors_per_game": 11.321444,
+      "fp_overall": 0.808017,
+      "fp_full_game": 0.028704,
+      "fp_errors_per_game": 11.321185,
       "n": 27
     }
   },

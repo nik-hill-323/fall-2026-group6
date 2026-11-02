@@ -8,7 +8,7 @@
   "data_seed": 0,
   "play_seed": 0,
   "teacher_forced": {
-    "overall": 0.926585382702404,
+    "overall": 0.9266026526664825,
     "full_game_rate": 0.059,
     "n_games": 1000,
     "n_positions": 57904,
@@ -65,7 +65,7 @@
         895,
         891,
         881,
-        892,
+        893,
         894,
         903,
         901,
@@ -143,10 +143,10 @@
   },
   "free_play": {
     "n_distinct_games": 1000,
-    "overall": 0.9462620783183591,
-    "full_game_rate": 0.083,
-    "mean_errors_per_game": 3.17,
-    "mean_first_error_move": 27.492911668484187,
+    "overall": 0.9463129343956603,
+    "full_game_rate": 0.084,
+    "mean_errors_per_game": 3.167,
+    "mean_first_error_move": 27.509825327510917,
     "median_first_error_move": 25.0,
     "mean_game_length": 59.99,
     "n_games": 1000,
@@ -165,7 +165,7 @@
         999,
         993,
         989,
-        975,
+        976,
         977,
         962,
         966,
@@ -183,11 +183,11 @@
         931,
         944,
         925,
-        925,
+        926,
         912,
         929,
         928,
-        929,
+        930,
         925,
         931,
         917,
@@ -281,14 +281,15 @@
     }
   },
   "d1_score": 0.9266026526664825,
-  "matches_d1": false,
+  "matches_d1": true,
   "provenance": {
-    "git_commit": "92d7ea9",
+    "git_commit": "ab140fa",
+    "uncommitted_src": [],
     "device": "cuda",
     "gpu": "NVIDIA A10G",
     "torch": "2.13.0+cu130",
     "host": "ip-10-0-2-159",
-    "time_utc": "2026-10-31T21:35:00Z"
+    "time_utc": "2026-11-02T21:58:05Z"
   },
-  "runtime_sec": 98.9
+  "runtime_sec": 95.6
 }

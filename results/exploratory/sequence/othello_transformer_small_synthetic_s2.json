@@ -143,14 +143,14 @@
   },
   "free_play": {
     "n_distinct_games": 1000,
-    "overall": 0.8354750118668204,
+    "overall": 0.8354438963196528,
     "full_game_rate": 0.0,
-    "mean_errors_per_game": 9.705,
+    "mean_errors_per_game": 9.707,
     "mean_first_error_move": 14.235,
     "median_first_error_move": 13.0,
-    "mean_game_length": 59.988,
+    "mean_game_length": 59.989,
     "n_games": 1000,
-    "n_predictions": 58988,
+    "n_predictions": 58989,
     "by_move": {
       "legal": [
         0,
@@ -206,13 +206,13 @@
         849,
         846,
         848,
-        871,
+        870,
         854,
         834,
         840,
+        854,
         855,
-        855,
-        894,
+        895,
         276
       ],
       "n": [
@@ -276,19 +276,20 @@
         1000,
         1000,
         999,
-        989
+        990
       ]
     }
   },
   "d1_score": 0.8414840379637618,
   "matches_d1": true,
   "provenance": {
-    "git_commit": "92d7ea9",
+    "git_commit": "ab140fa",
+    "uncommitted_src": [],
     "device": "cuda",
     "gpu": "NVIDIA A10G",
     "torch": "2.13.0+cu130",
     "host": "ip-10-0-2-159",
-    "time_utc": "2026-10-31T20:54:52Z"
+    "time_utc": "2026-11-02T21:22:01Z"
   },
-  "runtime_sec": 15.7
+  "runtime_sec": 13.3
 }
