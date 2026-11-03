@@ -199,7 +199,7 @@ The fragility suites write their own simpler JSON, with the fields `fragility`, 
 | `reports/figures/othello/h1_concordance.svg`, `a3_competence.svg`, `h3_scatter.svg`, `fragility_distribution.svg`, `h2_disagreement.svg` | `_figures` in `hypotheses.py` |
 | `reports/figures/othello/sequence_by_move.svg` and `reports/Latex_report/fig/othello_sequence.pdf` | `_figure` in `sequence_othello.py` |
 | `reports/Latex_report/fig/zoo_pipeline.pdf` | Not a script; the source diagram is `reports/diagrams/zoo_training_pipeline.drawio` |
-| `reports/Latex_report/fig/othello_h1.pdf`, `othello_shifts.pdf`, `othello_h3_d4.pdf` | Not written by any script in `src/` |
+| `reports/Latex_report/fig/othello_h1.pdf`, `othello_shifts.pdf`, `othello_h3_d4.pdf` | `reports/Latex_report/make_figures.py` |
 
 
 ## 2. How the next move is predicted
