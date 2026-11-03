@@ -153,33 +153,39 @@ Note: Use Markdown Cheat Sheet download in the directory as needed.
 * [ ] Checkpoints shared through S3 (uploads in progress)
 ---
 
-## Date: Week 9 - Month Day Year 
+## Date: Week 9 - October 27, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #6 (2026-10-25): on schedule, publication on track. The presentation notes asked for the equation of each test, the training and testing procedure, results in tables, the rules of the game, and whether next move metrics capture the whole game
+    - 10-27 session: the professor asked us to learn the code (every file and how the models work), asked how the next move is predicted (our models read a growing history, there is no window), and suggested predicting several moves, an LSTM with attention and reinforcement learning; to be discussed on 11-03
+    - Review #6 items prepared in PR #131: boxed definitions, Othello rules, training and testing procedure, pipeline diagram, H2 and H3 tables, headline rewritten, H3 sensitivity, SVG figures
+    - Whole game measures (exploratory): models trained on human games collapse in their own games, and LSTMs drift over long games; H1 to H3 unchanged
+    - Found: fragility v2's undisturbed detour reference is at most 4 distinct games; stated as a limitation, to be fixed for navigation
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] Review #6 report items (PR #131, closes #129)
+* [x] Whole game measures for 81 models and 2 anchors (PR #131, closes #130)
+* [x] All 81 Othello checkpoints on S3, hashes verified
+* [x] Slides and Streamlit demo for the preliminary presentation (PRs #126, #127)
+* [ ] Reply to Instructor Review #6 (moved to Week 10)
 ---
-## Date: Week 10 - Month Day Year 
+---
+## Date: Week 10 - November 3, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #7 (2026-11-01): on schedule on Othello, navigation not started; asks to review and merge PR #131, decide on navigation on 11-03, share the work across all four members, and add the RL discussion and the progress reports
+    - PR #131 reviewed by Nikhil: he reran one model on his own instance (identical results) and found four problems (headline overstated training data, results recorded the wrong commit, a miscounted model list, a reviewer check that could not pass); all four fixed and the whole game results rerun from committed code
+    - Navigation: the team does the full navigation domain, all four members, as for Othello; first step is the Vafa et al. (2024) reproduction, then the navigation amendment before any navigation score
+    - Work split: code guide (Nikhil), progress reports (Viharika), explainer website for the professor's suggestions (Venkatesh), Vafa reproduction and navigation amendment (Siddu)
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [ ] PR #131 merged
+* [ ] Reply to Instructor Reviews #6 and #7
+* [ ] Progress reports Week 9 and Week 10 (this PR)
+* [ ] Code guide, src/docs/code_guide.md (Nikhil)
+* [ ] Vafa et al. (2024) navigation reproduction
+* [ ] Navigation amendment (Amendment 5, prereg-v1.5)
+* [ ] Navigation generator, DFA spec and fragility suite frozen and tagged
 ---
 ## Date: Week 11 - Month Day Year 
 - Topics of discussion
