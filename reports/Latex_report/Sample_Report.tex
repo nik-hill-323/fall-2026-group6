@@ -71,9 +71,11 @@
 	    0.87), but with the validation legal move rate controlled it falls to W 0.27, and no pair among the
 	    three diagnostics that can be separated from competence still agrees. The remaining disagreement is
 	    not explained by architecture, scale or training data. Only the representation probe adds to the
-	    legal move rate in predicting fragility on shifted tasks, and an exploratory check traces this to the
-	    models trained on human championship games, which are both the most fragile and the least probe
-	    readable; among comparable models the link disappears. A paper that reports one diagnostic on models
+	    legal move rate in predicting fragility on shifted tasks, and this rests on three of the 27
+	    configurations: an exploratory check traces it to the models trained on human championship games,
+	    above all the three championship LSTM configurations, which are both the most fragile and the least
+	    probe readable; without those three its interval includes zero, and among comparable models the link
+	    disappears. A paper that reports one diagnostic on models
 	    of different quality is therefore mostly reporting how good the models are. Navigation and a held out
 	    program interpreter follow with the same pipeline.
 	\end{abstract}
@@ -637,10 +639,12 @@ therefore reported as exploratory (\texttt{src/analysis/sequence\_othello.py}). 
 number} splits the D1 rate by the move being predicted, on the same test games and positions, so its overall
 value equals D1 exactly. \emph{Free play} lets the model play 1,000 whole games against itself from its own
 moves (the first move is random): its top move is checked against the rules at every step, and the move
-actually played is drawn from the model's own probabilities over the legal moves, so every game continues to
-its natural end and the games differ from one another. (A first version played the top legal move instead;
-because that choice is deterministic, its 1,000 games collapsed into at most four distinct games, one per
-opening move, and it was replaced before any result was used.)
+actually played is drawn from the model's own probabilities over the legal moves, so the games differ from one
+another and each continues to its natural end or to move 59, whichever comes first. Move 60 is not scored: in
+training a model reads at most 58 tokens, so no zoo model is ever trained to predict move 60. (A first version
+played the top legal move instead; because that choice is deterministic, its 1,000 games collapsed into at most
+four distinct games, one per opening move. A second version also scored move 60. Both were replaced before any
+result was used in this report.)
 We report the legal rate per move number, the share of games with no illegal top move at all (the full game
 rate), and the move at which the first error happens. Both measures will be preregistered for navigation and the interpreter before any of their models is
 scored.
@@ -826,6 +830,30 @@ Mamba, and nine of the ten were trained on synthetic games. Twenty three models 
     \caption{Means over the 9 models (3 distributions $\times$ 3 seeds) of each architecture and scale. Causal:
     models labelled decodable and causal.}
     \label{tab:descriptives}
+\end{table}
+
+\paragraph{The three families side by side.} Table~\ref{tab:families} puts the three architectures next to
+each other, 27 models each. Transformers and Mamba are close on every measure, while the LSTMs are lower on
+competence and on all four diagnostics, never pass the causal check, and lose the most when they play whole
+games themselves (Section~\ref{sec:sequence_results}). They also carry the H3 result: the three championship
+LSTM configurations are the three most fragile in the zoo (Table~\ref{tab:h3sens}).
+
+\begin{table}[H]
+    \centering
+    \small
+    \setlength{\tabcolsep}{4.5pt}
+    \begin{tabular}{lrrrrrrrr}
+    \toprule
+    Architecture & Competence & D1 & D2 & D3 & D4 & Causal & Rel.\ frag.\ v2 & Free play legal \\
+    \midrule
+    Transformer & 0.896 & 0.898 & 0.803 & 0.036 & 0.236 & 7 of 27 & 0.018 & 0.845 \\
+    LSTM        & 0.683 & 0.684 & 0.635 & 0.015 & 0.150 & 0 of 27 & 0.014 & 0.516 \\
+    Mamba       & 0.885 & 0.887 & 0.779 & 0.046 & 0.237 & 3 of 27 & 0.011 & 0.830 \\
+    \bottomrule
+    \end{tabular}
+    \caption{The three model families, means over 27 models each (3 scales $\times$ 3 distributions $\times$ 3
+    seeds). Free play legal: the exploratory whole game measure of Section~\ref{sec:sequence_results}.}
+    \label{tab:families}
 \end{table}
 
 \paragraph{Inside each diagnostic.} D1 is almost the same quantity as competence (tau 0.968). For D2, models
@@ -1053,22 +1081,22 @@ each model played at least 978 distinct games out of 1,000.
     \cmidrule(lr){3-4}\cmidrule(lr){5-8}
     Architecture & Scale & legal (D1) & full games & legal & full games & errors/game & 1st error \\
     \midrule
-    Transformer & small  & 0.843 & 0.000 & 0.768 & 0.000 & 13.7 & 11.6 \\
-    Transformer & medium & 0.917 & 0.041 & 0.863 & 0.023 &  8.1 & 18.4 \\
-    Transformer & large  & 0.933 & 0.116 & 0.888 & 0.111 &  6.6 & 22.9 \\
-    LSTM        & small  & 0.584 & 0.000 & 0.412 & 0.000 & 34.7 &  5.8 \\
-    LSTM        & medium & 0.690 & 0.000 & 0.489 & 0.000 & 30.1 &  8.4 \\
-    LSTM        & large  & 0.780 & 0.000 & 0.639 & 0.000 & 21.3 & 11.0 \\
-    Mamba       & small  & 0.837 & 0.001 & 0.789 & 0.001 & 12.5 & 10.9 \\
-    Mamba       & medium & 0.899 & 0.015 & 0.837 & 0.012 &  9.6 & 16.7 \\
-    Mamba       & large  & 0.925 & 0.079 & 0.864 & 0.075 &  8.0 & 22.4 \\
+    Transformer & small  & 0.843 & 0.000 & 0.777 & 0.000 & 13.0 & 11.6 \\
+    Transformer & medium & 0.917 & 0.041 & 0.867 & 0.031 &  7.7 & 18.1 \\
+    Transformer & large  & 0.933 & 0.116 & 0.890 & 0.112 &  6.4 & 22.8 \\
+    LSTM        & small  & 0.584 & 0.000 & 0.416 & 0.000 & 33.8 &  5.8 \\
+    LSTM        & medium & 0.690 & 0.000 & 0.491 & 0.000 & 29.5 &  8.4 \\
+    LSTM        & large  & 0.780 & 0.000 & 0.639 & 0.000 & 20.9 & 11.0 \\
+    Mamba       & small  & 0.837 & 0.001 & 0.788 & 0.001 & 12.3 & 10.9 \\
+    Mamba       & medium & 0.899 & 0.015 & 0.838 & 0.012 &  9.4 & 16.7 \\
+    Mamba       & large  & 0.925 & 0.079 & 0.865 & 0.075 &  7.9 & 22.4 \\
     \midrule
-    \multicolumn{2}{l}{trained on synthetic}    & 0.832 & 0.060 & 0.802 & 0.045 & 11.7 & 18.2 \\
-    \multicolumn{2}{l}{trained on championship} & 0.814 & 0.003 & 0.572 & 0.000 & 25.2 &  7.2 \\
-    \multicolumn{2}{l}{trained on mixed}        & 0.823 & 0.021 & 0.808 & 0.029 & 11.3 & 17.3 \\
+    \multicolumn{2}{l}{trained on synthetic}    & 0.832 & 0.060 & 0.803 & 0.047 & 11.4 & 18.2 \\
+    \multicolumn{2}{l}{trained on championship} & 0.814 & 0.003 & 0.578 & 0.001 & 24.5 &  7.2 \\
+    \multicolumn{2}{l}{trained on mixed}        & 0.823 & 0.021 & 0.809 & 0.030 & 11.1 & 17.2 \\
     \midrule
     \multicolumn{2}{l}{Othello GPT synthetic}    & 0.9996 & 0.981 & 0.999 & 0.965 & 0.04 & 54.6 \\
-    \multicolumn{2}{l}{Othello GPT championship} & 0.896 & 0.019 & 0.949 & 0.466 & 3.0 & 28.1 \\
+    \multicolumn{2}{l}{Othello GPT championship} & 0.896 & 0.019 & 0.949 & 0.470 & 3.0 & 27.8 \\
     \bottomrule
     \end{tabular}
     \caption{Whole game measures (exploratory), means over 9 models per architecture and scale and over 27 per
@@ -1087,10 +1115,10 @@ each model played at least 978 distinct games out of 1,000.
 
 Three things answer the question from the presentation (Table~\ref{tab:sequence}, Figure~\ref{fig:sequence}).
 First, \textbf{playing its own games is much harder than following real ones for the models trained on human
-games}: on average the free play rate is below the teacher forced rate by 0.03 for synthetic and 0.015 for
-mixed training (18 synthetic or mixed transformers and Mamba are even slightly higher in free play, by at most
-0.024), but by 0.24 for championship training, and lower for all 27 championship models. Models trained on human games are legal 81\% of the time on
-human test games but only 57\% in their own games, and make their first illegal move at move 7 on average:
+games}: on average the free play rate is below the teacher forced rate by 0.03 for synthetic and 0.014 for
+mixed training (23 synthetic or mixed transformers and Mamba are even slightly higher in free play, by at most
+0.023), but by 0.24 for championship training, and lower for all 27 championship models. Models trained on human games are legal 81\% of the time on
+human test games but only 58\% in their own games, and make their first illegal move at move 7 on average:
 as soon as the random opening takes them off the human lines, they fail, which is the same weakness the
 fragility suite found on random games and rotated boards. Second, \textbf{the LSTMs lose track of the board
 over a long game}: with the real history their legal rate is flat after the opening, but in their own games it
@@ -1098,14 +1126,14 @@ falls steadily (for LSTM large, from 0.74 at move 10 to 0.64 at move 30 and 0.43
 Mamba stay flat, so the per move D1 score understates how much worse the LSTMs are at playing a whole game.
 Third, a whole game without any illegal move is rare: besides the two anchors, only the large transformers
 trained on synthetic or mixed games and the large Mamba models trained on synthetic games reach it in more
-than 10\% of games (at most 0.216 in the zoo, 0.965 for Othello GPT
-synthetic), and 41 of the 81 models never manage one, so this share sits at its floor for most of the zoo and
+than 10\% of games (at most 0.219 in the zoo, 0.965 for Othello GPT
+synthetic), and 40 of the 81 models never manage one, so this share sits at its floor for most of the zoo and
 the free play legal rate is the more informative number.
 
-The whole game view ranks the models much as D1 does: the free play legal rate has Spearman 0.886 [0.721,
-0.951] with D1 and 0.879 [0.710, 0.946] with competence, and neither whole game measure is related to
-relative fragility v2 ($-0.179$ [$-0.599$, 0.366] for the free play rate). With D1 controlled, D4 is the only
-diagnostic that relates to the full game rate (partial Spearman 0.354 [0.169, 0.526]; D2 0.022, D3 0.063, both
+The whole game view ranks the models much as D1 does: the free play legal rate has Spearman 0.891 [0.730,
+0.951] with D1 and 0.884 [0.724, 0.946] with competence, and neither whole game measure is related to
+relative fragility v2 ($-0.173$ [$-0.594$, 0.371] for the free play rate). With D1 controlled, D4 is the only
+diagnostic that relates to the full game rate (partial Spearman 0.324 [0.136, 0.512]; D2 0.064, D3 $-0.001$, both
 intervals including 0), which fits the causal check: models whose board can be read and used play cleaner whole
 games. This is exploratory and is one of the measures we preregister for navigation. In short, whole game
 measures do not change the H1 to H3 answers, but they show two failures the next move unit misses: models
@@ -1140,6 +1168,12 @@ predictive (Table~\ref{tab:h3sens}). Navigation, where the three training distri
 test of H3, and we plan to preregister a training distribution control for it before any navigation score
 exists.
 
+\paragraph{Reinforcement learning.} At the preliminary presentation we were asked whether reinforcement
+learning could address this problem. Every model in the zoo is trained to predict the next move, never to win,
+and a model trained to win might have more reason to track the board. We considered adding models fine tuned
+by reinforcement learning, and decided on November 3 not to pursue it in this project, so
+that the second domain, navigation, is done in full; it remains an open question for future work.
+
 \subsection{Limitations}
 \label{sec:limitations}
 \begin{itemize}
@@ -1151,6 +1185,10 @@ exists.
     al.~\cite{vafa2024evaluating}, and its same board pairs come mostly from the opening.
     \item \textbf{D3 measures help from pretraining with 64 examples}, not closeness to a perfect answer, and
     part of it reflects an occupancy shortcut.
+    \item \textbf{The last input position.} In training a model reads at most 58 tokens, so no zoo model is
+    trained to predict move 60, and for the transformer the position vector of the 59th token receives no
+    gradient. The whole game measures stop at move 59 for this reason. D2, D3 and D4 read that position when a
+    game reaches 59 moves, about 1 in 59 positions; the preregistered scores are kept as computed.
     \item \textbf{The detour reference of fragility v2.} The undisturbed self play run that each detour drop is
     measured against plays the model's best legal move after a random first move, so its games are
     deterministic and collapse into at most four distinct games; the detour drops therefore compare the

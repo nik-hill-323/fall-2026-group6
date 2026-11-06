@@ -20,7 +20,10 @@ whole game fits, so the history only grows and nothing is ever dropped.
    fragility v2. At each later move the model's top move is checked against the true rules (an
    illegal top move is counted as an error). The move actually played is drawn from the model's
    own probabilities over the legal moves only (play seed 0), so every game is the model's own
-   game and continues to its natural end. Version 1 always played the top legal move instead;
+   game and continues to its natural end or to move 59, whichever comes first. Move 60 is not
+   scored: training reads at most 58 tokens, so no zoo model is ever trained to predict move 60 (for
+   the transformer, the 59th position vector gets no gradient). Version 2 scored move 60 too, and
+   was replaced for that reason (found by the code guide, src/docs/code_guide.md). Version 1 always played the top legal move instead;
    because that choice is deterministic, its 1,000 games collapsed into at most 4 distinct games
    (one per opening move), so v1 results are not used. Passes are not tokens (as in Othello GPT):
    when the player to move has no legal move the other player moves again. Reported: legal rate
@@ -65,7 +68,8 @@ OUT_DIR = ROOT / "results" / "exploratory" / "sequence"
 ANALYSIS_DIR = ROOT / "results" / "analysis" / "othello"
 FIG_DIR = ROOT / "reports" / "figures" / "othello"
 LATEX_FIG_DIR = ROOT / "reports" / "Latex_report" / "fig"
-VERSION = "sequence-v2"   # v1 played the top legal move: only 4 distinct games (see docstring)
+VERSION = "sequence-v3"   # v1: only 4 distinct games; v2 also scored move 60, never trained (see docstring)
+LAST_SCORED_MOVE = 59     # zoo models are trained to predict moves 2 to 59 (train.py reads at most 58 tokens)
 N_GAMES = 1000
 DATA_SEED = 0
 PLAY_SEED = 0
@@ -124,8 +128,10 @@ def teacher_forced(model, data: dict, batch: int = BATCH) -> dict[str, Any]:
 @torch.no_grad()
 def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str | None = None,
               batch: int = BATCH) -> dict[str, Any]:
-    """The model plays whole games from its own moves (module docstring, part 2). Games are run
-    through the model `batch` at a time; the batch size changes memory use, not the result."""
+    """The model plays whole games from its own moves, up to move LAST_SCORED_MOVE (module docstring,
+    part 2). Games are run through the model `batch` at a time. On a CPU the batch size changes only
+    memory use; on a GPU, rounding depends on the batch size, so a near tie in the top move can break
+    the other way. Results are therefore produced at batch 256, the same as D1."""
     rng = np.random.default_rng(seed)
     boards = [oth.start_board() for _ in range(n_games)]
     to_move = [oth.BLACK] * n_games
@@ -147,8 +153,8 @@ def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str 
     for g in range(n_games):
         play(g, int(rng.choice(oth.legal_moves(boards[g], oth.BLACK))), 0)
 
-    # t moves played so far; the model reads all t of them (at most 59) and predicts move t+1
-    for t in range(1, oth.N_CTX + 1):
+    # t moves played so far; the model reads all t of them and predicts move t+1, up to move 59
+    for t in range(1, LAST_SCORED_MOVE):
         idx = np.flatnonzero(alive)
         if len(idx) == 0:
             break
@@ -183,12 +189,8 @@ def free_play(model, n_games: int = N_GAMES, seed: int = PLAY_SEED, device: str 
             w = np.array([probs[r, oth.SQ_TO_TOKEN[s]] for s in legal], dtype=np.float64)
             w = w / w.sum() if w.sum() > 0 else np.full(len(legal), 1.0 / len(legal))
             sq = int(legal[int(rng.choice(len(legal), p=w))])
-            if t < oth.N_CTX:
-                play(g, sq, t)
-                length[g] = t + 1
-            else:                                           # move 60 checked: the board is full
-                alive[g] = False
-                length[g] = oth.MAX_MOVES
+            play(g, sq, t)
+            length[g] = t + 1
     had_error = first_error > 0
     distinct = len({tokens[g].tobytes() for g in range(n_games)})
     return {"n_distinct_games": distinct,"overall": float(ok.sum() / max(n.sum(), 1)),

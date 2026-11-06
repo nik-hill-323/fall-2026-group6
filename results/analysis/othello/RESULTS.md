@@ -179,25 +179,26 @@ Script: `src/analysis/sequence_othello.py` (version sequence-v2). Teacher forced
 same test games (matches D1 exactly for all 81 models, both at batch 256; results from commit ab140fa). Free play = 1,000
 games the model plays itself; top move scored, played move drawn from the model's probabilities over the legal
 moves (at least 978 distinct games per model). Version 1 played the top legal move, which gave at most 4
-distinct games, and was replaced before any result was used.
+distinct games; version 2 also scored move 60, which no zoo model is trained to predict. This is version 3:
+free play scores moves 2 to 59 (results from commit c990e63).
 
 | | teacher forced legal (D1) | free play legal | free play full games | errors per game | first error (move) |
 |---|---|---|---|---|---|
-| synthetic | 0.832 | 0.802 | 0.045 | 11.7 | 18.2 |
-| championship | 0.814 | 0.572 | 0.000 | 25.2 | 7.2 |
-| mixed | 0.823 | 0.808 | 0.029 | 11.3 | 17.3 |
+| synthetic | 0.832 | 0.803 | 0.047 | 11.4 | 18.2 |
+| championship | 0.814 | 0.578 | 0.001 | 24.5 | 7.2 |
+| mixed | 0.823 | 0.809 | 0.030 | 11.1 | 17.2 |
 | Othello GPT synthetic | 0.9996 | 0.999 | 0.965 | 0.04 | 54.6 |
-| Othello GPT championship | 0.896 | 0.949 | 0.466 | 3.0 | 28.1 |
+| Othello GPT championship | 0.896 | 0.949 | 0.470 | 3.0 | 27.8 |
 
-* Championship trained models collapse in their own games (0.81 -> 0.57, first error at move 7): off the human
+* Championship trained models collapse in their own games (0.81 -> 0.58, first error at move 7): off the human
   lines they fail, as the fragility suite found.
 * LSTMs drift: in free play their legal rate falls steadily over the game (LSTM large 0.74 at move 10, 0.43 at
   move 58); transformers and Mamba stay flat.
-* A whole game with no illegal move is rare (41 of 81 models never manage one; zoo maximum 0.216), so the free
+* A whole game with no illegal move is rare (40 of 81 models never manage one; zoo maximum 0.219), so the free
   play legal rate is the informative number.
-* Whole game measures rank models like D1 (free play rate vs D1: Spearman 0.886 [0.721, 0.951]) and are not
-  related to relative fragility v2. With D1 controlled, only D4 relates to the full game rate (partial 0.354
-  [0.169, 0.526]).
+* Whole game measures rank models like D1 (free play rate vs D1: Spearman 0.891 [0.730, 0.951]) and are not
+  related to relative fragility v2. With D1 controlled, only D4 relates to the full game rate (partial 0.324
+  [0.136, 0.512]).
 * Found while building this: fragility v2's undisturbed detour reference (p = 0) plays the best legal move after
   a random first move, so it is at most 4 distinct games. The preregistered suite is unchanged; navigation will
   sample its undisturbed games.
