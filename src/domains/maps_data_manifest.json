@@ -1,0 +1,148 @@
+{
+  "build_report": {
+    "cache_noisy_shortest_paths": {
+      "cache_pairs": 1155660,
+      "cache_routes": 2000000,
+      "date": "2026-11-08T04:19:17.409459+00:00",
+      "eligible": 30187785,
+      "git_commit": "5da2df0",
+      "lines": 30599313,
+      "reasons": {
+        "ok": 30187785,
+        "val_or_test_pair": 411528
+      }
+    },
+    "cache_random_walks": {
+      "cache_pairs": 1045054,
+      "cache_routes": 2000000,
+      "date": "2026-11-08T04:22:23.606592+00:00",
+      "eligible": 87416216,
+      "git_commit": "5da2df0",
+      "lines": 90646871,
+      "reasons": {
+        "longer_than_max_tokens": 2565511,
+        "ok": 87416216,
+        "val_or_test_pair": 665144
+      }
+    },
+    "cache_shortest_paths": {
+      "cache_pairs": 2000000,
+      "cache_routes": 2000000,
+      "date": "2026-11-08T04:17:45.781777+00:00",
+      "eligible": 2712750,
+      "git_commit": "5da2df0",
+      "lines": 2932675,
+      "reasons": {
+        "ok": 2712750,
+        "street_missing_from_canonical_map": 177141,
+        "val_or_test_pair": 42784
+      }
+    },
+    "splits": {
+      "date": "2026-11-08T04:15:05.832310+00:00",
+      "drops": {
+        "noisy_shortest_paths_heldout": {
+          "ok": 307917
+        },
+        "random_walks_heldout": {
+          "longer_than_max_tokens": 26221,
+          "ok": 881889
+        },
+        "shortest_paths_heldout": {
+          "ok": 27881,
+          "street_missing_from_canonical_map": 1765
+        }
+      },
+      "git_commit": "5da2df0",
+      "pairs": {
+        "test": 53666,
+        "val": 53665
+      },
+      "routes": {
+        "noisy_shortest_paths_test": 153485,
+        "noisy_shortest_paths_val": 154432,
+        "random_walks_test": 438441,
+        "random_walks_val": 443448,
+        "shortest_paths_test": 13890,
+        "shortest_paths_val": 13991
+      },
+      "unreachable_pairs": 12
+    }
+  },
+  "constants": {
+    "CACHE_SEED": 0,
+    "MAX_TOKENS": 99,
+    "N_CACHE": 2000000,
+    "N_CTX": 98,
+    "N_EDGES": 9705,
+    "N_NODES": 4579,
+    "SPLIT_SEED": 0,
+    "VOCAB": 4589
+  },
+  "design": "src/docs/navigation_design.md",
+  "domain": "maps",
+  "files": {
+    "noisy_shortest_paths_test.npy": "37cc5b1bc8e2f824739bdafa03ac3c98370a6a84b4a477ff5826d536a53a2469",
+    "noisy_shortest_paths_train.npy": "11b91d923f90dc9c2a780a84e6ab5602cafdae84c2097d65a625785ad1b2826a",
+    "noisy_shortest_paths_val.npy": "4f526c949d0c81ebeacbaa8328f2be6ac1e58d6fd5186d7d184903bc79f3f9b7",
+    "pairs_test.npy": "69dc60a4400383599230997fba1fbe8073a6751bd2940592a18b636873cdb1eb",
+    "pairs_val.npy": "cf8dcf9adfd5ea4295187d92a6b8bf2987decfd5cecf1dc3385b243599558e49",
+    "random_walks_test.npy": "bad39b17d04879b475d5227dc9c0cc1c8f344c864596744056cb1a2515e3a2e8",
+    "random_walks_train.npy": "8641ca77aa92b5559df11159ec67d00380c63f3e4014f3c4df3f742873ccbfeb",
+    "random_walks_val.npy": "22999210f2a1804f78989b310226132885ebf5cc00f13d03874217f59dad4a05",
+    "shortest_paths_test.npy": "96b0ca6828b211ad4e3baa42cb982ad898d87cfbb525268fbbefb9d993dde543",
+    "shortest_paths_train.npy": "4c5f910b6b9e68976ac18cae9746a3c94285f92521c21c3a70d0e0862dfcd4c9",
+    "shortest_paths_val.npy": "3c4fa23ddbb0622399bd2ad2963c9e9a3c1df3e78674b543385646778c37ec8f"
+  },
+  "manifest_git_commit": "5da2df0",
+  "map_files": {
+    "src/domains/maps_coordinates.csv": "f5a0f026172f7b1935a11f1fd1c4bb9f286cd6a9683826e59a65b98f93b1e986",
+    "src/domains/maps_edges.csv": "7969a516cc1009750dd29b07671c505d4b5c75ba384cdd795de51f0df12dbb28"
+  },
+  "shapes": {
+    "noisy_shortest_paths_test.npy": [
+      153485,
+      99
+    ],
+    "noisy_shortest_paths_train.npy": [
+      2000000,
+      99
+    ],
+    "noisy_shortest_paths_val.npy": [
+      154432,
+      99
+    ],
+    "pairs_test.npy": [
+      53666,
+      2
+    ],
+    "pairs_val.npy": [
+      53665,
+      2
+    ],
+    "random_walks_test.npy": [
+      438441,
+      99
+    ],
+    "random_walks_train.npy": [
+      2000000,
+      99
+    ],
+    "random_walks_val.npy": [
+      443448,
+      99
+    ],
+    "shortest_paths_test.npy": [
+      13890,
+      99
+    ],
+    "shortest_paths_train.npy": [
+      2000000,
+      99
+    ],
+    "shortest_paths_val.npy": [
+      13991,
+      99
+    ]
+  }
+}
