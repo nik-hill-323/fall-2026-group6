@@ -1,7 +1,7 @@
 {
   "model_id": "othello_lstm_small_mixed_s2",
   "exploratory": true,
-  "version": "sequence-v2",
+  "version": "sequence-v3",
   "note": "exploratory, not preregistered (Instructor Review #6); see the module docstring",
   "distribution": "mixed",
   "split": "test",
@@ -143,14 +143,14 @@
   },
   "free_play": {
     "n_distinct_games": 1000,
-    "overall": 0.4856624134654541,
+    "overall": 0.49054357204486626,
     "full_game_rate": 0.0,
-    "mean_errors_per_game": 30.313,
+    "mean_errors_per_game": 29.523,
     "mean_first_error_move": 6.041,
     "median_first_error_move": 5.0,
-    "mean_game_length": 59.936,
+    "mean_game_length": 58.95,
     "n_games": 1000,
-    "n_predictions": 58936,
+    "n_predictions": 57950,
     "by_move": {
       "legal": [
         0,
@@ -213,7 +213,7 @@
         284,
         261,
         213,
-        196
+        0
       ],
       "n": [
         0,
@@ -276,20 +276,20 @@
         999,
         999,
         999,
-        986
+        0
       ]
     }
   },
   "d1_score": 0.5863325504282951,
   "matches_d1": true,
   "provenance": {
-    "git_commit": "ab140fa",
+    "git_commit": "c990e63",
     "uncommitted_src": [],
     "device": "cuda",
     "gpu": "NVIDIA A10G",
     "torch": "2.13.0+cu130",
     "host": "ip-10-0-2-159",
-    "time_utc": "2026-11-02T21:30:39Z"
+    "time_utc": "2026-11-03T22:23:36Z"
   },
-  "runtime_sec": 13.1
+  "runtime_sec": 13.4
 }

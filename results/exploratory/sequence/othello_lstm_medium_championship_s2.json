@@ -1,7 +1,7 @@
 {
   "model_id": "othello_lstm_medium_championship_s2",
   "exploratory": true,
-  "version": "sequence-v2",
+  "version": "sequence-v3",
   "note": "exploratory, not preregistered (Instructor Review #6); see the module docstring",
   "distribution": "championship",
   "split": "test",
@@ -143,14 +143,14 @@
   },
   "free_play": {
     "n_distinct_games": 1000,
-    "overall": 0.2640632421795481,
+    "overall": 0.26712446944339,
     "full_game_rate": 0.0,
-    "mean_errors_per_game": 43.382,
+    "mean_errors_per_game": 42.476,
     "mean_first_error_move": 5.279,
     "median_first_error_move": 2.0,
-    "mean_game_length": 59.948,
+    "mean_game_length": 58.958,
     "n_games": 1000,
-    "n_predictions": 58948,
+    "n_predictions": 57958,
     "by_move": {
       "legal": [
         0,
@@ -213,7 +213,7 @@
         174,
         143,
         114,
-        84
+        0
       ],
       "n": [
         0,
@@ -276,20 +276,20 @@
         999,
         999,
         997,
-        990
+        0
       ]
     }
   },
   "d1_score": 0.7083246941737508,
   "matches_d1": true,
   "provenance": {
-    "git_commit": "ab140fa",
+    "git_commit": "c990e63",
     "uncommitted_src": [],
     "device": "cuda",
     "gpu": "NVIDIA A10G",
     "torch": "2.13.0+cu130",
     "host": "ip-10-0-2-159",
-    "time_utc": "2026-11-02T21:32:02Z"
+    "time_utc": "2026-11-03T22:25:00Z"
   },
-  "runtime_sec": 13.7
+  "runtime_sec": 13.9
 }

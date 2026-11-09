@@ -105,3 +105,10 @@ def test_free_play_games_are_diverse():
     model = train.GPT(n_layers=1, d_model=16, n_heads=2).eval()
     fp = seq.free_play(model, n_games=40, seed=0)
     assert fp["n_distinct_games"] > 30
+
+
+def test_free_play_never_scores_move_60():
+    """Zoo models are trained on moves 2 to 59 only, so free play stops scoring at move 59."""
+    fp = seq.free_play(Oracle(), n_games=10, seed=0)
+    assert fp["by_move"]["n"][60] == 0 and fp["by_move"]["n"][59] > 0
+    assert fp["mean_game_length"] <= 59
