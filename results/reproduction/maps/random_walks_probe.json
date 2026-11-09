@@ -1,0 +1,39 @@
+{
+  "anchor": "random_walks",
+  "untrained": false,
+  "test": "probe",
+  "published": 0.99,
+  "vafa_recipe": {
+    "accuracy": 0.9915413158839724,
+    "se": 0.00018293225333098937,
+    "best_epoch_accuracy": 0.9947332721541715,
+    "curve_every_10_epochs": [
+      0.9730199896261421,
+      0.9775405976938116,
+      0.9811076088257591,
+      0.9861708494593624,
+      0.9901568048517735,
+      0.9912859593823564,
+      0.9907712564337868,
+      0.9934445198100786,
+      0.9892032079160515,
+      0.9915413158839724
+    ],
+    "n_positions": 1253150,
+    "n_train": 1002520,
+    "n_test": 250630,
+    "n_classes": 4573,
+    "split_seed": 0,
+    "init_seed": 0
+  },
+  "empty_routes_skipped": 0,
+  "seconds": 966.2,
+  "provenance": {
+    "git_commit": "d46aa20",
+    "date": "2026-11-08T06:03:37.940708+00:00",
+    "torch": "2.13.0+cu130",
+    "python": "3.13.15",
+    "device": "NVIDIA A10G",
+    "transformers": "5.14.1"
+  }
+}
