@@ -18,9 +18,13 @@ positive rate is below 0.10 or above 0.90, or its shortcut rule reaches a balanc
 H_TURNS and R_METRES are the medians over 30,000 positions: 10,000 validation routes per distribution (seed 0),
 one uniformly random scored position per route (seed 0), the way D3 draws its positions.
 
-Rare intersections (fragility): per distribution, the 10% of the 4,579 intersections (458) with the fewest
-visits in that distribution's training cache, a visit being the current intersection at a scored position;
-ties at the cut are broken by token id. Fixed per distribution, so every model of a distribution uses the same set.
+Rare intersections (fragility): per distribution, the least visited intersections of that distribution's
+training cache (a visit = the current intersection at a scored position), taken in order of visits (ties by token
+id) until together they hold at least 10% of the scored positions of that distribution's test split. Fixed per
+distribution, so every model of a distribution uses the same set. A first definition, the 10% of the 4,579
+intersections with the fewest visits, was replaced before any navigation model existed: those intersections are
+almost never on a route (6 such positions in 5,000 shortest paths test routes, 38 for noisy shortest paths), so
+the variant could not be measured.
 
 Run on the EC2 (needs the built data), from the repo root:
     python src/domains/maps_tasks.py
@@ -57,7 +61,7 @@ maps = _load("maps", "src/domains/maps.py")
 TASKS = ["T1", "T2", "T3", "T4"]
 TASK_SEED = 0              # route draw and position draw for the thresholds (D3 uses seed 0 as well)
 N_THRESHOLD_ROUTES = 10_000
-RARE_SHARE = 0.10
+RARE_SHARE = 0.10          # share of the scored test positions the rare set must hold
 N_RARE_TEST_ROUTES = 5_000
 MIN_RARE_POSITIONS = 200
 DROP_POSITIVE_RATE = (0.10, 0.90)
@@ -161,11 +165,14 @@ def visit_counts(cache, chunk: int = 100_000) -> np.ndarray:
     return counts
 
 
-def rare_set(counts: np.ndarray, share: float = RARE_SHARE) -> np.ndarray:
-    """Token ids of the `share` of intersections with the fewest visits (ties broken by token id)."""
+def rare_set(counts: np.ndarray, test_counts: np.ndarray, share: float = RARE_SHARE) -> np.ndarray:
+    """Token ids of the least visited intersections (training visits `counts`, ties by token id), taken in that
+    order until they hold at least `share` of the scored test positions (`test_counts`, visits in the test split)."""
     tokens = np.arange(1, maps.N_NODES + 1)
-    n = int(round(share * maps.N_NODES))
-    order = np.lexsort((tokens, counts[1:]))      # by count, then by token id
+    order = np.lexsort((tokens, counts[1:]))      # by training visits, then by token id
+    held = np.cumsum(test_counts[1:][order])
+    need = share * test_counts[1:].sum()
+    n = int(np.searchsorted(held, need, side="left")) + 1
     return np.sort(tokens[order[:n]])
 
 
@@ -228,7 +235,8 @@ def compute(out_numbers: Path = NUMBERS_FILE, out_rare: Path = RARE_FILE) -> dic
     rare_sets = {}
     for dist in maps.DISTRIBUTIONS:
         counts = visit_counts(maps.load_distribution(dist, "train"))
-        rare = rare_set(counts)
+        test_counts = visit_counts(maps.load_distribution(dist, "test"))
+        rare = rare_set(counts, test_counts)
         rare_sets[dist] = rare.tolist()
         test = maps.build(maps.load_distribution(dist, "test", N_RARE_TEST_ROUTES, seed=0))
         is_rare = np.isin(test["current"], rare) & test["score"]
@@ -236,13 +244,15 @@ def compute(out_numbers: Path = NUMBERS_FILE, out_rare: Path = RARE_FILE) -> dic
         base_cells = set(np.unique(cells[test["score"] & ~is_rare]).tolist())
         covered = np.array([c in base_cells for c in cells[is_rare]])
         out["rare"][dist] = {"n_rare_intersections": int(len(rare)),
+                             "share_of_test_positions_held": round(float(test_counts[rare].sum() / test_counts[1:].sum()), 4),
                              "max_visits_in_rare_set": int(counts[rare].max()),
                              "median_visits_all": float(np.median(counts[1:])),
                              "never_visited": int((counts[1:] == 0).sum()),
                              "rare_positions_in_5000_test_routes": int(is_rare.sum()),
                              "share_with_a_matched_cell": round(float(covered.mean()) if len(covered) else 0.0, 4),
                              "enough": bool(is_rare.sum() >= MIN_RARE_POSITIONS)}
-        log.info("%s: rare set max visits %d, rare test positions %d", dist, counts[rare].max(), is_rare.sum())
+        log.info("%s: %d rare intersections (max %d visits), %d rare test positions", dist, len(rare),
+                 counts[rare].max(), is_rare.sum())
     mb = _load("maps_build", "src/domains/maps_build.py")
     out["git_commit"] = mb.git_commit()
     out["data_manifest_sha256"] = maps.sha256(maps.MANIFEST) if maps.MANIFEST.exists() else None
@@ -262,4 +272,11 @@ if __name__ == "__main__":
     if bad:
         sys.exit(f"these data files do not match the manifest: {bad}")
     res = compute()
-    print(json.dumps({k: v for k, v in res.items() if k != "rare"} | {"rare": res["rare"]}, indent=2))
+    print(f"H_TURNS = {res['H_TURNS']}, R_METRES = {res['R_METRES']}, commit {res['git_commit']}")
+    for t in TASKS:
+        per = res["tasks"][t]["per_distribution"]
+        cells = "; ".join(f"{d}: positive {v['positive_rate']}, shortcut {v['shortcut']['balanced_accuracy']} ({v['shortcut']['rule']})"
+                          for d, v in per.items())
+        print(f"{t} {'KEPT' if res['tasks'][t]['kept'] else 'DROPPED ' + str(res['tasks'][t]['drop_reasons'])} | {cells}")
+    for d, v in res["rare"].items():
+        print(f"rare {d}: {v}")

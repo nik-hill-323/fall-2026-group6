@@ -88,11 +88,24 @@ def test_rare_set_and_visit_counts() -> None:
     counts = tasks.visit_counts(d["tokens"], chunk=64)
     manual = np.bincount(d["current"][d["score"]], minlength=maps.N_NODES + 1)
     assert np.array_equal(counts, manual)
-    rare = tasks.rare_set(counts)
-    assert len(rare) == round(0.1 * maps.N_NODES) == 458
-    assert counts[rare].max() <= np.sort(counts[1:])[457]
+    test = _data(100, seed=4)
+    test_counts = tasks.visit_counts(test["tokens"])
+    rare = tasks.rare_set(counts, test_counts)
+    held = test_counts[rare].sum() / test_counts[1:].sum()
+    assert held >= 0.10
+    # the smallest such set: without its most visited member it would hold less than 10%
+    worst = rare[np.argmax(counts[rare] * (maps.N_NODES + 1) + rare)]
+    assert test_counts[np.setdiff1d(rare, [worst])].sum() / test_counts[1:].sum() < 0.10
+    # every intersection outside the set was visited at least as often in training as every one inside
+    outside = np.setdiff1d(np.arange(1, maps.N_NODES + 1), rare)
+    assert counts[outside].min() >= counts[rare].max()
+
+
+def test_rare_set_ties_are_broken_by_token_id() -> None:
     flat = np.zeros(maps.N_NODES + 1, dtype=np.int64)
-    assert list(tasks.rare_set(flat)) == list(range(1, 459))  # ties broken by token id
+    test_counts = np.zeros(maps.N_NODES + 1, dtype=np.int64)
+    test_counts[1:11] = 1                                        # 10 test positions, on tokens 1..10
+    assert list(tasks.rare_set(flat, test_counts)) == [1]       # token 1 alone holds 10%
 
 
 def test_matched_cells_separate_what_they_should() -> None:
@@ -131,5 +144,5 @@ def test_compute_on_a_small_built_dataset(tmp_path: Path, monkeypatch) -> None:
         assert all(0 <= p["positive_rate"] <= 1 for p in per.values())
         assert res["tasks"][t]["kept"] == (not res["tasks"][t]["drop_reasons"])
     rare = json.loads((tmp_path / "rare.json").read_text())["rare"]
-    assert all(len(v) == 458 for v in rare.values())
-    assert all(r["n_rare_intersections"] == 458 for r in res["rare"].values())
+    assert all(len(v) == res["rare"][d]["n_rare_intersections"] for d, v in rare.items())
+    assert all(r["share_of_test_positions_held"] >= 0.10 for r in res["rare"].values())
