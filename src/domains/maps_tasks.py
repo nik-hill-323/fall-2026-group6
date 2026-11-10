@@ -68,9 +68,11 @@ DROP_POSITIVE_RATE = (0.10, 0.90)
 DROP_SHORTCUT_BALANCED = 0.90
 EARTH_RADIUS_M = 6_371_008.8
 
-# Filled in from results/prereg/maps_amendment5_numbers.json and frozen by Amendment 5 (prereg-v1.5).
-H_TURNS: int | None = None
-R_METRES: float | None = None
+# Computed by compute() at commit 7ed6331 (results/prereg/maps_amendment5_numbers.json) and frozen by Amendment 5,
+# G6 (prereg-v1.5). A test checks that these equal the numbers file.
+H_TURNS: int | None = 10
+R_METRES: float | None = 823.9
+D3_TASKS = ["T1", "T2", "T4"]   # T3 dropped by the drop rule (shortcut 0.922 shortest paths, 0.908 noisy)
 RARE_FILE = ROOT / "src/domains/maps_rare_intersections.json"
 NUMBERS_FILE = ROOT / "results/prereg/maps_amendment5_numbers.json"
 
@@ -206,6 +208,8 @@ def compute(out_numbers: Path = NUMBERS_FILE, out_rare: Path = RARE_FILE) -> dic
     pooled_metres = np.concatenate([haversine(s["current"], s["dest"]) for s in states.values()])
     h = int(np.median(pooled_turns))
     r = float(np.round(np.median(pooled_metres), 1))
+    if H_TURNS is not None and (h, r) != (H_TURNS, R_METRES):
+        log.warning("recomputed thresholds (%s, %s) differ from the frozen ones (%s, %s)", h, r, H_TURNS, R_METRES)
     out: dict = {"H_TURNS": h, "R_METRES": r, "positions_per_distribution": N_THRESHOLD_ROUTES,
                  "drop_rule": {"positive_rate_outside": DROP_POSITIVE_RATE, "shortcut_balanced_at_least": DROP_SHORTCUT_BALANCED},
                  "tasks": {}, "rare": {}}

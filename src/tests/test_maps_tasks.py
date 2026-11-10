@@ -58,8 +58,7 @@ def test_labels_follow_their_definitions() -> None:
     assert np.array_equal(lab["T4"], lon[s["current"]] > lon[s["dest"]])
     at = s["current"] == s["dest"]
     assert lab["T1"][at].all() and lab["T2"][at].all() and not lab["T3"][at].any() and not lab["T4"][at].any()
-    with pytest.raises(ValueError):
-        tasks.labels(s)                                         # thresholds not fixed until Amendment 5
+    assert set(tasks.labels(s)) == {"T1", "T2", "T3", "T4"}   # frozen thresholds are used by default
 
 
 def test_haversine() -> None:
@@ -146,3 +145,16 @@ def test_compute_on_a_small_built_dataset(tmp_path: Path, monkeypatch) -> None:
     rare = json.loads((tmp_path / "rare.json").read_text())["rare"]
     assert all(len(v) == res["rare"][d]["n_rare_intersections"] for d, v in rare.items())
     assert all(r["share_of_test_positions_held"] >= 0.10 for r in res["rare"].values())
+
+
+def test_frozen_numbers_match_amendment_5() -> None:
+    assert (tasks.H_TURNS, tasks.R_METRES) == (10, 823.9)
+    assert tasks.D3_TASKS == ["T1", "T2", "T4"]
+    if tasks.NUMBERS_FILE.exists():                           # committed with Amendment 5
+        n = json.loads(tasks.NUMBERS_FILE.read_text())
+        assert (n["H_TURNS"], n["R_METRES"]) == (tasks.H_TURNS, tasks.R_METRES)
+        assert [t for t in tasks.TASKS if n["tasks"][t]["kept"]] == tasks.D3_TASKS
+    if tasks.RARE_FILE.exists():
+        rare = json.loads(tasks.RARE_FILE.read_text())["rare"]
+        assert {d: len(v) for d, v in rare.items()} == {"shortest_paths": 2749, "noisy_shortest_paths": 2816,
+                                                        "random_walks": 1130}
