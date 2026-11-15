@@ -174,7 +174,7 @@ def random_like(model, seed: int) -> nn.Module:
     row = results.load_models().get(model.model_id)
     if row is not None and hasattr(module, "layer_outputs"):   # zoo model
         train = _load("zoo_train", "src/zoo/train.py")
-        return train.build_model(row["arch"], row["scale"])
+        return train.build_model(row["arch"], row["scale"], row["domain"])
     fresh = copy.deepcopy(module)
     for m in fresh.modules():
         if hasattr(m, "reset_parameters"):
