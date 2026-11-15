@@ -1,7 +1,7 @@
 # Navigation design (domain `maps`)
 
-Status: draft for review (Nikhil, then Dr. Jafari on Nov 10). Nothing here is frozen until Amendment 5
-is merged and tagged `prereg-v1.5`. No navigation zoo model is trained before that.
+Status: frozen by Amendment 5 of `reports/preregistration.md` (tag `prereg-v1.5`). Where this file and
+Amendment 5 differ, Amendment 5 holds. No navigation zoo model is trained before that tag exists.
 
 This file fixes how navigation plugs into WM-Concord: the data, the map, the vocabulary, the splits,
 what the models are trained on, and what D1 to D4, the fragility suite and the whole route measure mean
@@ -201,23 +201,25 @@ examples from validation routes, one random scored position per route, random we
 = mean over tasks and seeds of pretrained minus random balanced accuracy). The questions are about the
 current state, so only replaying the turns on the map answers them:
 
-| Task | Question | Shortcut it is checked against |
-|---|---|---|
-| T1 | Is the destination at most h turns away on the canonical map? | number of turns so far |
-| T2 | Is the destination closer than r metres in a straight line? | number of turns so far |
-| T3 | Is the current intersection north of the destination (higher latitude)? | start north of destination |
-| T4 | Is the current intersection east of the destination (higher longitude)? | start east of destination |
+| Task | Question | Shortcut it is checked against | Status |
+|---|---|---|---|
+| T1 | Is the destination at most h = 10 turns away on the canonical map? | number of turns so far | kept |
+| T2 | Is the destination at most r = 823.9 m away in a straight line? | number of turns so far | kept |
+| T3 | Is the current intersection north of the destination (higher latitude)? | start north of destination | **dropped** |
+| T4 | Is the current intersection east of the destination (higher longitude)? | start east of destination | kept |
 
-* h and r are the medians over validation positions of all three distributions pooled, computed from the
-  data alone by N1 and fixed in Amendment 5, so each task is about balanced and the same for every model.
+* h and r are the medians over 30,000 validation positions (10,000 routes per distribution, one random scored
+  position each, seed 0), computed from the data alone (`src/domains/maps_tasks.py`).
+* Drop rule, fixed before computing: a task is dropped if, in any distribution, its positive rate is outside
+  0.10 to 0.90 or its shortcut reaches 0.90 balanced accuracy. T3's shortcut reaches 0.922 (shortest paths) and
+  0.908 (noisy), so D3 uses T1, T2 and T4. All numbers: Amendment 5, G6.
 * The turn distance is always finite at a scored position: the route itself goes on to the destination.
 * **Shortcut check**, as the Othello occupancy shortcut: agreement of the adapted model's answers with the
   shortcut rule, reported next to the score.
 * **Symbolic regression arm** (descriptive, as Othello): PySR fits the adapted model's margin from current,
   start and destination coordinates and the number of turns so far. Law recovered = the formula depends
   mainly on current minus destination with the right sign; shortcut = it depends on start minus destination.
-* The pilots (6.4) check on the anchors and pilot models that no task is trivial for the random baseline
-  and none is solved by its shortcut. A task that fails is dropped before Amendment 5, never after.
+* The shortcut agreement of every adapted model is reported next to its score (T4's data shortcut is 0.88).
 
 ### D4 representation probe (N7)
 
@@ -225,7 +227,8 @@ The Othello protocol with the board replaced by the current intersection.
 
 * **Probe**: per layer, one linear classifier reads the current intersection (4,579 classes) from the
   standardized vector at each scored position. 10,000 validation routes fit, 1,000 more choose the layer,
-  1,000 test routes give the score. MLP probe as in Amendment 2.
+  1,000 test routes give the score. MLP probe as in Amendment 2. Epochs: the smallest of 2, 5, 10 and 20 at which
+  the probe reads a layer holding the true intersection at 0.99 or more (no model involved; Amendment 5, G7).
 * **Control task** (Hewitt and Liang 2019): each position gets a type, (token just read, number of turns
   so far); each type gets a fixed random intersection drawn from the real mix of intersections.
   Selectivity = probe accuracy minus control accuracy; score = selectivity at the best layer, test routes.
@@ -250,7 +253,7 @@ played always stays legal so one error does not end the measurement.
 | cross distribution | 1,000 test routes of each other distribution (unseen pairs, 3.5) | legal rate; drop = in distribution minus it |
 | detour, random | the model drives from a test start to its destination (500 routes, seed 0) | legal rate of its top token over the whole drive; drop = rate at p = 0 minus rate at p, for p = 0.1 and 0.5 |
 | detour, adversarial | as above, the detour is the safe turn the model rates lowest | as above |
-| rare intersections | positions at the 10% of intersections least visited in the model's own training cache (5,000 test routes, seed 0) | drop = legal rate at matched positions (same number of legal tokens, same "at destination", same block of 10 turns) minus legal rate at rare positions |
+| least visited intersections | positions at the least visited intersections of the model's distribution (5,000 test routes, seed 0) | drop = legal rate at matched positions (same number of legal tokens, same "at destination", same block of 10 turns) minus legal rate at those positions |
 
 **Detour drives** (Vafa's Table 2, made safe and scored per step):
 
@@ -263,8 +266,16 @@ played always stays legal so one error does not end the measurement.
 * The drive ends at `end` or at the length limit. "Reached the destination with `end`" is saved as a
   descriptive number next to the score.
 
+**Least visited intersections** (`src/domains/maps_rare_intersections.json`): per distribution, the intersections
+with the fewest visits in its training cache, in order of visits, until they hold 10% of the scored positions of
+its test split (2,749, 2,816 and 1,130 intersections; 18,418, 26,891 and 24,785 positions in 5,000 test routes).
+A first definition, the 10% of intersections with the fewest visits, gave only 6 and 38 positions for shortest
+and noisy shortest paths, so it was replaced before any model existed.
+
 `fragility` = mean of the drops; H3 uses **relative fragility** = fragility divided by the in
 distribution legal rate, as for Othello. No symmetry variant: no symmetry maps the street map onto itself.
+A variant whose drop has a standard deviation below 0.001 across the 9 pilots is reported but left out of
+`fragility` (decided on the pilots, before any zoo model is scored).
 
 ### 5.2 Whole route measure (preregistered as secondary for navigation, as the plan says)
 
@@ -327,14 +338,15 @@ evaluation and sampled rollouts (N8 and the whole route measure).
 
 ### 6.4 Pilots
 
-One small model per architecture per distribution (9 models), saved under `outputs/pilot/`, never in any
-analysis. They give real throughput, confirm the 0.50 admission line, check that no fragility variant sits
-at its floor or ceiling, check that each rare intersection set has enough positions, and check the D3
-tasks against their shortcuts.
+One small model per architecture per distribution (9 models, seed 100), saved under `outputs/pilot/`, never in
+any analysis. They are trained before any zoo model is trained (throughput, training and the admission number
+checked) and scored before any zoo model is scored (every scorer end to end, the fragility rule of 5.1). The D3
+tasks, the thresholds and the least visited intersection sets were fixed from the data alone before any model.
 
 ### 6.5 Amendment 5, tag `prereg-v1.5`
 
-Fixes every number in this file, and adds, for navigation:
+Fixes every number in this file, sets the order of training and scoring (transformers, then LSTMs, then Mamba;
+primary analysis on all 81) with a cutoff of 2026-11-22 (Instructor Review #8), and adds, for navigation:
 
 * the whole route measure (5.2) as a preregistered secondary measure;
 * H3 with the training distribution as a control (the Othello link from D4 to fragility came from the
