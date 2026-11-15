@@ -27,8 +27,11 @@ Three pieces
 Models available now
     TransformerLensModel    the reference Othello GPT (TransformerLens weights)
     TrainPyModel            a model built by src/zoo/train.py: transformer, LSTM or Mamba
+    HFGPT2Model             a Hugging Face GPT 2 behind our tokens (Vafa et al. 2024 navigation models)
     othello_gpt()           loads a reference Othello GPT
+    vafa_navigation()       loads one of Vafa's three navigation checkpoints (anchors for the maps domain)
     from_checkpoint()       loads a zoo model from outputs/zoo/{model_id}/model.pt
+For the maps domain, logits are over the maps vocabulary (src/domains/maps.py, 4,589 tokens) instead of 61.
 
 Example (EC2, repo root):
     from src.diagnostics.interface import othello_gpt, from_checkpoint, run   # or load with importlib
@@ -70,6 +73,8 @@ oth = load_module("othello", "src/domains/othello.py")
 results = load_module("results", "src/component/results.py")
 
 GPT_DIR = os.environ.get("WMC_OTHELLO_GPT", os.path.expanduser("~/artifacts/othello_gpt_tl"))
+VAFA_WEIGHTS_DIR = os.environ.get("WMC_VAFA_WEIGHTS", os.path.expanduser("~/artifacts/vafa_weights"))
+VAFA_ANCHORS = ("shortest_paths", "noisy_shortest_paths", "random_walks")
 ZOO_DIR = ROOT / "outputs" / "zoo"
 MODEL_FIELDS = ("domain", "arch", "scale", "distribution", "seed")
 
@@ -209,6 +214,77 @@ class TrainPyModel(ZooModel):
                 h.remove()
 
 
+class HFGPT2Model(ZooModel):
+    """A Hugging Face GPT2LMHeadModel with its own vocabulary, behind our tokens (Vafa's navigation models).
+
+    in_map[t]   its token id for our token t. Our padding goes to its padding (0). An intersection its
+                vocabulary does not have also goes to 0, exactly as its own encode() does, and is still
+                attended to (its collate_fn builds the attention mask from the length, not the id).
+    out_map[t]  its token id for our token t, or -1 where it has none; logits there are -1e9, so such a
+                token is never its top prediction.
+    Activations are the residual stream after each block, before the final layer norm (as for every other
+    transformer in the study); readout() is not needed by any diagnostic."""
+
+    NEG = -1e9
+
+    def __init__(self, module: nn.Module, model_id: str, n_layers: int, d_model: int, in_map, out_map,
+                 device: str | None = None, meta: dict[str, Any] | None = None) -> None:
+        super().__init__(module, model_id, "transformer", n_layers, d_model, device, meta)
+        self.in_map = torch.as_tensor(in_map, dtype=torch.long, device=self.device)
+        self.out_map = torch.as_tensor(out_map, dtype=torch.long, device=self.device)
+        self._missing = self.out_map < 0
+
+    def known(self, tokens) -> torch.Tensor:
+        """(batch,) bool: every token of the route exists in the model's own vocabulary."""
+        tokens = self._to(tokens)
+        return (~self._missing[tokens] | (tokens == 0)).all(-1)
+
+    def _inputs(self, tokens: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        return self.in_map[tokens], (tokens != 0).long()
+
+    def _ours(self, logits: torch.Tensor) -> torch.Tensor:
+        out = logits[..., self.out_map.clamp(min=0)]
+        return out.masked_fill(self._missing, self.NEG)
+
+    def _logits(self, tokens: torch.Tensor) -> torch.Tensor:
+        ids, mask = self._inputs(tokens)
+        return self._ours(self.module(input_ids=ids, attention_mask=mask).logits)
+
+    def _blocks(self) -> nn.ModuleList:
+        return self.module.transformer.h
+
+    def _activations(self, tokens: torch.Tensor) -> torch.Tensor:
+        ids, mask = self._inputs(tokens)
+        acts: list[torch.Tensor] = []
+
+        def grab(mod, inp, out):  # noqa: ARG001
+            acts.append(out[0] if isinstance(out, tuple) else out)
+
+        handles = [b.register_forward_hook(grab) for b in self._blocks()]
+        try:
+            self.module.transformer(input_ids=ids, attention_mask=mask)
+        finally:
+            for h in handles:
+                h.remove()
+        return torch.stack(acts)
+
+    def _logits_edited(self, tokens, positions, edits):
+        def make(fn):
+            def hook(mod, inp, out):  # noqa: ARG001 (a block returns a tuple in transformers 4, a tensor in 5)
+                if isinstance(out, tuple):
+                    return (_edit_at(out[0], positions, fn),) + tuple(out[1:])
+                return _edit_at(out, positions, fn)
+            return hook
+        ids, mask = self._inputs(tokens)
+        blocks = self._blocks()
+        handles = [blocks[layer].register_forward_hook(make(fn)) for layer, fn in edits.items()]
+        try:
+            return self._ours(self.module(input_ids=ids, attention_mask=mask).logits)
+        finally:
+            for h in handles:
+                h.remove()
+
+
 # ==========================================================================
 # Loading models
 # ==========================================================================
@@ -228,6 +304,55 @@ def othello_gpt(which: str = "synthetic", device: str | None = None, gpt_dir: st
     meta = {"domain": "othello", "arch": "transformer", "scale": "othello_gpt",
             "distribution": which, "seed": 0}
     return TransformerLensModel(module, f"othello_gpt_{which}", "transformer", 8, 512, dev, meta)
+
+
+def build_gpt2(config: dict) -> nn.Module:
+    """A GPT2LMHeadModel with Vafa's configuration (GPT2Config defaults plus his four settings), eager attention."""
+    from transformers import GPT2Config, GPT2LMHeadModel
+    cfg = GPT2Config(vocab_size=config["vocab_size"], n_embd=config["n_embd"], n_layer=config["n_layer"],
+                     n_head=config["n_head"], pad_token_id=0,
+                     bos_token_id=None, eos_token_id=None)  # GPT 2's 50256 is outside his vocabulary; never used here
+    cfg._attn_implementation = "eager"
+    return GPT2LMHeadModel(cfg)
+
+
+def vafa_vocab_maps(word_to_id: dict[str, int], distribution: str) -> tuple[list[int], list[int]]:
+    """(in_map, out_map) between our maps tokens and one of Vafa's tokenizers (see HFGPT2Model).
+    The shortest paths tokenizer calls intersection 7732571914 by its shortest paths map id 42438066."""
+    maps = load_module("maps", "src/domains/maps.py")
+    back = {v: k for k, v in maps.RENAME_SHORTEST_PATHS.items()} if distribution == "shortest_paths" else {}
+    in_map = [0] * maps.VOCAB
+    out_map = [-1] * maps.VOCAB
+    out_map[0] = 0
+    for t in range(1, maps.VOCAB):
+        if maps.is_node(t):
+            n = maps.node_of_token(t)
+            word = str(back.get(n, n))
+        else:
+            word = maps.token_name(t)
+        if word in word_to_id:
+            in_map[t] = out_map[t] = int(word_to_id[word])
+    return in_map, out_map
+
+
+def vafa_navigation(which: str = "random_walks", device: str | None = None,
+                    weights_dir: str = VAFA_WEIGHTS_DIR) -> HFGPT2Model:
+    """One of the three navigation models of Vafa et al. (2024), released with their code: which is
+    shortest_paths, noisy_shortest_paths or random_walks. Weights are extracted from the released Lightning
+    checkpoints once by `python src/diagnostics/maps_reproduce_vafa.py prepare`. Reference models are
+    scored as anchors but are not part of the zoo statistics."""
+    import json
+    if which not in VAFA_ANCHORS:
+        raise ValueError(f"which must be one of {VAFA_ANCHORS}")
+    folder = Path(weights_dir) / which
+    config = json.loads((folder / "config.json").read_text())
+    word_to_id = json.loads((folder / "vocab.json").read_text())
+    module = build_gpt2(config)
+    module.load_state_dict(torch.load(folder / "model.pt", map_location="cpu", weights_only=True), strict=True)
+    dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    in_map, out_map = vafa_vocab_maps(word_to_id, which)
+    meta = {"domain": "maps", "arch": "transformer", "scale": "vafa_gpt2", "distribution": which, "seed": 0}
+    return HFGPT2Model(module, f"maps_vafa_{which}", config["n_layer"], config["n_embd"], in_map, out_map, dev, meta)
 
 
 def from_checkpoint(model_id: str, device: str | None = None, zoo_dir: Path | str = ZOO_DIR) -> ZooModel:

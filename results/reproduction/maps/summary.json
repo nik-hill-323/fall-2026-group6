@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "tolerances": {
+    "next_token_min": 0.99,
+    "pipeline": 0.001,
+    "probe": 0.02
+  },
+  "published": {
+    "next_token": {
+      "shortest_paths": 1.0,
+      "noisy_shortest_paths": 1.0,
+      "random_walks": 1.0,
+      "untrained": 0.03
+    },
+    "probe": {
+      "shortest_paths": 0.91,
+      "noisy_shortest_paths": 0.92,
+      "random_walks": 0.99,
+      "untrained": 0.1
+    }
+  },
+  "rows": [
+    {
+      "anchor": "shortest_paths",
+      "next_token": 0.9996216038949572,
+      "next_token_pass": true,
+      "pipeline_difference": 0.0,
+      "pipeline_pass": null,
+      "probe": 0.9088710088098997,
+      "probe_pass": true
+    },
+    {
+      "anchor": "noisy_shortest_paths",
+      "next_token": 0.9997906317211975,
+      "next_token_pass": true,
+      "pipeline_difference": 0.0,
+      "pipeline_pass": true,
+      "probe": 0.9141710007969512,
+      "probe_pass": true
+    },
+    {
+      "anchor": "random_walks",
+      "next_token": 0.9999801429706116,
+      "next_token_pass": true,
+      "pipeline_difference": 0.0,
+      "pipeline_pass": true,
+      "probe": 0.9915413158839724,
+      "probe_pass": true
+    }
+  ],
+  "untrained": {
+    "shortest_paths_untrained_next_token": 0.0,
+    "shortest_paths_untrained_probe": 0.0841727351428426,
+    "noisy_shortest_paths_untrained_next_token": 0.0005900378766249834,
+    "noisy_shortest_paths_untrained_probe": 0.1073580123810711,
+    "random_walks_untrained_next_token": 3.971405877680699e-05,
+    "random_walks_untrained_probe": 0.09266648046921758
+  },
+  "git_commit": "d46aa20"
+}

@@ -1,0 +1,33 @@
+{
+  "anchor": "noisy_shortest_paths",
+  "untrained": false,
+  "test": "next_token",
+  "published": 1.0,
+  "vafa": {
+    "rate": 0.9997906317211975,
+    "se": 6.31203025213456e-05,
+    "n_ok": 52528,
+    "n_positions": 52539,
+    "n_routes": 1000,
+    "n_empty_skipped": 0
+  },
+  "ours": {
+    "rate": 0.9997906317211975,
+    "vafa_rate_same_routes": 0.9997906317211975,
+    "difference": 0.0,
+    "n_routes": 1000,
+    "translator": {
+      "ok": 1000
+    },
+    "routes_with_words_unknown_to_the_model": 0
+  },
+  "seconds": 102.7,
+  "provenance": {
+    "git_commit": "d46aa20",
+    "date": "2026-11-08T05:11:23.008313+00:00",
+    "torch": "2.13.0+cu130",
+    "python": "3.13.15",
+    "device": "NVIDIA A10G",
+    "transformers": "5.14.1"
+  }
+}
