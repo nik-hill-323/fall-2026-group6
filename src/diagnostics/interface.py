@@ -360,7 +360,7 @@ def from_checkpoint(model_id: str, device: str | None = None, zoo_dir: Path | st
     models.csv. (A6 adds the registry; this is the minimal loader it builds on.)"""
     train = load_module("zoo_train", "src/zoo/train.py")
     row = results.load_models()[model_id]
-    module = train.build_model(row["arch"], row["scale"])
+    module = train.build_model(row["arch"], row["scale"], row["domain"])
     path = Path(zoo_dir) / model_id / "model.pt"
     dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
     module.load_state_dict(torch.load(path, map_location=dev))
