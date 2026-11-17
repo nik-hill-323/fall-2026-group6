@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1050" height="600" viewBox="0 0 1050 600" font-family="Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#444441"/></marker></defs>
+<rect width="1050" height="600" fill="#FFFFFF"/>
+<rect x="190" y="46" width="200" height="64" rx="6" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<text x="290.0" y="65.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">predicts C5  (p = 0.29)</text>
+<text x="290.0" y="82.0" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">legal: C3, E3, C5</text>
+<text x="290.0" y="99.0" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">legal ✓   real next: C5</text>
+<rect x="190" y="136" width="200" height="36" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="290.0" y="158.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">linear head: 61 scores</text>
+<rect x="190" y="196" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="290.0" y="217.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 4: h, c (128 each)</text>
+<rect x="190" y="240" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="290.0" y="261.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 3: h, c (128 each)</text>
+<rect x="190" y="284" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="290.0" y="305.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 2: h, c (128 each)</text>
+<rect x="190" y="328" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="290.0" y="349.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 1: h, c (128 each)</text>
+<rect x="190" y="392" width="200" height="36" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="290.0" y="414.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">embedding: 128 numbers</text>
+<rect x="190" y="462" width="200" height="50" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="290.0" y="482.5" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">move C4</text>
+<text x="290.0" y="499.5" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">token 27</text>
+<rect x="450" y="46" width="200" height="64" rx="6" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<text x="550.0" y="65.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">predicts E6  (p = 0.18)</text>
+<text x="550.0" y="82.0" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">legal: B6, C6, D6, E6, F6</text>
+<text x="550.0" y="99.0" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">legal ✓   real next: D6</text>
+<rect x="450" y="136" width="200" height="36" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="550.0" y="158.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">linear head: 61 scores</text>
+<rect x="450" y="196" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="550.0" y="217.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 4: h, c (128 each)</text>
+<rect x="450" y="240" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="550.0" y="261.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 3: h, c (128 each)</text>
+<rect x="450" y="284" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="550.0" y="305.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 2: h, c (128 each)</text>
+<rect x="450" y="328" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="550.0" y="349.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 1: h, c (128 each)</text>
+<rect x="450" y="392" width="200" height="36" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="550.0" y="414.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">embedding: 128 numbers</text>
+<rect x="450" y="462" width="200" height="50" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="550.0" y="482.5" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">move C5</text>
+<text x="550.0" y="499.5" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">token 33</text>
+<rect x="710" y="46" width="200" height="64" rx="6" fill="#EAF3DE" stroke="#3B6D11" stroke-width="1"/>
+<text x="810.0" y="65.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">predicts E3  (p = 0.18)</text>
+<text x="810.0" y="82.0" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">legal: C3, E3, C7, E7</text>
+<text x="810.0" y="99.0" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">legal ✓   real next: E3</text>
+<rect x="710" y="136" width="200" height="36" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="810.0" y="158.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">linear head: 61 scores</text>
+<rect x="710" y="196" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="810.0" y="217.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 4: h, c (128 each)</text>
+<rect x="710" y="240" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="810.0" y="261.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 3: h, c (128 each)</text>
+<rect x="710" y="284" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="810.0" y="305.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 2: h, c (128 each)</text>
+<rect x="710" y="328" width="200" height="34" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+<text x="810.0" y="349.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">LSTM layer 1: h, c (128 each)</text>
+<rect x="710" y="392" width="200" height="36" rx="6" fill="#E6F1FB" stroke="#185FA5" stroke-width="1"/>
+<text x="810.0" y="414.0" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">embedding: 128 numbers</text>
+<rect x="710" y="462" width="200" height="50" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="1"/>
+<text x="810.0" y="482.5" font-size="13" font-weight="bold" text-anchor="middle" fill="#2C2C2A">move D6</text>
+<text x="810.0" y="499.5" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#2C2C2A">token 40</text>
+<line x1="290.0" y1="462" x2="290.0" y2="428" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="290.0" y1="392" x2="290.0" y2="362" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="290.0" y1="328" x2="290.0" y2="318" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="290.0" y1="284" x2="290.0" y2="274" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="290.0" y1="240" x2="290.0" y2="230" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="290.0" y1="196" x2="290.0" y2="172" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="290.0" y1="136" x2="290.0" y2="110" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="390" y1="345.0" x2="450" y2="345.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="390" y1="301.0" x2="450" y2="301.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="390" y1="257.0" x2="450" y2="257.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="390" y1="213.0" x2="450" y2="213.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<text x="420.0" y="207.0" font-size="12" text-anchor="middle" fill="#444441">h, c</text>
+<line x1="550.0" y1="462" x2="550.0" y2="428" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="550.0" y1="392" x2="550.0" y2="362" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="550.0" y1="328" x2="550.0" y2="318" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="550.0" y1="284" x2="550.0" y2="274" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="550.0" y1="240" x2="550.0" y2="230" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="550.0" y1="196" x2="550.0" y2="172" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="550.0" y1="136" x2="550.0" y2="110" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="650" y1="345.0" x2="710" y2="345.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="650" y1="301.0" x2="710" y2="301.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="650" y1="257.0" x2="710" y2="257.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="650" y1="213.0" x2="710" y2="213.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<text x="680.0" y="207.0" font-size="12" text-anchor="middle" fill="#444441">h, c</text>
+<line x1="810.0" y1="462" x2="810.0" y2="428" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="810.0" y1="392" x2="810.0" y2="362" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="810.0" y1="328" x2="810.0" y2="318" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="810.0" y1="284" x2="810.0" y2="274" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="810.0" y1="240" x2="810.0" y2="230" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="810.0" y1="196" x2="810.0" y2="172" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="810.0" y1="136" x2="810.0" y2="110" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="146" y1="345.0" x2="190" y2="345.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="910" y1="345.0" x2="954" y2="345.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="146" y1="301.0" x2="190" y2="301.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="910" y1="301.0" x2="954" y2="301.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="146" y1="257.0" x2="190" y2="257.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="910" y1="257.0" x2="954" y2="257.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="146" y1="213.0" x2="190" y2="213.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<line x1="910" y1="213.0" x2="954" y2="213.0" stroke="#444441" stroke-width="1.2" marker-end="url(#a)"/>
+<text x="290.0" y="18" font-size="14" text-anchor="middle" fill="#2C2C2A">Step 1: reads move 1</text>
+<text x="550.0" y="18" font-size="14" text-anchor="middle" fill="#2C2C2A">Step 2: reads move 2</text>
+<text x="810.0" y="18" font-size="14" text-anchor="middle" fill="#2C2C2A">Step 3: reads move 3</text>
+<text x="140" y="204" font-size="12" text-anchor="end" fill="#2C2C2A">h = c = 0</text>
+<text x="140" y="220" font-size="12" text-anchor="end" fill="#2C2C2A">at the start</text>
+<text x="960" y="204" font-size="12" text-anchor="start" fill="#2C2C2A">... up to</text>
+<text x="960" y="220" font-size="12" text-anchor="start" fill="#2C2C2A">step 58</text>
+<text x="14" y="76.0" font-size="13" text-anchor="start" fill="#2C2C2A">prediction</text>
+<text x="14" y="92.0" font-size="12" text-anchor="start" fill="#2C2C2A">top of 61 scores</text>
+<text x="14" y="152.0" font-size="13" text-anchor="start" fill="#2C2C2A">output</text>
+<text x="14" y="168.0" font-size="12" text-anchor="start" fill="#2C2C2A">(1, 1, 61)</text>
+<text x="14" y="299.0" font-size="13" text-anchor="start" fill="#2C2C2A">memory h, c</text>
+<text x="14" y="315.0" font-size="12" text-anchor="start" fill="#2C2C2A">(1, 1, 128) per layer</text>
+<text x="14" y="408.0" font-size="13" text-anchor="start" fill="#2C2C2A">embedding</text>
+<text x="14" y="424.0" font-size="12" text-anchor="start" fill="#2C2C2A">(1, 1, 128)</text>
+<text x="14" y="485.0" font-size="13" text-anchor="start" fill="#2C2C2A">input</text>
+<text x="14" y="501.0" font-size="12" text-anchor="start" fill="#2C2C2A">(1, 1) integer</text>
+<text x="495.0" y="548" font-size="13" text-anchor="middle" fill="#2C2C2A">The same 4 LSTM layers (same weights) are used at every step; only the memory h, c changes.</text>
+<text x="495.0" y="570" font-size="13" text-anchor="middle" fill="#2C2C2A">Training runs all 58 steps of a game in one pass and scores every prediction; the result is identical to running step by step.</text>
+<text x="495.0" y="590" font-size="12" text-anchor="middle" fill="#2C2C2A">Real game: first synthetic test game. Model: othello_lstm_small_synthetic_s0 (4 layers, D = 128).</text>
+</svg>
