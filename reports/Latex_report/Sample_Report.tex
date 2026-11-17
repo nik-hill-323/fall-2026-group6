@@ -339,11 +339,15 @@ the validation split is used for checks during training and for fitting diagnost
 reserved exclusively for final diagnostic scores.
 
 \subsection{Navigation}
-Navigation follows Vafa et al.~\cite{vafa2024evaluating}: the state is the current intersection on a street
-graph of Manhattan, a token is a turn, and the three training distributions are shortest paths, noisy shortest
-paths and random walks. It is the next domain to be built; it reuses the zoo, the diagnostics and the analysis
-code of Othello unchanged, and its first step is a reproduction of the published state equivalence numbers on
-the released navigation checkpoints.
+Navigation follows Vafa et al.~\cite{vafa2024evaluating}: taxi routes on the street graph of Manhattan, taken
+from OpenStreetMap. A route is a sequence of tokens: the start intersection, the destination intersection, the
+turns taken (each one of eight compass directions) and an end token, so intersections (4,579 of them) and turns
+are both tokens. The state is the current intersection together with the destination, and the three training
+distributions are shortest paths, noisy shortest paths and random walks. Navigation reuses the zoo, the
+diagnostics and the analysis code of Othello unchanged. Our own code first reproduced the next token rate and the
+linear probe results of Vafa et al.\ on their released checkpoints; the navigation rules are fixed in Amendment 5
+of the preregistration (tag \texttt{prereg-v1.5}), and the 81 navigation models are being trained, with a cutoff
+on November 22.
 
 \subsection{Interpreter}
 The interpreter is a small deterministic stack or register machine whose full state (registers and stack) is
@@ -1350,8 +1354,8 @@ training data. \textbf{H3}, no single diagnostic wins; D4 adds to the legal move
 shows that this comes from differences between training distributions. \textbf{H4} is still to be tested on the
 held out interpreter.
 
-Next, the same pipeline runs on navigation, starting with a reproduction of the state equivalence results of
-Vafa et al.~\cite{vafa2024evaluating}, and then on the held out interpreter for H4, with the paper due on
+Next, the same pipeline runs on navigation, where our reproduction of Vafa et al.~\cite{vafa2024evaluating} is
+done and the 81 models are being trained, and then on the held out interpreter for H4, with the paper due on
 December 8. Beyond this project, the same comparison could be extended to domains with continuous or
 probabilistic state, and any new world model diagnostic can be added through the common interface and judged
 against these four on identical ground truth.
