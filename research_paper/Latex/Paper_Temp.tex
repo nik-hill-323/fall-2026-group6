@@ -79,6 +79,42 @@ at three scales (0.48 to 25.3 million parameters) on synthetic, championship (WT
 each, with one fixed budget. A model is admitted if its validation legal move rate, its \emph{competence}, is
 at least 0.50; all 81 are admitted (competence 0.559 to 0.969).
 
+\subsection{How the models see a game}
+\label{sec:see}
+Every model maps a batch of move sequences to scores for the next move at every position: tokens of shape
+$(B, T)$, one integer per move (the square played, 1 to 60, with 0 for padding), go through a learned embedding
+to $(B, T, D)$, through the layers at $(B, T, D)$, and through a linear head to $(B, T, 61)$, one score per
+token. $B$ is the batch (256 in training), $T \le 59$ the positions read and $D \in \{128, 256, 512\}$ the
+width. The 61 is the vocabulary, not the sequence length: written one hot, the input is $(B, T, 61)$ and the
+embedding is a learned $61 \times D$ matrix, which is where one integer per move becomes $D$ numbers. A batch
+is 256 whole games drawn from the training pool (synthetic games are made of random legal moves;
+championship games are human), each cut to its first 59 tokens.
+
+Training is next move prediction at every prefix position. For the first synthetic test game, C4 C5 D6 E3
+\dots\ (tokens 27 33 40 21 \dots), the model reads the first 58 moves and at position $t$ predicts move $t+2$
+from moves 1 to $t+1$: C4$\to$C5, C4 C5$\to$D6, C4 C5 D6$\to$E3, up to 58 moves$\to$H5. All 58 predictions
+are made in one forward pass and all enter the cross entropy loss. So the pairs are $[a] \to b$,
+$[a\,b] \to c$, \dots, not a fixed window ($[a\,b\,c] \to d$, $[b\,c\,d] \to e$): each prediction is sequence to
+one, made at every position, and the history only grows.
+
+An LSTM reads one token per step and carries a memory $(h_t, c_t)$ per layer, so at step $t$ it sees only the
+new move but predicts from a summary of the whole history (Fig.~\ref{fig:lstm}). On this game the trained small
+LSTM (synthetic, seed 0) reads C4, turns its 128 numbers into 61 scores and predicts the highest, C5
+($p = 0.29$, legal), then reads C5 with the memory of C4 and
+predicts E6 (legal), then reads D6 and predicts E3 (legal). Running the game one token at a time gives the same
+top move as the single training pass at all 58 positions. The transformer has the same input and output shapes
+but attends to all earlier positions under a causal mask instead of carrying a memory; Mamba carries a
+selective state. The diagnostics read these same scores (D1, D2), adapt the same model (D3) and probe the same
+$(B, T, D)$ vectors (D4).
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.92\textwidth]{lstm_unrolled.pdf}
+    \caption{The trained small LSTM unrolled over the first three moves of the first synthetic test game. The
+    same four layers run at every step and pass the memory $h, c$ forward; each step predicts the next move.}
+    \label{fig:lstm}
+\end{figure*}
+
 \subsection{Diagnostics}
 \textbf{D1} is the share of positions whose top predicted move is legal. \textbf{D2} is one minus the mean of the
 compression and distinction errors of Vafa et al.~\cite{vafa2024evaluating} with next move continuations.

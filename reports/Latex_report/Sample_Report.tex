@@ -467,6 +467,134 @@ but not across training sets.
     \label{tab:training}
 \end{table}
 
+\subsection{How the models see a game}
+\label{sec:see}
+
+This section follows one real game through one real model: the first synthetic test game (the first of the
+1,000 games every diagnostic scores, data seed 0) and a trained small LSTM, trained on synthetic games with
+seed 0 (4 layers, width $D=128$, 544,061 parameters; zoo name \texttt{othello\_lstm\_small\_synthetic\_s0}). The printout comes from running the model, not from a drawing
+of it.
+
+\paragraph{What goes in and what comes out.} Every model of the zoo has the same interface
+(\texttt{src/zoo/train.py}): it takes a batch of move sequences as integers and returns 61 scores at every
+position (Table~\ref{tab:shapes}). $B$ is the number of games in a batch (256 in training), $T$ the number of
+positions read (at most 59; 58 in training, see below) and $D$ the width of the model (128, 256 or 512 for
+small, medium and large).
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{l l >{\raggedright\arraybackslash}p{9.6cm}}
+    \toprule
+    Step & Shape & What it holds \\
+    \midrule
+    Input tokens & $(B, T)$ & one integer per move: the square played, 1 to 60 (0 = padding) \\
+    Embedding & $(B, T, D)$ & each token replaced by $D$ learned numbers \\
+    Each LSTM layer & $(B, T, D)$ & the hidden state $h_t$ at every position; memory $h, c$ of size $D$ carried along \\
+    Linear head & $(B, T, 61)$ & one score per token at every position \\
+    \bottomrule
+    \end{tabular}
+    \caption{Tensor shapes through the LSTM. The transformer and Mamba have the same input and output shapes
+    and the same $(B, T, D)$ vectors between layers; only how a layer combines the past differs.}
+    \label{tab:shapes}
+\end{table}
+
+The shape $(B, 61, 1)$ in the instructor's notes of 11-10 corresponds to this as follows. The 61 is the
+\emph{vocabulary}: the number of scores the model outputs at each position (60 playable squares and the
+padding token), so it is the last axis of the output, $(B, T, 61)$. The sequence axis is $T$, at most 59.
+The 1 is right for the raw input, one integer per move, which is why the input is written $(B, T)$, or
+$(B, T, 1)$ with the feature axis shown. The model does not use that integer as a number, though: C4 is token
+27 and C5 is token 33, but C5 is not ``more'' than C4. The embedding layer looks each token up in a learned
+table and replaces it with $D$ numbers, so $D$ is where the 1 becomes 128, 256 or 512. Equivalently, each
+token can be written as a one hot vector of length 61 (a 1 at its own index, 0 elsewhere), so the input is
+$(B, T, 61)$ in one hot form, and the embedding multiplies it by a learned $61 \times D$ matrix:
+$(B, T, 61) \times (61, D) \to (B, T, D)$. The 61 therefore appears twice, as the size of the one hot input and as
+the number of output scores, and neither is the length of the game.
+
+\paragraph{Where the sequences come from.} A sequence is one whole game, recorded as the squares played in
+order. Synthetic games were generated from random legal moves (\texttt{othello\_world},
+Li et al.~\cite{li2023othello}); championship games are human tournament games from the WTHOR archive
+(Section~\ref{sec:data}). Nothing is cut into windows: in each training step, 256 whole games are drawn at
+random from the training pool, each is turned into its first 59 tokens (shorter games padded with 0), and this
+$(256, 59)$ array is the batch.
+
+\paragraph{How the training sequences are formed.} The real game starts C4 C5 D6 E3 D3 C3 \dots, which as
+tokens is 27 33 40 21 20 19 \dots. The model reads the first 59 moves. In training it receives the first 58
+(\texttt{x[:, :-1]}) and is asked to predict the next move at \emph{every} position (\texttt{x[:, 1:]}), as in
+Table~\ref{tab:pairs}. So one game gives 58 predictions, all scored by the loss, and position $t$ always reads
+the whole history up to $t$: the history grows by one move per position and nothing is dropped. In the
+notation of the 11-10 session, the pairs are $[a] \to b$, $[a\,b] \to c$, $[a\,b\,c] \to d$, and so on, not a
+fixed window of three ($[a\,b\,c] \to d$, then $[b\,c\,d] \to e$, which would forget $a$). Each prediction is
+sequence to one (the whole prefix in, one move out), and training makes this prediction at every position of the
+game, not only at the last. Games shorter than 60 moves are padded
+with token 0, and the loss ignores those positions.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{r l l}
+    \toprule
+    Position $t$ & Model reads (moves 1 to $t+1$) & Target \\
+    \midrule
+    0 & C4 & C5 \\
+    1 & C4 C5 & D6 \\
+    2 & C4 C5 D6 & E3 \\
+    3 & C4 C5 D6 E3 & D3 \\
+    \dots & \dots & \dots \\
+    56 & C4 \dots\ G2 (57 moves) & H1 \\
+    57 & C4 \dots\ H1 (58 moves) & H5 \\
+    \bottomrule
+    \end{tabular}
+    \caption{The input and target pairs of the real game. Each row is one prediction; all 58 are made in one
+    forward pass and all enter the loss.}
+    \label{tab:pairs}
+\end{table}
+
+\paragraph{One worked example through the LSTM.} An LSTM reads one token at a time and carries a memory
+forward: at step $t$ each layer takes the vector from the layer below and its own memory from step $t-1$,
+\[
+  (h_t, c_t) = \mathrm{LSTM}\big(x_t, (h_{t-1}, c_{t-1})\big), \qquad
+  \text{scores}_t = W h^{(4)}_t + b ,
+\]
+where $x_t$ is the embedding of move $t$ for layer 1 and the output $h_t$ of the layer below for the others,
+$h^{(4)}_t$ is the output of the last layer, and the memory starts at zero. Figure~\ref{fig:lstm} shows the
+first three steps of the real game:
+\begin{itemize}
+    \item Step 1: the model reads C4 (token 27); its memory now holds one move. The last layer's 128 numbers go
+    through the head to 61 scores, a softmax turns them into probabilities, and the highest is the prediction:
+    C5, with probability 0.29. The legal moves are C3, E3 and C5, so the prediction is legal (the game also played C5).
+    \item Step 2: it reads C5 together with the memory carried from step 1, which still holds C4. It predicts
+    E6 (0.18), legal among B6, C6, D6, E6 and F6. The game played D6: D1 asks whether the move is legal, not
+    whether it matches the game, because on synthetic data the next move is random among the legal ones.
+    \item Step 3: it reads D6 with the memory of C4 and C5, and predicts E3 (0.18), legal among C3, E3, C7 and E7.
+\end{itemize}
+This is the ``$a \to b$, then $[a\,b] \to c$'' reading: at step $t$ the LSTM sees only the new move, but its
+memory summarises all earlier ones, so every prediction depends on the whole history so far. The one pass used
+in training computes exactly these steps: running the same game one token at a time with the memory carried
+forward gives the same top move at all 58 positions as the single training pass (largest score difference
+$5.6\times10^{-6}$, floating point rounding). On this one game the model's top move is legal at 25 of 58
+positions (0.431); on 1,000 validation games its rate is 0.561, close to the mean of the small LSTMs
+(Table~\ref{tab:training}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{lstm_unrolled.pdf}
+    \caption{The LSTM unrolled over the first three moves of the real test game. The same four layers (the same
+    weights) run at every step; only the memory $h, c$ changes, and it is passed to the next step. Source:
+    \texttt{reports/diagrams/lstm\_unrolled.drawio}; numbers from running \texttt{othello\_lstm\_small\_synthetic\_s0}.}
+    \label{fig:lstm}
+\end{figure}
+
+\paragraph{The other two architectures, and why this matters for the diagnostics.} The transformer and Mamba
+take the same $(B, T)$ tokens and return the same $(B, T, 61)$ scores. The transformer does not carry a memory:
+at position $t$ attention looks back at all earlier positions directly, and a causal mask hides later ones.
+Mamba carries a state forward like the LSTM, but decides from each input what to keep. In all three, the
+prediction at position $t$ uses moves 1 to $t+1$ only. This is what the diagnostics rely on: D1 and D2 read
+the 61 scores at every position, D3 adapts the model on the same inputs, and D4 probes the $(B, T, D)$ vectors
+after each layer, which are exactly the vectors the model predicts from. Navigation uses the same interface
+with a vocabulary of 4,589 tokens, at most 98 positions and a loss on the turns and the end token only
+(Amendment 5).
+
 \subsection{The four diagnostics}
 \label{sec:diagnostics}
 
