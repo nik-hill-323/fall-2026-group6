@@ -189,33 +189,46 @@ Note: Use Markdown Cheat Sheet download in the directory as needed.
 * [ ] Navigation amendment (Amendment 5, prereg-v1.5)
 * [ ] Navigation generator, DFA spec and fragility suite frozen and tagged
 ---
-## Date: Week 11 - Month Day Year 
+## Date: Week 11 - November 10, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - Instructor Review #8 (2026-11-08, #143): navigation had to start, PRs #139 and #141 were waiting, and the review asked for a cutoff date for navigation and for the work to be shared by all four members
+    - 11-10 session: the professor asked again for the LSTM explanation (how the input sequence is formed, what goes into the model, the tensor shapes) and noted that navigation had no results yet
+    - Navigation domain merged (#141): the Manhattan street map from OpenStreetMap with 4,579 intersections, data from Vafa et al. (2024), split by start and destination pair
+    - Vafa reproduction merged (#147): our own next token check and probes give the published numbers on Vafa's released models (next token 0.9996 to 1.0000; probes 0.909, 0.914 and 0.992 against 0.91, 0.92 and 0.99)
+    - Amendment 5 merged (#146) and tagged prereg-v1.5: the navigation rules are frozen before any navigation result, with a cutoff on November 22
+    - Navigation trainer merged (#149); the 9 pilot models were trained on all four machines and merged (#151); all pass the 0.50 admission line except the small LSTM on random walks (0.479)
+    - The navigation zoo started on 11-16, one runner per machine, in the order transformers, LSTMs, Mamba
+    - Instructor Review #9 (2026-11-15): the LSTM explanation is a blocker for 11-17; it also flags work concentration, the paper, the journal and this progress report
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [x] #139 and #141 merged
+* [x] Vafa reproduction (#147)
+* [x] Amendment 5 and tag prereg-v1.5 (#146)
+* [x] Navigation trainer (#149)
+* [x] 9 navigation pilots (#151)
+* [x] Navigation zoo training started
+* [ ] Reply to Instructor Review #8 (#143)
 ---
-## Date: Week 12 - Month Day Year 
+## Date: Week 12 - November 17, 2026
 - Topics of discussion
-    - Item1
-    - Item2
-    - Item3
+    - LSTM explanation added to the report, the paper and one slide: tensor shapes, how the training sequences are formed, one worked example through the LSTM, and the unrolled LSTM diagram (Review #9 blocker)
+    - 11-17 session: every member explains how the models see a game
+    - Review #9 tasks assigned on a ticket, one owner each
+    - The paper is going to an IEEE journal, with the IEEEtran template
+    - Navigation zoo training continues; the navigation cutoff is November 22
 
 - Action Items:
 
-* [ ] Action Item 1
-* [ ] Action Item 2
-* [ ] Action Item 3
-* [ ] Action Item 4
-* [ ] Action Item 5
+* [ ] LSTM explanation in the report, paper and slide
+* [ ] Every member explains it in class (11-17)
+* [ ] Progress reports Weeks 11 and 12 (this PR)
+* [ ] Paper gets its own references file
+* [ ] Outdated navigation text fixed in the report and the paper
+* [ ] Navigation zoo: 81 models trained
+* [ ] Navigation diagnostics and fragility suite
+* [ ] Navigation scored by the 11-22 cutoff, or reported as incomplete
+* [ ] Replies to Instructor Reviews #8 and #9
 ---
 ## Date: Week 13 - Month Day Year 
 - Topics of discussion
