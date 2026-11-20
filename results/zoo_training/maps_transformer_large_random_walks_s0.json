@@ -1,0 +1,66 @@
+{
+  "model_id": "maps_transformer_large_random_walks_s0",
+  "arch": "transformer",
+  "scale": "large",
+  "scale_config": {
+    "n_layers": 8,
+    "d_model": 512,
+    "n_heads": 8
+  },
+  "n_params": 29973997,
+  "train": {
+    "steps_run": 5000,
+    "final_loss": 1.029617393016815,
+    "sec_per_step": 0.34822947185837433,
+    "wall_sec": 1742.4421153068542
+  },
+  "eval": {
+    "next_token_acc": 0.49846122696902206,
+    "legal_move_rate": 0.9515084025106297,
+    "n_eval_games": 1000,
+    "illegal_games_dropped": 0
+  },
+  "throughput": {
+    "sec_per_step": 0.34822947185837433,
+    "min_per_model_full_budget": 29.01912265486453,
+    "hours_per_27_models": 13.058605194689038,
+    "budget": {
+      "steps": 5000,
+      "batch_games": 256
+    },
+    "micro_batch": 0
+  },
+  "device": "cuda",
+  "gpu": "NVIDIA A10G",
+  "config": {
+    "domain": "maps",
+    "arch": "transformer",
+    "scale": "large",
+    "distribution": "random_walks",
+    "seed": 0,
+    "data": "/home/ubuntu/artifacts/othello_data/data",
+    "championship_data": "/home/ubuntu/artifacts/othello_championship",
+    "maps_data": "/home/ubuntu/artifacts/maps",
+    "n_train_games": 1280000,
+    "n_val_games": 1000,
+    "steps": 5000,
+    "batch": 256,
+    "micro_batch": 0,
+    "lr": 0.0003,
+    "warmup_steps": 200,
+    "weight_decay": 0.01,
+    "synthetic": 0,
+    "device": "cuda",
+    "log_every": 50,
+    "out_dir": "outputs/zoo",
+    "budget_steps": 5000
+  },
+  "domain": "maps",
+  "distribution": "random_walks",
+  "seed": 0,
+  "checkpoint": "outputs/zoo/maps_transformer_large_random_walks_s0/model.pt",
+  "checkpoint_sha256": "2fec27dcf0297720147b7590aa4d102171936e49827c267193b1c4e545a630e1",
+  "git_commit": "1980762",
+  "host": "ip-10-0-2-67",
+  "time_utc": "2026-11-17T05:20:59Z"
+}
