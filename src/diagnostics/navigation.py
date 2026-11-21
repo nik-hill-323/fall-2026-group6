@@ -417,7 +417,7 @@ def report_not_loaded(not_loaded: list[tuple[str, str]]) -> None:
 
 
 def main_for(diagnostic: ModuleType, model_ids: list[str], save: bool, **kw: Any) -> tuple[list, list]:
-    """The command line path of every navigation scorer: gates, then run(). Exits with status 1 when a model
-    could not be loaded, so a launcher sees it."""
+    """The command line path of every navigation scorer: gates, then run(). Returns (results, not loaded); the
+    scorer prints both and exits with status 1 when a model could not be loaded, so a launcher sees it."""
     check_can_score(model_ids, save)
     return run(diagnostic, model_ids, save=save, **kw)
