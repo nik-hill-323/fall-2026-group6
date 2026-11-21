@@ -23,3 +23,27 @@ Each model produces one JSON result file at:
 `results/D1_next_token/{model_id}.json`
 
 The JSON format follows `src/docs/results_schema.md`. The master D1 score is the argmax legal rate.
+
+## Navigation (domain `maps`, Amendment 5, G4)
+
+The same question on the street map: after a route prefix such as `start destination SW SW SE`, is the model's
+top token a turn that exists at the car's current intersection (or `end`, if the car is at the destination)?
+Replaying the turns on the map gives the legal next set at every step, as the board does for Othello.
+
+* **Score.** Share of scored positions where the top token is legal, computed by `maps.legal_rate`. Scored
+  positions are every prediction of a turn or of `end` (positions 1 to length minus 2), the positions the
+  training loss covers. The same computation gives Vafa et al.'s next token rate exactly on their models
+  (reproduction, `src/docs/navigation_reproduction.md`).
+* **Secondary.** At each scored position, 10 tokens sampled at temperature 1.0 from the whole vocabulary
+  (sampling seed 0); the share that are legal. An intersection or padding is never legal.
+* **Data.** 1,000 test routes of the model's own training distribution, data seed 0.
+* **Reference points.** An untrained model scores about 0.0005 (about 2 legal tokens of 4,589); the anchors of
+  Vafa et al. score 0.9996 to 1.0000. For an anchor, `details` also counts the routes with an intersection its
+  own tokenizer does not have.
+
+Code: `score_maps` in `src/diagnostics/d1/next_token.py`. Tests: `src/tests/test_d1_maps.py`. Loading, gates
+and the pilot results folder: `src/docs/navigation_scoring.md`.
+
+```bash
+python src/diagnostics/d1/next_token.py --models maps_transformer_small_shortest_paths_s100 --save
+```
