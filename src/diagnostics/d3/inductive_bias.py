@@ -44,6 +44,32 @@ Run on the EC2 (repo root):
     python src/diagnostics/d3/inductive_bias.py --models othello_gpt_synthetic othello_gpt_championship
     python src/diagnostics/d3/inductive_bias.py --models othello_gpt_synthetic --save
 Zoo models are refused until the git tag prereg-v1.2 exists (the protocol must be frozen first).
+
+Navigation (domain maps, preregistration Amendment 5, G6; ticket N6): A7 and C unchanged except
+    tasks            T1 the destination is at most 10 turns away, T2 at most 823.9 m away in a straight line,
+                     T4 the current intersection is east of the destination; labels from
+                     src/domains/maps_tasks.py at one random scored position per route
+                     (maps_tasks.random_positions, seed 0). T3 is dropped (its shortcut reaches 0.92)
+    data             64 validation routes and 1,000 test routes of the model's own distribution, data seed 0,
+                     read through src/diagnostics/navigation.py (manifest checked, tokens[:, :98])
+    shortcut check   for every adapted model, the balanced accuracy of its answers against the shortcut
+                     rule's answers on the same test positions (T1, T2: the threshold on the number of turns
+                     so far in results/prereg/maps_amendment5_numbers.json; T4: the start instead of the
+                     current intersection), reported next to the score
+    symbolic arm     PySR (C's settings, no feature selection) fits the adapted model's margin from 7
+                     standardized inputs: latitude and longitude of the current, start and destination
+                     intersections, and the number of turns so far. Contrast of input j = mean |f(x_j at its
+                     90th percentile) - f(x_j at its 10th percentile)|. T4 law recovered: current longitude
+                     has the largest contrast and raises the margin, destination longitude lowers it, and the
+                     formula's sign beats chance. Start shortcut: start longitude contrast > current longitude
+                     contrast. T1 and T2: formulas, contrasts and R squared only
+    anchors          the shortest paths anchor (89M) is adapted as A7, with its dropout off as every zoo model
+                     (none has dropout); the two 1.5B anchors are reported as skipped (G11: weights, gradients
+                     and AdamW state need about 24 GB, more than the A10G's 23 GB)
+    python src/diagnostics/d3/inductive_bias.py --models maps_transformer_small_shortest_paths_s100
+    python src/diagnostics/d3/inductive_bias.py --models maps_transformer_small_shortest_paths_s100 --save
+Navigation zoo models are refused until the tags prereg-v1.5 and maps-fragility-v1 exist (navigation.py);
+pilot results go to results/pilot_scoring/.
 """
 
 from __future__ import annotations
@@ -89,6 +115,9 @@ def _load(name: str, rel: str):
 itf = _load("interface", "src/diagnostics/interface.py")
 oth = itf.oth
 results = itf.results
+nav = _load("navigation", "src/diagnostics/navigation.py")
+maps = nav.maps
+mt = _load("maps_tasks", "src/domains/maps_tasks.py")
 
 DIAGNOSTIC = "D3"
 METHOD = ("inductive bias probe (Vafa et al. 2025): balanced accuracy of the adapted model minus that of a "
@@ -226,7 +255,7 @@ def adapt_and_score(body: nn.Module, d_model: int, train: dict[str, np.ndarray],
     pred = np.concatenate(preds)
     yt = test["labels"][:, task]
     return {"balanced_accuracy": balanced_accuracy(pred, yt), "accuracy": float((pred == yt).mean()),
-            "margin": np.concatenate(margins)}
+            "margin": np.concatenate(margins), "pred": pred}
 
 
 # ==========================================================================
@@ -256,12 +285,15 @@ def board_features(board: np.ndarray) -> np.ndarray:
     return np.where(board == 1, 1.0, np.where(board == 2, -1.0, 0.0))
 
 
-def pysr_fit(X: np.ndarray, y: np.ndarray, seed: int) -> tuple[Callable[[np.ndarray], np.ndarray], str, int]:
-    """Fit one PySR search with the Amendment 2 settings. Returns (predict, equation, complexity)."""
+def pysr_fit(X: np.ndarray, y: np.ndarray, seed: int, variable_names: list[str] | None = None,
+             select_k: int | None = SR_SELECT_K) -> tuple[Callable[[np.ndarray], np.ndarray], str, int]:
+    """Fit one PySR search with the Amendment 2 settings. Returns (predict, equation, complexity).
+    variable_names and select_k default to Othello's (64 squares, 10 kept); navigation passes its 7 inputs
+    and no feature selection (Amendment 5, G6)."""
     if pysr is None:
         raise ImportError("pysr is not installed: install requirements.txt (EC2) or pass regressor=")
     kwargs = dict(binary_operators=SR_BINARY, unary_operators=SR_UNARY, maxsize=SR_MAXSIZE,
-                  niterations=SR_NITERATIONS, populations=SR_POPULATIONS, select_k_features=SR_SELECT_K,
+                  niterations=SR_NITERATIONS, populations=SR_POPULATIONS, select_k_features=select_k,
                   deterministic=True, parallelism="serial", random_state=seed, progress=False,
                   verbosity=0, model_selection="best")
     params = inspect.signature(pysr.PySRRegressor.__init__).parameters
@@ -271,7 +303,7 @@ def pysr_fit(X: np.ndarray, y: np.ndarray, seed: int) -> tuple[Callable[[np.ndar
         elif "tempdir" in params:
             kwargs.update(tempdir=tmp, temp_equation_file=True)
         reg = pysr.PySRRegressor(**kwargs)
-        reg.fit(X, y, variable_names=SR_VARIABLE_NAMES)
+        reg.fit(X, y, variable_names=variable_names or SR_VARIABLE_NAMES)
         best = reg.get_best()
     return reg.predict, str(best["equation"]), int(best["complexity"])
 
@@ -438,7 +470,9 @@ def score(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, n
           seeds=ADAPT_SEEDS, **adapt: Any):
     """The diagnostic contract (src/docs/diagnostic_interface.md). n_adapt, seeds and adapt
     (steps, batch, head_lr, body_lr, make_random, symbolic, regressor) may be overridden for
-    tests only."""
+    tests only. Navigation models go to score_maps (Amendment 5, G6)."""
+    if nav.is_maps(model):
+        return score_maps(model, split, n_games, data_seed, n_adapt, seeds, **adapt)
     t0 = time.time()
     dist = training_distribution(model)
     train = prepare(dist, "val", n_adapt, data_seed)
@@ -451,6 +485,295 @@ def score(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, n
                                  "head_lr": adapt.get("head_lr", HEAD_LR), "body_lr": adapt.get("body_lr", BODY_LR),
                                  "weight_decay": WEIGHT_DECAY, "position_seed": POSITION_SEED}})
     return itf.result_for(model, DIAGNOSTIC, method=METHOD, split=split, n_games=len(test["tokens"]),
+                          data_seed=data_seed, score=out["score"], score_std=out["score_std"],
+                          details=details, runtime_sec=round(time.time() - t0, 1))
+
+
+# ==========================================================================
+# Navigation (Amendment 5, G6)
+#
+# Plain words: the same probe on the navigation models. The three questions are about where the car is
+# now (how far the destination is, and whether the car is east of it), which only replaying the turns
+# on the map gives. Where the start lies already says a lot about T4 (0.88 balanced accuracy on the
+# data), and the number of turns so far says a little about T1 and T2, so the agreement of every
+# adapted model with those shortcut rules is reported next to the score.
+# ==========================================================================
+
+MAPS_TASKS = tuple(mt.D3_TASKS)                     # ("T1", "T2", "T4"); T3 dropped by the G6 drop rule
+MAPS_TASK_TEXT = {"T1": f"destination at most {mt.H_TURNS} turns away",
+                  "T2": f"destination at most {mt.R_METRES} m away",
+                  "T4": "current intersection east of the destination"}
+MAPS_METHOD = ("inductive bias probe (Vafa et al. 2025), navigation (Amendment 5 G6): balanced accuracy of the "
+               "adapted model minus that of a random weight model of the same architecture, tasks T1 (destination "
+               "within 10 turns), T2 (within 823.9 m), T4 (east of the destination), higher is better")
+MAPS_SR_NAMES = ["cur_lat", "cur_lon", "start_lat", "start_lon", "dest_lat", "dest_lon", "turns"]
+MAPS_PERCENTILES = (10, 90)
+MAPS_SKIPPED = {
+    "maps_vafa_noisy_shortest_paths": "1.5B parameters: weights, gradients and AdamW state need about 24 GB, more "
+                                      "than the A10G's 23 GB (Amendment 5, G11)",
+    "maps_vafa_random_walks": "1.5B parameters: weights, gradients and AdamW state need about 24 GB, more than the "
+                              "A10G's 23 GB (Amendment 5, G11)",
+}
+
+
+class HFBody(nn.Module):
+    """Vafa's GPT-2 (interface.HFGPT2Model) as an adaptable body: our tokens in, the residual stream after each
+    block out (before the final layer norm, as HFGPT2Model.activations), with layer_outputs like a train.py
+    model. The GPT-2 stays in eval mode, so its dropout (GPT2Config default 0.1) is off during adaptation, as
+    for every zoo model; gradients still flow."""
+
+    def __init__(self, module: nn.Module, in_map: torch.Tensor) -> None:
+        super().__init__()
+        self.gpt2 = module
+        self.register_buffer("in_map", torch.as_tensor(in_map, dtype=torch.long).clone())
+
+    def train(self, mode: bool = True) -> "HFBody":
+        super().train(mode)
+        self.gpt2.eval()
+        return self
+
+    def layer_outputs(self, tokens: torch.Tensor) -> list[torch.Tensor]:
+        acts: list[torch.Tensor] = []
+
+        def grab(mod, inp, out):  # noqa: ARG001
+            acts.append(out[0] if isinstance(out, tuple) else out)
+
+        handles = [b.register_forward_hook(grab) for b in self.gpt2.transformer.h]
+        try:
+            self.gpt2.transformer(input_ids=self.in_map[tokens], attention_mask=(tokens != 0).long())
+        finally:
+            for h in handles:
+                h.remove()
+        return acts
+
+
+def maps_body(model) -> nn.Module:
+    """The module adaptation copies: the train.py model itself, or Vafa's GPT-2 behind our tokens."""
+    if isinstance(model, itf.HFGPT2Model):
+        return HFBody(model.module, model.in_map)
+    return model.module
+
+
+def maps_random_like(model, seed: int) -> nn.Module:
+    """A navigation model of the same architecture and scale with random weights: models.csv for zoo models,
+    the id for pilots (not in models.csv), Vafa's configuration for the anchors."""
+    torch.manual_seed(seed)
+    module = model.module
+    if hasattr(module, "random_copy"):                         # test models define their own
+        return module.random_copy(seed)
+    if isinstance(model, itf.HFGPT2Model):
+        return HFBody(type(module)(module.config), model.in_map)
+    f = nav.model_fields(model)
+    train = _load("zoo_train", "src/zoo/train.py")
+    return train.build_model(f["arch"], f["scale"], nav.DOMAIN)
+
+
+def _amendment5_numbers() -> dict:
+    import json
+    return json.loads(mt.NUMBERS_FILE.read_text())
+
+
+def shortcut_rule(task: str, distribution: str) -> str:
+    """The shortcut rule of a task: 'turns so far > 4' (T1, T2: per distribution, from the numbers file that
+    Amendment 5 froze) or 'start instead of current' (T4)."""
+    return _amendment5_numbers()["tasks"][task]["per_distribution"][distribution]["shortcut"]["rule"]
+
+
+def shortcut_answers(s: dict[str, np.ndarray], distribution: str) -> np.ndarray:
+    """(G, 3) int64: the shortcut rule's answer to T1, T2, T4 at each state (maps_tasks.state_at)."""
+    out = []
+    for t in MAPS_TASKS:
+        rule = shortcut_rule(t, distribution)
+        if t == "T4":
+            if rule != "start instead of current":
+                raise ValueError(f"unexpected T4 shortcut rule {rule!r}")
+            out.append(mt.start_shortcuts(s)["T4"])
+            continue
+        words = rule.split()
+        if words[:3] != ["turns", "so", "far"] or words[3] not in ("<=", ">") or len(words) != 5:
+            raise ValueError(f"unexpected {t} shortcut rule {rule!r}")
+        thr = int(words[4])
+        out.append(s["turns"] <= thr if words[3] == "<=" else s["turns"] > thr)
+    return np.stack(out, axis=1).astype(np.int64)
+
+
+def maps_features(s: dict[str, np.ndarray]) -> np.ndarray:
+    """(G, 7) symbolic regression inputs (MAPS_SR_NAMES), each standardized over these positions."""
+    lat, lon = maps.coordinates()
+    raw = np.c_[lat[s["current"]], lon[s["current"]], lat[s["start"]], lon[s["start"]],
+                lat[s["dest"]], lon[s["dest"]], s["turns"]].astype(np.float64)
+    sd = raw.std(0)
+    return (raw - raw.mean(0)) / np.where(sd > 0, sd, 1.0)
+
+
+def maps_examples(data: dict, distribution: str, seed: int = POSITION_SEED) -> dict[str, np.ndarray]:
+    """tokens (G, 98), one random scored position per route, labels (G, 3) of T1, T2, T4, the shortcut answers
+    (G, 3) and the 7 symbolic regression inputs, all at that position."""
+    pos = mt.random_positions(data, seed)
+    s = mt.state_at(data, pos)
+    lab = mt.labels(s)
+    return {"tokens": np.asarray(data["tokens"][:, :maps.N_CTX], dtype=np.int64), "pos": pos,
+            "labels": np.stack([lab[t] for t in MAPS_TASKS], axis=1).astype(np.int64),
+            "shortcut": shortcut_answers(s, distribution), "features": maps_features(s)}
+
+
+def maps_prepare(distribution: str, split: str, n_routes: int, data_seed: int) -> dict[str, np.ndarray]:
+    key = ("maps", distribution, split, n_routes, data_seed)
+    if key not in _CACHE:
+        _CACHE[key] = maps_examples(nav.routes(distribution, split, n_routes, seed=data_seed), distribution)
+    return _CACHE[key]
+
+
+def maps_linear_r2(X: np.ndarray, y: np.ndarray) -> float:
+    """R squared of a least squares fit of y on the 7 inputs plus an intercept (reference for fit_r2)."""
+    A = np.c_[X, np.ones(len(X))]
+    coef = np.linalg.lstsq(A, y, rcond=None)[0]
+    return r_squared(A @ coef, y)
+
+
+def describe_maps_law(predict: Callable[[np.ndarray], np.ndarray], X: np.ndarray, y_model: np.ndarray,
+                      y_true: np.ndarray, task: str) -> dict[str, Any]:
+    """Contrast of every input (G6): mean |f(x_j at its 90th percentile) - f(x_j at its 10th)| over the test
+    positions, the signed contrast without the absolute value. T4 law recovered: current longitude has the
+    largest contrast and a positive signed contrast, destination longitude a negative one, and the formula's
+    sign beats chance against the true rule. Start shortcut (T4): start longitude contrast above current
+    longitude contrast. T1, T2: no rule (recovered and start_shortcut are None)."""
+    base = np.asarray(predict(X), dtype=np.float64)
+    lo, hi = np.percentile(X, MAPS_PERCENTILES, axis=0)
+    contrast, signed = np.zeros(X.shape[1]), np.zeros(X.shape[1])
+    for j in range(X.shape[1]):
+        diff = np.asarray(predict(_set(X, j, hi[j])), dtype=np.float64) - np.asarray(predict(_set(X, j, lo[j])), dtype=np.float64)
+        contrast[j] = float(np.abs(diff).mean())
+        signed[j] = float(diff.mean())
+    eps = 1e-9
+    top = int(np.argmax(contrast))
+    agreement = balanced_accuracy((base > 0).astype(np.int64), y_true)
+    c = {n: j for j, n in enumerate(MAPS_SR_NAMES)}
+    recovered = start_shortcut = None
+    if task == "T4":
+        recovered = bool(contrast[top] > eps and top == c["cur_lon"] and signed[c["cur_lon"]] > 0
+                         and signed[c["dest_lon"]] < 0 and agreement > 0.5)
+        start_shortcut = bool(contrast[c["start_lon"]] > contrast[c["cur_lon"]])
+    return {"top_input": MAPS_SR_NAMES[top] if contrast[top] > eps else None,
+            "recovered": recovered, "start_shortcut": start_shortcut,
+            "contrast": {n: round(float(contrast[j]), 4) for n, j in c.items()},
+            "signed_contrast": {n: round(float(signed[j]), 4) for n, j in c.items()},
+            "inputs_used": [n for n, j in c.items() if contrast[j] > eps],
+            "fit_r2": round(r_squared(base, y_model), 4),
+            "linear_r2": round(maps_linear_r2(X, y_model), 4),
+            "law_agreement": round(agreement, 4)}
+
+
+def maps_pysr_fit(X: np.ndarray, y: np.ndarray, seed: int):
+    """C's PySR settings on the 7 navigation inputs, all used (no feature selection, G6)."""
+    return pysr_fit(X, y, seed, variable_names=MAPS_SR_NAMES, select_k=None)
+
+
+def maps_symbolic_arm(test: dict[str, np.ndarray], margins: dict[tuple[str, int, int], np.ndarray],
+                      seeds, regressor: Callable) -> dict[str, Any]:
+    """One search per (model kind, task, seed) on the adapted model's test margins."""
+    X = test["features"]
+    cells = []
+    for kind in ("pretrained", "random"):
+        for k, t in enumerate(MAPS_TASKS):
+            for seed in seeds:
+                y = margins[(kind, k, seed)]
+                predict, eq, complexity = regressor(X, y, seed)
+                d = describe_maps_law(predict, X, y, test["labels"][:, k], t)
+                cells.append({"model": kind, "task": t, "seed": seed, "equation": eq, "complexity": complexity, **d})
+
+    def mean(kind, key, task=None):
+        v = [x[key] for x in cells if x["model"] == kind and (task is None or x["task"] == task)]
+        return round(float(np.mean(v)), 4)
+
+    return {
+        "t4_recovery_rate_pretrained": mean("pretrained", "recovered", "T4"),
+        "t4_recovery_rate_random": mean("random", "recovered", "T4"),
+        "t4_start_shortcut_rate_pretrained": mean("pretrained", "start_shortcut", "T4"),
+        "t4_start_shortcut_rate_random": mean("random", "start_shortcut", "T4"),
+        "fit_r2_by_task_pretrained": {t: mean("pretrained", "fit_r2", t) for t in MAPS_TASKS},
+        "fit_r2_by_task_random": {t: mean("random", "fit_r2", t) for t in MAPS_TASKS},
+        "linear_r2_by_task_pretrained": {t: mean("pretrained", "linear_r2", t) for t in MAPS_TASKS},
+        "linear_r2_by_task_random": {t: mean("random", "linear_r2", t) for t in MAPS_TASKS},
+        "settings": {"binary_operators": SR_BINARY, "unary_operators": SR_UNARY, "maxsize": SR_MAXSIZE,
+                     "niterations": SR_NITERATIONS, "populations": SR_POPULATIONS, "select_k_features": None,
+                     "seeds": list(seeds), "deterministic": True, "inputs": MAPS_SR_NAMES,
+                     "standardized": "over the test positions", "contrast_percentiles": list(MAPS_PERCENTILES),
+                     "target": "adapted model margin logit(yes) - logit(no)"},
+        "cells": cells,
+    }
+
+
+def maps_evaluate(model, train: dict[str, np.ndarray], test: dict[str, np.ndarray], seeds=ADAPT_SEEDS,
+                  make_random: Callable[[Any, int], nn.Module] = maps_random_like, symbolic: bool = True,
+                  regressor: Callable | None = None, **adapt: Any) -> dict[str, Any]:
+    """evaluate() for navigation: every (task, seed) adapts a copy of the model and a random weight model,
+    scores both, and records each one's agreement with the task's shortcut rule."""
+    body = maps_body(model)
+    cells = []
+    margins: dict[tuple[str, int, int], np.ndarray] = {}
+    for seed in seeds:
+        random_body = make_random(model, 1000 + seed)          # one random model per seed, reused across tasks
+        for k, t in enumerate(MAPS_TASKS):
+            pre = adapt_and_score(copy.deepcopy(body), model.d_model, train, test, k, seed, model.device, **adapt)
+            rnd = adapt_and_score(copy.deepcopy(random_body), model.d_model, train, test, k, seed, model.device, **adapt)
+            margins[("pretrained", k, seed)], margins[("random", k, seed)] = pre["margin"], rnd["margin"]
+            short = test["shortcut"][:, k]
+            cells.append({"task": t, "seed": seed,
+                          "pretrained_balanced_accuracy": pre["balanced_accuracy"],
+                          "random_balanced_accuracy": rnd["balanced_accuracy"],
+                          "pretrained_accuracy": pre["accuracy"], "random_accuracy": rnd["accuracy"],
+                          "pretrained_shortcut_agreement": balanced_accuracy(pre["pred"], short),
+                          "random_shortcut_agreement": balanced_accuracy(rnd["pred"], short),
+                          "gap": pre["balanced_accuracy"] - rnd["balanced_accuracy"]})
+        del random_body
+    gaps = np.array([c["gap"] for c in cells])
+    per_seed = [float(np.mean([c["gap"] for c in cells if c["seed"] == s])) for s in seeds]
+
+    def by_task(key):
+        return {t: float(np.mean([c[key] for c in cells if c["task"] == t])) for t in MAPS_TASKS}
+
+    out = {
+        "score": float(gaps.mean()),
+        "score_std": float(np.std(per_seed, ddof=1)) if len(per_seed) > 1 else None,
+        "gap_by_seed": per_seed,
+        "gap_by_task": by_task("gap"),
+        "pretrained_balanced_accuracy": float(np.mean([c["pretrained_balanced_accuracy"] for c in cells])),
+        "random_balanced_accuracy": float(np.mean([c["random_balanced_accuracy"] for c in cells])),
+        "shortcut_agreement_by_task_pretrained": by_task("pretrained_shortcut_agreement"),
+        "shortcut_agreement_by_task_random": by_task("random_shortcut_agreement"),
+        "data_shortcut_balanced_accuracy": {t: balanced_accuracy(test["shortcut"][:, k], test["labels"][:, k])
+                                            for k, t in enumerate(MAPS_TASKS)},
+        "positive_rate_adapt": train["labels"].mean(0).round(4).tolist(),
+        "positive_rate_test": test["labels"].mean(0).round(4).tolist(),
+        "cells": cells,
+    }
+    if symbolic:
+        out["symbolic_regression"] = maps_symbolic_arm(test, margins, seeds, regressor or maps_pysr_fit)
+    return out
+
+
+def score_maps(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, n_adapt: int = N_ADAPT,
+               seeds=ADAPT_SEEDS, **adapt: Any):
+    """D3 on a navigation model (Amendment 5, G6). n_adapt, seeds and adapt may be overridden for tests only."""
+    t0 = time.time()
+    dist = nav.training_distribution(model)
+    if model.model_id in MAPS_SKIPPED:
+        return itf.result_for(model, DIAGNOSTIC, method=MAPS_METHOD, split=split, n_games=0, data_seed=data_seed,
+                              score=None, status="skipped", reason=MAPS_SKIPPED[model.model_id],
+                              details={"distribution": dist}, runtime_sec=round(time.time() - t0, 1))
+    train = maps_prepare(dist, "val", n_adapt, data_seed)
+    test = maps_prepare(dist, split, n_games, data_seed)
+    out = maps_evaluate(model, train, test, seeds=seeds, **adapt)
+    details = {k: v for k, v in out.items() if k not in ("score", "score_std")}
+    details.update({"distribution": dist, "tasks": [f"{t}: {MAPS_TASK_TEXT[t]}" for t in MAPS_TASKS],
+                    "shortcut_rules": {t: shortcut_rule(t, dist) for t in MAPS_TASKS},
+                    "n_adapt_routes": len(train["tokens"]), "seeds": list(seeds),
+                    "protocol": {"steps": adapt.get("steps", ADAPT_STEPS), "batch": adapt.get("batch", ADAPT_BATCH),
+                                 "head_lr": adapt.get("head_lr", HEAD_LR), "body_lr": adapt.get("body_lr", BODY_LR),
+                                 "weight_decay": WEIGHT_DECAY, "position_seed": POSITION_SEED,
+                                 "h_turns": mt.H_TURNS, "r_metres": mt.R_METRES}})
+    return itf.result_for(model, DIAGNOSTIC, method=MAPS_METHOD, split=split, n_games=len(test["tokens"]),
                           data_seed=data_seed, score=out["score"], score_std=out["score_std"],
                           details=details, runtime_sec=round(time.time() - t0, 1))
 
@@ -473,13 +796,35 @@ def load_any(model_id: str):
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Diagnostic 3, inductive bias probe")
-    ap.add_argument("--models", nargs="+", required=True, help="othello_gpt_synthetic, othello_gpt_championship or zoo model ids")
+    ap.add_argument("--models", nargs="+", required=True, help="othello_gpt_synthetic, othello_gpt_championship, zoo model ids, or navigation ids (zoo, pilot, maps_vafa_*)")
     ap.add_argument("--split", default="test")
     ap.add_argument("--n_games", type=int, default=1000)
     ap.add_argument("--data_seed", type=int, default=0)
-    ap.add_argument("--save", action="store_true", help="write results/D3_inductive_bias/{model_id}.json")
+    ap.add_argument("--save", action="store_true", help="write results/D3_inductive_bias/{model_id}.json (pilots: results/pilot_scoring/)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+
+    if any(nav.is_maps_id(m) for m in args.models):      # navigation: gates, loading, pilot folder (N0)
+        out, not_loaded = nav.main_for(sys.modules[__name__], args.models, args.save, split=args.split,
+                                       n_games=args.n_games, data_seed=args.data_seed)
+        for r in out:
+            d = r.details
+            if r.status == "ok":
+                gap = {t: round(v, 3) for t, v in d["gap_by_task"].items()}
+                short = {t: round(v, 3) for t, v in d["shortcut_agreement_by_task_pretrained"].items()}
+                print(f"{r.model_id:45s} score {r.score:.4f}  pretrained {d['pretrained_balanced_accuracy']:.4f}  "
+                      f"random {d['random_balanced_accuracy']:.4f}  by task {gap}  shortcut agreement {short}  "
+                      f"routes {r.n_games}  {r.provenance.get('runtime_sec', '?')} s")
+                if "symbolic_regression" in d:
+                    sr = d["symbolic_regression"]
+                    print(f"{'':45s} symbolic regression: T4 recovered pretrained {sr['t4_recovery_rate_pretrained']:.3f}  "
+                          f"random {sr['t4_recovery_rate_random']:.3f}  T4 start shortcut pretrained "
+                          f"{sr['t4_start_shortcut_rate_pretrained']:.3f}  random {sr['t4_start_shortcut_rate_random']:.3f}  "
+                          f"fit r2 {sr['fit_r2_by_task_pretrained']}  linear r2 {sr['linear_r2_by_task_pretrained']}")
+            else:
+                print(f"{r.model_id:45s} {r.status}: {r.reason}")
+        nav.report_not_loaded(not_loaded)
+        sys.exit(1 if not_loaded else 0)
 
     zoo = [m for m in args.models if not m.startswith("othello_gpt_")]
     if zoo and not prereg_tag_exists():
