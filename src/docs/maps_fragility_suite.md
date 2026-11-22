@@ -61,7 +61,20 @@ There is no symmetry variant: no symmetry maps the street map onto itself.
    `FROZEN_HASH` in `src/tests/test_maps_fragility.py` to `suite_hash()`, commit, merge, and only then tag:
    `git tag maps-fragility-v1 && git push origin maps-fragility-v1`.
 
-**Pilot rule outcome: not run yet.** (Filled in at step 3, with each drop's standard deviation.)
+**Pilot rule outcome (2026-11-22, Amendment 6):** no drop is left out. Standard deviation of each drop across the 9 pilots (sample, ddof 1), from `results/prereg/maps_fragility_pilot_rule.json` (pilot run at commit 28d3039):
+
+| Drop | Standard deviation | |
+|---|---|---|
+| `cross_distribution/noisy_shortest_paths` | 0.048915 | kept |
+| `cross_distribution/random_walks` | 0.133003 | kept |
+| `detour/random/p=0.1` | 0.095053 | kept |
+| `detour/random/p=0.5` | 0.193177 | kept |
+| `detour/adversarial/p=0.1` | 0.091992 | kept |
+| `detour/adversarial/p=0.5` | 0.187290 | kept |
+| `least_visited` | 0.017829 | kept |
+| `cross_distribution/shortest_paths` | 0.031390 | kept |
+
+`EXCLUDED_BY_PILOT_RULE = []`; suite hash `47068aee3f4b`.
 
 Zoo models are refused while `EXCLUDED_BY_PILOT_RULE` is None, and until both tags `prereg-v1.5` and
 `maps-fragility-v1` exist (`src/docs/navigation_scoring.md`).

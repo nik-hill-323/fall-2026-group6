@@ -114,7 +114,7 @@ SUITE: dict = {
 
 # The pilot rule's outcome (G8): the drop names left out of `fragility`. None until the rule has been run on the
 # 9 pilots; then a list (possibly empty), written here and in src/docs/maps_fragility_suite.md before the tag.
-EXCLUDED_BY_PILOT_RULE: list[str] | None = None
+EXCLUDED_BY_PILOT_RULE: list[str] | None = []
 
 RESULTS_FOLDER = "fragility_maps"
 PILOT_RULE_FILE = ROOT / "results" / "prereg" / "maps_fragility_pilot_rule.json"
