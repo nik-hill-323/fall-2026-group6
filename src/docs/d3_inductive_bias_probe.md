@@ -84,3 +84,51 @@ et al. is a second, descriptive output and uses several seeds because it is stoc
 D4 reads the state out of the activations and does not change the model. D3 changes the model and
 watches how it learns. A model can pass one and fail the other, which is why WM-Concord runs both on
 the same models.
+
+## Navigation (domain `maps`, Amendment 5, G6)
+
+The questions are about where the car is now, which only replaying the turns on the map gives. A7 and C are
+unchanged except for the tasks, the shortcut check and the inputs of the symbolic regression step.
+
+* **Tasks**, at one uniformly random scored position per route (`maps_tasks.random_positions`, seed 0), labels
+  from `src/domains/maps_tasks.py`:
+  * **T1**: is the destination at most 10 turns away on the canonical map?
+  * **T2**: is it at most 823.9 m away in a straight line?
+  * **T4**: is the current intersection east of the destination?
+
+  T3 (north of the destination) is dropped: in shortest and noisy shortest path routes, where the start lies
+  already says where the car lies (0.92 and 0.91 balanced accuracy).
+* **Protocol.** Exactly A7:
+  * 64 validation routes of the model's own distribution, data seed 0.
+  * A copy of the model plus a new linear head on the last layer vector.
+  * Head lr 1e-3, body lr 1e-4, AdamW, weight decay 0.01, 300 steps of 16.
+  * A random weight model of the same architecture and scale, seeds 0, 1 and 2.
+  * Scored on 1,000 test routes. Score = mean over the 3 tasks and 3 seeds of pretrained minus random
+    balanced accuracy.
+* **Shortcut agreement**, reported next to the score for every adapted model (pretrained and random): the
+  balanced accuracy of its answers against a shortcut rule's answers on the same test positions.
+  * T1 and T2: a threshold on the number of turns so far, per distribution, from
+    `results/prereg/maps_amendment5_numbers.json` (for example "turns so far > 4" for T1 on shortest paths).
+  * T4: the start in place of the current intersection. This shortcut is strong on the data (0.88), so a high T4
+    score with a high shortcut agreement is read with care.
+
+  `details` also gives each rule's own balanced accuracy on the test positions (`data_shortcut_balanced_accuracy`).
+* **Symbolic regression** (descriptive). PySR with C's settings, no feature selection, fits the adapted model's
+  margin from 7 inputs, each standardized over the test positions:
+  * the inputs: latitude and longitude of the current, start and destination intersections, and the number of
+    turns so far;
+  * **contrast** of an input: mean |f(input at its 90th percentile) minus f(input at its 10th percentile)|;
+  * **T4 law recovered**: current longitude has the largest contrast and raises the margin, destination
+    longitude lowers it, and the formula's sign beats chance against the true answer;
+  * **start shortcut** (T4): start longitude has a larger contrast than current longitude;
+  * T1 and T2: formulas, contrasts and R squared only, with no recovery rule.
+* **Anchors.** Vafa's three GPT-2 models are adapted the same way, with their dropout turned off as for every
+  zoo model (none has dropout).
+* **Order** (Amendment 5): pilots and anchors first; zoo models only once the tags `prereg-v1.5` and
+  `maps-fragility-v1` exist. Pilot results go to `results/pilot_scoring/`, which the analysis never reads.
+
+Code: `score_maps` in `src/diagnostics/d3/inductive_bias.py`. Tests: `src/tests/test_d3_maps.py`.
+
+```bash
+python src/diagnostics/d3/inductive_bias.py --models maps_transformer_small_shortest_paths_s100 --save
+```
