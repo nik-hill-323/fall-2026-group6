@@ -6,6 +6,7 @@
 #   bash src/shellscripts/maps_score_slice.sh <slice> --dry_run          # only print the plan
 #   bash src/shellscripts/maps_score_slice.sh <slice> --only <model_id>  # one model
 #   JOBS="D1 D4" bash src/shellscripts/maps_score_slice.sh pilots        # only some jobs
+#   PY=.venv/bin/python bash src/shellscripts/maps_score_slice.sh <slice>  # another Python (default: python)
 #
 # What it does for every model:
 #   1. gets the checkpoint: a zoo model or pilot missing from outputs/ is copied from S3
@@ -14,8 +15,9 @@
 #   2. runs every job with --save. Each scorer checks the checkpoint against checkpoint_sha256 in its training
 #      record, the gates (navigation zoo models need the tags prereg-v1.5 and maps-fragility-v1) and that src/ is
 #      committed (src/diagnostics/navigation.py);
-#   3. skips a job whose result already exists (status ok, or skipped for D3 on the 1.5B anchors), so after a
-#      crash or restart just run the same command again; a failed job is logged and the slice goes on;
+#   3. skips a job whose result already exists (status ok, or skipped for D3 on the 1.5B anchors; for a zoo
+#      model or anchor, a fragility result only if the current, frozen suite made it), so after a crash or restart
+#      just run the same command again; a failed job is logged and the slice goes on;
 #   4. writes how long every job took to outputs/score_logs/timings.csv (to split the zoo by GPU hours).
 #
 # Results: zoo models and anchors in results/D1_next_token, D2_state_equiv, D3_inductive_bias, D4_probing and
@@ -35,7 +37,7 @@ ONLY=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry_run) DRY_RUN="--dry_run"; shift ;;
-    --only) ONLY="${2:-}"; shift 2 ;;
+    --only) [[ $# -ge 2 ]] || { echo "--only needs a model id"; exit 1; }; ONLY="$2"; shift 2 ;;
     *) echo "unknown option $1"; exit 1 ;;
   esac
 done
@@ -72,7 +74,8 @@ else
     echo "no $CSV yet: the zoo slices are written after the pilot run (from its timings)"
     exit 1
   fi
-  while IFS=, read -r slice model_id rest; do
+  while IFS=, read -r slice model_id rest || [[ -n "$slice" ]]; do   # also a last line without a newline
+    model_id="${model_id%$'\r'}"                                       # and Windows line endings
     [[ "$slice" == "$SLICE" ]] && models+=("$model_id")
   done < "$CSV"
   if (( ${#models[@]} == 0 )); then
@@ -114,10 +117,20 @@ result_file() {   # job model_id
   esac
 }
 
-result_ok() {     # job file: 0 if the file holds a finished result
+SUITE_HASH=""
+suite_hash() {    # the current fragility suite's hash (frozen at the tag maps-fragility-v1)
+  [[ -n "$SUITE_HASH" ]] || SUITE_HASH="$("$PY" -c "import importlib.util as u, sys; s = u.spec_from_file_location('fragility_maps', 'src/fragility/maps.py'); m = u.module_from_spec(s); sys.modules['fragility_maps'] = m; s.loader.exec_module(m); print(m.suite_hash())" 2>/dev/null | tail -1)"
+  echo "$SUITE_HASH"
+}
+
+result_ok() {     # job file [model_id]: 0 if the file holds a finished result
   [[ -f "$2" ]] || return 1
   if [[ "$1" == "fragility" ]]; then
-    "$PY" -c "import json, sys; d = json.load(open(sys.argv[1])); sys.exit(0 if 'fragility' in d else 1)" "$2" 2>/dev/null
+    if [[ "$(kind "${3:-x_s100}")" == "pilot" ]]; then   # pilots keep their pre rule results (the rule is computed from them)
+      "$PY" -c "import json, sys; d = json.load(open(sys.argv[1])); sys.exit(0 if 'fragility' in d else 1)" "$2" 2>/dev/null
+    else                                                 # zoo models and anchors: only a result of the current suite
+      "$PY" -c "import json, sys; d = json.load(open(sys.argv[1])); sys.exit(0 if 'fragility' in d and d.get('suite_hash') == sys.argv[2] else 1)" "$2" "$(suite_hash)" 2>/dev/null
+    fi
   else
     "$PY" -c "import json, sys; d = json.load(open(sys.argv[1])); sys.exit(0 if d.get('status') in ('ok', 'skipped') else 1)" "$2" 2>/dev/null
   fi
@@ -178,7 +191,7 @@ for model_id in "${models[@]}"; do
   fi
   for job in $JOBS; do
     out="$(result_file "$job" "$model_id")"
-    if result_ok "$job" "$out"; then
+    if result_ok "$job" "$out" "$model_id"; then
       echo "[skip] $model_id $job (result exists)"
       skipped=$((skipped + 1)); continue
     fi
@@ -202,7 +215,7 @@ for model_id in "${models[@]}"; do
     echo "[run ] $model_id $job  started $(date +%H:%M)"
     "${cmd[@]}" < /dev/null > "$log" 2>&1
     secs=$(( $(date +%s) - t0 ))
-    if result_ok "$job" "$out"; then
+    if result_ok "$job" "$out" "$model_id"; then
       echo "[done] $model_id $job  $(result_line "$job" "$out")  ${secs} s"
       echo "$model_id,$job,$secs,ok,$(hostname),$COMMIT" >> "$TIMINGS"
       ran=$((ran + 1))
@@ -216,13 +229,20 @@ for model_id in "${models[@]}"; do
   done
 done
 
+if [[ -n "$ONLY" && $n -eq 0 ]]; then
+  echo "$ONLY is not in slice $SLICE"
+  exit 1
+fi
+missing=()            # zoo models and pilots that could not be fetched: the slice is not finished
+for m in "${not_here[@]}"; do [[ "$(kind "$m")" != "anchor" ]] && missing+=("$m"); done
 mins=$(( ($(date +%s) - start_all) / 60 ))
 echo
 echo "slice $SLICE: $n models, $ran jobs run now, $skipped skipped (already scored), $failed failed, ${mins} min"
 (( ${#not_here[@]} )) && echo "not available on this machine: ${not_here[*]}"
-if (( failed > 0 )); then
-  echo "failed: ${failed_runs[*]}"
-  echo "fix the cause (see the logs), then run the same command again; finished jobs are skipped"
+if (( failed > 0 || ${#missing[@]} > 0 )); then
+  (( failed > 0 )) && echo "failed: ${failed_runs[*]}"
+  (( ${#missing[@]} > 0 )) && echo "checkpoint not copied (S3 login expired?): ${missing[*]}; run 'aws sso login --use-device-code'"
+  echo "the slice is not finished: fix the cause, then run the same command again; finished jobs are skipped"
   exit 1
 fi
 if [[ "$DRY_RUN" != "--dry_run" ]]; then
