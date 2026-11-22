@@ -13,6 +13,17 @@ Protocol: src/docs/d1_next_token_validity.md (PR #62), frozen by reports/preregi
 Run on the EC2 (repo root, conda env wmconcord):
     python src/diagnostics/d1/next_token.py --models othello_gpt_synthetic othello_gpt_championship
 Zoo models are refused until the git tag prereg-v1.1 exists.
+
+Navigation (domain maps, preregistration Amendment 5, G4; ticket N4)
+    score      share of scored positions (every prediction of a turn or of end) where the top token is
+               legal, computed by maps.legal_rate (the computation that gives Vafa et al.'s next token
+               rate exactly on their models, G11)
+    secondary  at each scored position, 10 tokens sampled at temperature 1.0 (sampling seed 0) over the
+               whole vocabulary; share that are legal
+    data       1,000 test routes of the model's own training distribution, data seed 0
+    models     zoo models, the 9 pilots and the 3 anchors; loading, gates and the pilot results folder
+               come from src/diagnostics/navigation.py (N0)
+    python src/diagnostics/d1/next_token.py --models maps_transformer_small_shortest_paths_s100 --save
 """
 
 from __future__ import annotations
@@ -48,6 +59,8 @@ def _load(name: str, rel: str):
 itf = _load("interface", "src/diagnostics/interface.py")
 oth = itf.oth
 results = itf.results
+nav = _load("navigation", "src/diagnostics/navigation.py")
+maps = nav.maps
 
 DIAGNOSTIC = "D1"
 METHOD = "legal move rate: share of positions where the top predicted move is legal (argmax), higher is better"
@@ -58,6 +71,8 @@ TEMPERATURE = 1.0
 SAMPLE_SEED = 0
 BATCH = 256
 PREREG_TAG = "prereg-v1.1"
+MAPS_METHOD = ("legal next token rate (navigation, Amendment 5 G4): share of scored positions (every prediction "
+               "of a turn or of end) where the top token is legal (argmax), higher is better")
 
 
 @torch.no_grad()
@@ -89,9 +104,52 @@ def training_distribution(model) -> str:
     return row["distribution"] if row else model.meta["distribution"]
 
 
+@torch.no_grad()
+def maps_sampled_legal_rate(model, data: dict, n_samples: int = N_SAMPLES, temperature: float = TEMPERATURE,
+                            seed: int = SAMPLE_SEED, batch: int = BATCH) -> float:
+    """Navigation: share of sampled tokens that are legal, over the scored positions of maps.legal_rate.
+    Tokens are drawn from the whole vocabulary (an intersection or padding is never legal)."""
+    gen = torch.Generator(device=model.device).manual_seed(seed)
+    ok = total = 0
+    for i in range(0, len(data["tokens"]), batch):
+        logits = model.logits(nav.inputs(data, slice(i, i + batch))).float()      # (B, N_CTX, VOCAB)
+        probs = torch.softmax(logits / temperature, dim=-1)
+        B, T, V = probs.shape
+        draws = torch.multinomial(probs.reshape(-1, V), n_samples, replacement=True, generator=gen)
+        slots = maps.TOKEN_SLOT[draws.reshape(B, T, n_samples).cpu().numpy()]       # -1: never legal
+        legal = data["legal"][i:i + B, :T]                                         # (B, T, 9)
+        hit = np.take_along_axis(legal, np.maximum(slots, 0), axis=2) & (slots >= 0)
+        sc = data["score"][i:i + B, :T]
+        ok += int(hit[sc].sum())
+        total += int(sc.sum()) * n_samples
+    return ok / max(total, 1)
+
+
+def score_maps(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, batch: int = BATCH,
+               **config: Any):
+    """D1 on a navigation model (Amendment 5, G4)."""
+    t0 = time.time()
+    dist = nav.training_distribution(model)
+    data = nav.routes(dist, split, n_games, seed=data_seed)
+    argmax_rate = maps.legal_rate(model, data, model.device, batch)
+    sampled = maps_sampled_legal_rate(model, data, batch=batch)
+    details = {"argmax_legal_rate": argmax_rate, "sampled_legal_rate": sampled,
+               "n_samples": N_SAMPLES, "temperature": TEMPERATURE, "sample_seed": SAMPLE_SEED,
+               "n_positions": int(data["score"][:, :maps.N_CTX].sum()), "distribution": dist,
+               "illegal_routes_dropped": data["n_illegal"]}
+    if hasattr(model, "known"):     # anchors: routes with an intersection their own tokenizer does not have
+        known = model.known(nav.inputs(data)).cpu().numpy()
+        details["routes_with_words_unknown_to_the_model"] = int((~known).sum())
+    return itf.result_for(model, DIAGNOSTIC, method=MAPS_METHOD, split=split, n_games=len(data["tokens"]),
+                          data_seed=data_seed, score=float(argmax_rate), details=details,
+                          runtime_sec=round(time.time() - t0, 1))
+
+
 def score(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, batch: int = BATCH,
           **config: Any):
-    """The diagnostic contract (src/docs/diagnostic_interface.md)."""
+    """The diagnostic contract (src/docs/diagnostic_interface.md). Navigation models go to score_maps."""
+    if nav.is_maps(model):
+        return score_maps(model, split, n_games, data_seed, batch, **config)
     t0 = time.time()
     dist = training_distribution(model)
     data = oth.build(oth.load_distribution(dist, split, n_games, seed=data_seed), legal=True)
@@ -121,13 +179,25 @@ def load_any(model_id: str):
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Diagnostic 1, next token validity")
-    ap.add_argument("--models", nargs="+", required=True, help="othello_gpt_synthetic, othello_gpt_championship or zoo model ids")
+    ap.add_argument("--models", nargs="+", required=True, help="othello_gpt_synthetic, othello_gpt_championship, zoo model ids, or navigation ids (zoo, pilot, maps_vafa_*)")
     ap.add_argument("--split", default="test")
     ap.add_argument("--n_games", type=int, default=1000)
     ap.add_argument("--data_seed", type=int, default=0)
     ap.add_argument("--save", action="store_true", help="write results/D1_next_token/{model_id}.json")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+
+    if any(nav.is_maps_id(m) for m in args.models):      # navigation: gates, loading, pilot folder (N0)
+        out, not_loaded = nav.main_for(sys.modules[__name__], args.models, args.save, split=args.split,
+                                       n_games=args.n_games, data_seed=args.data_seed)
+        for res in out:
+            if res.status == "ok":
+                print(f"{res.model_id:45s} score {res.score:.4f}  sampled {res.details['sampled_legal_rate']:.4f}  "
+                      f"positions {res.details['n_positions']}")
+            else:
+                print(f"{res.model_id:45s} {res.status}: {res.reason}")
+        nav.report_not_loaded(not_loaded)
+        sys.exit(1 if not_loaded else 0)
 
     zoo = [m for m in args.models if not m.startswith("othello_gpt_")]
     if zoo and not prereg_tag_exists():
