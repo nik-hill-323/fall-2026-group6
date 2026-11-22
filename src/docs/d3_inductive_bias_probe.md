@@ -122,8 +122,10 @@ unchanged except for the tasks, the shortcut check and the inputs of the symboli
     longitude lowers it, and the formula's sign beats chance against the true answer;
   * **start shortcut** (T4): start longitude has a larger contrast than current longitude;
   * T1 and T2: formulas, contrasts and R squared only, with no recovery rule.
-* **Anchors.** Vafa's three GPT-2 models are adapted the same way, with their dropout turned off as for every
-  zoo model (none has dropout).
+* **Anchors** (G11). The shortest paths anchor (89M) is adapted the same way, with its dropout turned off as for
+  every zoo model (none has dropout), and a freshly initialised GPT-2 of its configuration as the random baseline.
+  The two 1.5B anchors (noisy shortest paths, random walks) are reported as `skipped`: weights, gradients and
+  AdamW state alone need about 24 GB, more than the A10G's 23 GB.
 * **Order** (Amendment 5): pilots and anchors first; zoo models only once the tags `prereg-v1.5` and
   `maps-fragility-v1` exist. Pilot results go to `results/pilot_scoring/`, which the analysis never reads.
 

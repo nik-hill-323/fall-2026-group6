@@ -63,8 +63,9 @@ Navigation (domain maps, preregistration Amendment 5, G6; ticket N6): A7 and C u
                      has the largest contrast and raises the margin, destination longitude lowers it, and the
                      formula's sign beats chance. Start shortcut: start longitude contrast > current longitude
                      contrast. T1 and T2: formulas, contrasts and R squared only
-    anchors          Vafa's GPT-2 models are adapted with their dropout off, as every zoo model (none has
-                     dropout); the score is otherwise the same protocol
+    anchors          the shortest paths anchor (89M) is adapted as A7, with its dropout off as every zoo model
+                     (none has dropout); the two 1.5B anchors are reported as skipped (G11: weights, gradients
+                     and AdamW state need about 24 GB, more than the A10G's 23 GB)
     python src/diagnostics/d3/inductive_bias.py --models maps_transformer_small_shortest_paths_s100
     python src/diagnostics/d3/inductive_bias.py --models maps_transformer_small_shortest_paths_s100 --save
 Navigation zoo models are refused until the tags prereg-v1.5 and maps-fragility-v1 exist (navigation.py);
@@ -507,6 +508,12 @@ MAPS_METHOD = ("inductive bias probe (Vafa et al. 2025), navigation (Amendment 5
                "within 10 turns), T2 (within 823.9 m), T4 (east of the destination), higher is better")
 MAPS_SR_NAMES = ["cur_lat", "cur_lon", "start_lat", "start_lon", "dest_lat", "dest_lon", "turns"]
 MAPS_PERCENTILES = (10, 90)
+MAPS_SKIPPED = {
+    "maps_vafa_noisy_shortest_paths": "1.5B parameters: weights, gradients and AdamW state need about 24 GB, more "
+                                      "than the A10G's 23 GB (Amendment 5, G11)",
+    "maps_vafa_random_walks": "1.5B parameters: weights, gradients and AdamW state need about 24 GB, more than the "
+                              "A10G's 23 GB (Amendment 5, G11)",
+}
 
 
 class HFBody(nn.Module):
@@ -751,6 +758,10 @@ def score_maps(model, split: str = "test", n_games: int = 1000, data_seed: int =
     """D3 on a navigation model (Amendment 5, G6). n_adapt, seeds and adapt may be overridden for tests only."""
     t0 = time.time()
     dist = nav.training_distribution(model)
+    if model.model_id in MAPS_SKIPPED:
+        return itf.result_for(model, DIAGNOSTIC, method=MAPS_METHOD, split=split, n_games=0, data_seed=data_seed,
+                              score=None, status="skipped", reason=MAPS_SKIPPED[model.model_id],
+                              details={"distribution": dist}, runtime_sec=round(time.time() - t0, 1))
     train = maps_prepare(dist, "val", n_adapt, data_seed)
     test = maps_prepare(dist, split, n_games, data_seed)
     out = maps_evaluate(model, train, test, seeds=seeds, **adapt)

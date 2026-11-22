@@ -304,6 +304,14 @@ def test_pilot_result_is_saved_in_the_pilot_folder(data_dir, tmp_path: Path, mon
     assert saved.score == out[0].score and saved.details["distribution"] == "shortest_paths"
 
 
+def test_large_anchors_are_skipped(data_dir) -> None:
+    for aid in ("maps_vafa_noisy_shortest_paths", "maps_vafa_random_walks"):
+        meta = {"domain": "maps", "arch": "transformer", "scale": "vafa_gpt2",
+                "distribution": aid.removeprefix("maps_vafa_"), "seed": 0}
+        res = d3.score(fx.MapsOracle(model_id=aid, meta=meta))
+        assert res.status == "skipped" and "23 GB" in res.reason and res.score is None
+
+
 def test_module_passes_interface_check() -> None:
     itf.check_diagnostic(d3)
 
