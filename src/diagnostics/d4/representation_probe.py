@@ -48,6 +48,28 @@ Run on the EC2 (repo root, conda env wmconcord):
     python src/diagnostics/d4/representation_probe.py --models othello_gpt_synthetic othello_gpt_championship
     python src/diagnostics/d4/representation_probe.py --models othello_transformer_small_synthetic_s0 --save
 Zoo models are refused until the git tag prereg-v1.2 exists (Amendment 2).
+
+Navigation (domain maps, preregistration Amendment 5, G7; ticket N7): A6, B1 and B2 with the board replaced by
+the current intersection
+    labels       the current intersection (4,579 classes) at every scored position
+    data         the first 10,000 of 11,000 validation routes fit, the last 1,000 choose the layer, 1,000 test
+                 routes give the score (data seed 0); optimizer, standardization, step size and seed are A6's
+    epochs       fixed by a rule run once before any navigation model is scored (no model involved): a synthetic
+                 layer of width 128 holds a fixed random Gaussian vector of the true current intersection (seed
+                 0); the epoch count is the smallest of 2, 5, 10, 20 at which the probe reads it at 0.99 or more
+                 on all three distributions (20 if none). `--epoch_rule` runs it and writes
+                 results/prereg/maps_d4_epochs.json; MAPS_EPOCHS below then holds the count, and navigation
+                 models are refused while it is None
+    control      type of a position = (token just read, number of turns so far); each type gets a fixed random
+                 intersection drawn from the intersection frequencies of the fitting routes (seed 0)
+    baselines    accuracy of answering the start, and of answering the destination
+    mlp          as B1 (details["mlp"])
+    causal       as B2: one case per test route, at the first scored position (random order, seed 0) with a
+                 neighbouring intersection, one legal turn away, whose legal next set differs from the current
+                 one and is not empty (the first such neighbour in turn order); the edit moves the probe's
+                 reading to that neighbour; boundary accuracy with k = size of the neighbour's legal next set
+    python src/diagnostics/d4/representation_probe.py --epoch_rule
+    python src/diagnostics/d4/representation_probe.py --models maps_transformer_small_shortest_paths_s100 --save
 """
 
 from __future__ import annotations
@@ -84,6 +106,8 @@ def _load(name: str, rel: str):
 itf = _load("interface", "src/diagnostics/interface.py")
 oth = itf.oth
 results = itf.results
+nav = _load("navigation", "src/diagnostics/navigation.py")
+maps = nav.maps
 
 DIAGNOSTIC = "D4"
 METHOD = ("linear probe mine/theirs/empty per layer, selectivity over a Hewitt and Liang control task "
@@ -526,7 +550,9 @@ def load_data(distribution: str, split: str, n_games: int, data_seed: int, n_fit
 def score(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, **config: Any):
     """The diagnostic contract (src/docs/diagnostic_interface.md). config may override n_fit,
     n_choose, epochs, batch, pos_batch, mlp_hidden (0 = no MLP probe), causal (False = no causal
-    check) and causal_cases_max for tests only."""
+    check) and causal_cases_max for tests only. Navigation models go to score_maps (Amendment 5, G7)."""
+    if nav.is_maps(model):
+        return score_maps(model, split, n_games, data_seed, **config)
     t0 = time.time()
     n_fit, n_choose = config.pop("n_fit", N_FIT), config.pop("n_choose", N_CHOOSE)
     causal, causal_cases_max = config.pop("causal", True), config.pop("causal_cases_max", None)
@@ -584,6 +610,481 @@ def score(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, *
 
 
 # ==========================================================================
+# Navigation (Amendment 5, G7)
+#
+# Plain words: the "board" of a route is where the car is. The probe reads the current intersection, one
+# of 4,579 classes, from the model's vector at every scored position. The control probe reads a fixed
+# random intersection given only (token just read, turns so far), which a probe can memorize but which
+# says nothing about where the car is. The causal check moves the probe's reading to a neighbouring
+# intersection whose legal turns differ, and asks whether the model's next tokens follow.
+# ==========================================================================
+
+MAPS_METHOD = ("linear probe of the current intersection (4,579 classes) per layer, navigation (Amendment 5 G7), "
+               "selectivity over a Hewitt and Liang control task (type = token just read + turns so far); layer "
+               "chosen on val, scored on test; higher is better. details add an MLP probe with its own control and "
+               "a causal check (probe guided edit to a neighbouring intersection vs random edit)")
+MAPS_N_CLASSES = maps.N_NODES                    # label = intersection token - 1
+MAPS_TURN_SLOTS = maps.MAX_TURNS + 1             # turns so far: 0 .. 96
+MAPS_N_TYPES = maps.VOCAB * MAPS_TURN_SLOTS      # (token just read, turns so far)
+
+# Epoch rule (G7), fixed before any navigation model is scored. MAPS_EPOCHS is written here, and in
+# src/docs/d4_representation_probe.md, from the rule's output file; until then navigation models are refused.
+MAPS_EPOCH_OPTIONS = (2, 5, 10, 20)
+MAPS_EPOCH_TARGET = 0.99
+MAPS_SYNTH_WIDTH = 128                           # the smallest zoo width
+MAPS_SYNTH_SEED = 0
+MAPS_EPOCH_RULE_FILE = ROOT / "results" / "prereg" / "maps_d4_epochs.json"
+MAPS_EPOCHS: int | None = None
+
+
+def _take(data: dict, rows) -> dict:
+    """The routes `rows` of a maps.build output."""
+    return {k: (v[rows] if isinstance(v, np.ndarray) and k != "kept" else v) for k, v in data.items()}
+
+
+def maps_load_data(distribution: str, split: str, n_routes: int, data_seed: int, n_fit: int = N_FIT,
+                   n_choose: int = N_CHOOSE) -> tuple[dict, dict, dict]:
+    """(fit, choose, test): the first n_fit and the last n_choose of n_fit + n_choose validation routes, and
+    n_routes routes of `split` for the score."""
+    val = nav.routes(distribution, "val", n_fit + n_choose, seed=data_seed)
+    G = len(val["tokens"])
+    if G < n_choose + 1:
+        raise ValueError(f"only {G} validation routes for {distribution}")
+    fit = _take(val, slice(0, G - n_choose))
+    choose = _take(val, slice(G - n_choose, G))
+    test = nav.routes(distribution, split, n_routes, seed=data_seed)
+    return fit, choose, test
+
+
+def maps_mask(data: dict, idx=slice(None)) -> np.ndarray:
+    """(B, N_CTX) bool: the scored positions of these routes."""
+    return data["score"][idx, :maps.N_CTX]
+
+
+def maps_labels(data: dict, idx=slice(None)) -> np.ndarray:
+    """(N,) the current intersection class (token - 1) at every scored position, row by row."""
+    return data["current"][idx, :maps.N_CTX][maps_mask(data, idx)] - 1
+
+
+def maps_types(data: dict, idx=slice(None)) -> np.ndarray:
+    """(N,) the control input type of every scored position: (token just read, turns so far)."""
+    tok = data["tokens"][idx, :maps.N_CTX]
+    return (tok * MAPS_TURN_SLOTS + data["n_turns"][idx, :maps.N_CTX])[maps_mask(data, idx)]
+
+
+def maps_class_freq(data: dict) -> np.ndarray:
+    """(4,579,) share of each intersection among the scored positions of the fitting routes."""
+    return np.bincount(maps_labels(data), minlength=MAPS_N_CLASSES) / max(int(maps_mask(data).sum()), 1)
+
+
+def maps_control_table(freq: np.ndarray, seed: int = SEED) -> np.ndarray:
+    """(MAPS_N_TYPES,) one fixed random intersection class per input type, drawn from `freq` (Hewitt and Liang)."""
+    rng = np.random.default_rng(seed)
+    u = rng.random(MAPS_N_TYPES)
+    cdf = np.cumsum(freq)
+    return np.searchsorted(cdf, u * cdf[-1], side="right").clip(0, MAPS_N_CLASSES - 1).astype(np.int64)
+
+
+@torch.no_grad()
+def maps_scored_acts(model, data: dict, idx: np.ndarray, layers: list[int] | None = None,
+                     chunk: int | None = None) -> torch.Tensor:
+    """(len(layers), N, d) float32 activations at the scored positions of routes idx, in row order. The
+    forward passes run `chunk` routes at a time (memory only: the result is the same for any chunk)."""
+    layers = list(range(model.n_layers)) if layers is None else layers
+    chunk = chunk or len(idx)
+    parts = []
+    for j in range(0, len(idx), chunk):
+        sub = idx[j:j + chunk]
+        m = torch.as_tensor(maps_mask(data, sub), device=model.device)
+        acts = model.activations(nav.inputs(data, sub))
+        parts.append(acts[layers][:, m].float())
+    return torch.cat(parts, dim=1)
+
+
+@torch.no_grad()
+def maps_activation_stats(model, data: dict, batch: int = BATCH, chunk: int | None = None) -> tuple[torch.Tensor, torch.Tensor]:
+    """(L, d) mean and standard deviation of every feature over the scored positions of the fitting routes (A6)."""
+    L, d, dev = model.n_layers, model.d_model, model.device
+    s1 = torch.zeros(L, d, dtype=torch.float64, device=dev)
+    s2 = torch.zeros(L, d, dtype=torch.float64, device=dev)
+    n = 0
+    for idx in _batches(len(data["tokens"]), batch):
+        x = maps_scored_acts(model, data, idx, chunk=chunk).double()
+        s1 += x.sum(1)
+        s2 += (x * x).sum(1)
+        n += x.shape[1]
+    mu = s1 / max(n, 1)
+    sd = (s2 / max(n, 1) - mu * mu).clamp_min(0).sqrt().clamp_min(1e-6)
+    return mu.float(), sd.float()
+
+
+def maps_mlp_probe(d: int, hidden: int) -> nn.Module:
+    return nn.Sequential(nn.Linear(d, hidden), nn.ReLU(), nn.Linear(hidden, MAPS_N_CLASSES))
+
+
+def maps_fit_probes(model, data: dict, ctrl: np.ndarray, mu: torch.Tensor, sd: torch.Tensor, epochs: int,
+                    batch: int = BATCH, pos_batch: int = POS_BATCH, lr: float = LR, weight_decay: float = WEIGHT_DECAY,
+                    seed: int = SEED, mlp_hidden: int = MLP_HIDDEN, layers_per_pass: int | None = None,
+                    chunk: int | None = None, on_epoch=None) -> dict[str, nn.ModuleList | None]:
+    """Per layer, a real and a control linear probe (A6) and a real and a control MLP probe (B1), trained exactly
+    as fit_probes trains them on Othello: probes created in the same order with torch seed `seed`, routes
+    shuffled `batch` at a time and positions within them, one optimizer step per `pos_batch` positions, the
+    linear and MLP probes with separate optimizers. layers_per_pass (memory only, for the 1.5B anchors) trains
+    the layers in groups, each group over the same data order; a probe's updates depend only on its own layer, so
+    the probes are the same. on_epoch(epoch, probes) is called after each epoch (the epoch rule uses it)."""
+    torch.manual_seed(seed)
+    L, d, dev = model.n_layers, model.d_model, model.device
+    real = nn.ModuleList([nn.Linear(d, MAPS_N_CLASSES) for _ in range(L)])
+    control = nn.ModuleList([nn.Linear(d, MAPS_N_CLASSES) for _ in range(L)])
+    mlp_real = mlp_control = None
+    if mlp_hidden:
+        mlp_real = nn.ModuleList([maps_mlp_probe(d, mlp_hidden) for _ in range(L)])
+        mlp_control = nn.ModuleList([maps_mlp_probe(d, mlp_hidden) for _ in range(L)])
+    probes = {"real": real, "control": control, "mlp_real": mlp_real, "mlp_control": mlp_control}
+    groups = [list(range(L))] if not layers_per_pass else [list(range(a, min(a + layers_per_pass, L)))
+                                                           for a in range(0, L, layers_per_pass)]
+    if on_epoch is not None and len(groups) > 1:
+        raise ValueError("on_epoch needs all layers in one pass")
+    loss_fn = nn.CrossEntropyLoss()
+    for group in groups:
+        mods = {k: [v[i].to(dev) for i in group] if v is not None else None for k, v in probes.items()}
+        opt = torch.optim.AdamW([p for m in mods["real"] + mods["control"] for p in m.parameters()], lr=lr,
+                                weight_decay=weight_decay)
+        opt_mlp = None
+        if mlp_hidden:
+            opt_mlp = torch.optim.AdamW([p for m in mods["mlp_real"] + mods["mlp_control"] for p in m.parameters()],
+                                        lr=lr, weight_decay=weight_decay)
+        rng = np.random.default_rng(seed)
+        mu_g, sd_g = mu[group], sd[group]
+        for epoch in range(epochs):
+            for idx in _batches(len(data["tokens"]), batch, rng):
+                x_all = (maps_scored_acts(model, data, idx, group, chunk) - mu_g[:, None]) / sd_g[:, None]
+                y = torch.as_tensor(maps_labels(data, idx), device=dev)
+                c = torch.as_tensor(ctrl[maps_types(data, idx)], device=dev)
+                perm = torch.as_tensor(rng.permutation(len(y)), device=dev)
+                for j in range(0, len(y), pos_batch):
+                    k = perm[j:j + pos_batch]
+                    for kind_real, kind_ctrl, optim in (("real", "control", opt), ("mlp_real", "mlp_control", opt_mlp)):
+                        if mods[kind_real] is None:
+                            continue
+                        loss = 0.0
+                        for gi in range(len(group)):
+                            x = x_all[gi][k]
+                            loss = loss + loss_fn(mods[kind_real][gi](x), y[k])
+                            loss = loss + loss_fn(mods[kind_ctrl][gi](x), c[k])
+                        optim.zero_grad()
+                        loss.backward()
+                        optim.step()
+            if on_epoch is not None:
+                on_epoch(epoch + 1, probes)
+        if len(groups) > 1:                       # free the device for the next group
+            for v in probes.values():
+                if v is not None:
+                    for i in group:
+                        v[i].cpu()
+    for v in probes.values():
+        if v is not None:
+            v.to(dev)
+    return probes
+
+
+@torch.no_grad()
+def maps_evaluate_probes(model, real: nn.ModuleList, control: nn.ModuleList, data: dict, ctrl: np.ndarray,
+                         mu: torch.Tensor, sd: torch.Tensor, batch: int = BATCH, chunk: int | None = None) -> dict[str, np.ndarray]:
+    """Per layer: probe accuracy and control accuracy (on the control labels)."""
+    L, dev = model.n_layers, model.device
+    hit_p, hit_c = np.zeros(L), np.zeros(L)
+    n = 0
+    for idx in _batches(len(data["tokens"]), batch):
+        x_all = (maps_scored_acts(model, data, idx, chunk=chunk) - mu[:, None]) / sd[:, None]
+        y = torch.as_tensor(maps_labels(data, idx), device=dev)
+        c = torch.as_tensor(ctrl[maps_types(data, idx)], device=dev)
+        for layer in range(L):
+            hit_p[layer] += float((real[layer](x_all[layer]).argmax(-1) == y).sum())
+            hit_c[layer] += float((control[layer](x_all[layer]).argmax(-1) == c).sum())
+        n += len(y)
+    return {"probe_acc": hit_p / max(n, 1), "control_acc": hit_c / max(n, 1)}
+
+
+def maps_baselines(data: dict) -> dict[str, float]:
+    """Accuracy of answering the start, and of answering the destination, at every scored position (G7)."""
+    m = maps_mask(data)
+    cur = data["current"][:, :maps.N_CTX][m]
+    start = np.broadcast_to(data["tokens"][:, :1], m.shape)[m]
+    dest = np.broadcast_to(data["dest"][:, None], m.shape)[m]
+    return {"start": float((cur == start).mean()), "destination": float((cur == dest).mean())}
+
+
+# ---- epoch rule (G7) ------------------------------------------------------
+
+class SyntheticLayer:
+    """No model involved: one layer of width 128 whose vector at every position is a fixed random Gaussian
+    vector of the true current intersection (seed 0). The epoch rule fits the D4 probe to it."""
+
+    def __init__(self, width: int = MAPS_SYNTH_WIDTH, seed: int = MAPS_SYNTH_SEED, device: str | None = None) -> None:
+        self.model_id, self.n_layers, self.d_model = "synthetic_current_intersection", 1, width
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        g = np.random.default_rng(seed).standard_normal((maps.N_NODES + 1, width)).astype(np.float32)
+        self.table = torch.as_tensor(g, device=self.device)
+
+    @torch.no_grad()
+    def activations(self, tokens: torch.Tensor) -> torch.Tensor:
+        cur = torch.as_tensor(nav.current_intersections(tokens.cpu().numpy()), device=self.device)
+        return self.table[cur][None]
+
+
+def maps_epoch_rule(options=MAPS_EPOCH_OPTIONS, target: float = MAPS_EPOCH_TARGET, n_fit: int = N_FIT,
+                    n_choose: int = N_CHOOSE, n_test: int = 1000, data_seed: int = 0, device: str | None = None,
+                    **fit_kw) -> dict[str, Any]:
+    """Fit the D4 probe (A6 settings) to the synthetic layer on every distribution's D4 fitting routes and score
+    it on its D4 test routes after each epoch count in `options` (one run to max(options): the first e epochs of
+    that run are exactly an e epoch run, same seed and data order). The count is the smallest option at which all
+    three distributions reach `target`, else the largest."""
+    acc: dict[str, dict[str, float]] = {}
+    for dist in maps.DISTRIBUTIONS:
+        fit, _, test = maps_load_data(dist, "test", n_test, data_seed, n_fit, n_choose)
+        layer = SyntheticLayer(device=device)
+        mu, sd = maps_activation_stats(layer, fit)
+        ctrl = maps_control_table(maps_class_freq(fit), SEED)
+        acc[dist] = {}
+
+        def on_epoch(e, probes, dist=dist, layer=layer, mu=mu, sd=sd, ctrl=ctrl, test=test):
+            if e in options:
+                ev = maps_evaluate_probes(layer, probes["real"], probes["control"], test, ctrl, mu, sd)
+                acc[dist][str(e)] = round(float(ev["probe_acc"][0]), 5)
+                log.info("epoch rule %s: %d epochs, probe accuracy %.5f", dist, e, ev["probe_acc"][0])
+
+        maps_fit_probes(layer, fit, ctrl, mu, sd, epochs=max(options), mlp_hidden=0, on_epoch=on_epoch, **fit_kw)
+    chosen = next((e for e in options if all(acc[d][str(e)] >= target for d in acc)), max(options))
+    return {"epochs": chosen, "options": list(options), "target": target, "accuracy": acc,
+            "synthetic_width": MAPS_SYNTH_WIDTH, "synthetic_seed": MAPS_SYNTH_SEED,
+            "n_fit_routes": n_fit, "n_test_routes": n_test, "data_seed": data_seed,
+            "settings": {"lr": LR, "weight_decay": WEIGHT_DECAY, "batch": BATCH, "pos_batch": POS_BATCH, "seed": SEED},
+            "git_commit": results._git_commit()}
+
+
+def maps_epochs(config: dict) -> int:
+    """The epoch count for a navigation model: MAPS_EPOCHS, fixed by the rule (tests may pass epochs)."""
+    if "epochs" in config:
+        return int(config.pop("epochs"))
+    if MAPS_EPOCHS is None:
+        raise RuntimeError("the D4 epoch count for navigation is not fixed yet: run "
+                           "`python src/diagnostics/d4/representation_probe.py --epoch_rule`, then write the count into "
+                           "MAPS_EPOCHS and src/docs/d4_representation_probe.md (Amendment 5, G7) before scoring")
+    return MAPS_EPOCHS
+
+
+# ---- causal check (G7, B2 settings) ----------------------------------------
+
+def maps_causal_cases(data: dict, seed: int = CAUSAL_SEED, max_cases: int | None = None) -> dict[str, np.ndarray]:
+    """One case per route: its scored positions in a random order (seed), the first with a neighbouring
+    intersection, one legal turn away, whose legal next set differs from the current one and is not empty (the
+    first such neighbour in turn order). Returns per case: route, position, the neighbour's class (token - 1),
+    and the legal next token masks at the current intersection and at the neighbour, (VOCAB,) each."""
+    rng = np.random.default_rng(seed)
+    routes, positions, targets, before, after = [], [], [], [], []
+    for g in range(len(data["tokens"])):
+        n_scored = int(data["length"][g]) - 2
+        dest = int(data["dest"][g])
+        for p in 1 + rng.permutation(max(n_scored, 0)):
+            cur = int(data["current"][g, p])
+            orig = set(maps.legal_next(cur, dest))
+            hit = None
+            for i in range(len(maps.TURNS)):
+                nbr = int(maps.NEXT[cur, i])
+                if nbr < 0:
+                    continue
+                new = maps.legal_next(nbr, dest)
+                if new and set(new) != orig:
+                    hit = nbr
+                    break
+            if hit is None:
+                continue
+            routes.append(g)
+            positions.append(int(p))
+            targets.append(hit - 1)
+            before.append(nav.legal_token_mask(cur, dest))
+            after.append(nav.legal_token_mask(hit, dest))
+            break
+        if max_cases is not None and len(routes) >= max_cases:
+            break
+    return {"route": np.array(routes, dtype=np.int64), "pos": np.array(positions, dtype=np.int64),
+            "target": np.array(targets, dtype=np.int64),
+            "legal_before": np.array(before, dtype=bool).reshape(-1, maps.VOCAB),
+            "legal_after": np.array(after, dtype=bool).reshape(-1, maps.VOCAB)}
+
+
+def maps_edit_reached(logits: torch.Tensor, target: torch.Tensor, confidence: float = EDIT_CONFIDENCE) -> torch.Tensor:
+    """(N,) the probe reads the target intersection with at least `confidence` probability."""
+    rows = torch.arange(len(target), device=target.device)
+    return (logits.argmax(-1) == target) & (logits.softmax(-1)[rows, target] >= confidence)
+
+
+def maps_probe_edit(probe: nn.Module, z: torch.Tensor, target: torch.Tensor, steps: int = EDIT_STEPS,
+                    step_size: float = EDIT_STEP_SIZE, confidence: float = EDIT_CONFIDENCE):
+    """probe_edit for one label per case: move standardized vectors z (N, d) along the normalized gradient of the
+    probe's cross entropy for `target`, step_size * sqrt(d) per step, each case stopping once it is reached."""
+    d = z.shape[1]
+    step = step_size * d ** 0.5
+    delta = torch.zeros_like(z)
+    done = torch.zeros(len(z), dtype=torch.bool, device=z.device)
+    used = torch.zeros(len(z), dtype=torch.long, device=z.device)
+    loss_fn = nn.CrossEntropyLoss(reduction="none")
+    for _ in range(steps):
+        x = (z + delta).detach().requires_grad_(True)
+        logits = probe(x)
+        done = done | maps_edit_reached(logits.detach(), target, confidence)
+        if bool(done.all()):
+            break
+        (grad,) = torch.autograd.grad(loss_fn(logits, target).sum(), x)
+        unit = grad / grad.norm(dim=1, keepdim=True).clamp_min(1e-12)
+        delta = delta - step * unit * (~done).float()[:, None]
+        used = used + (~done).long()
+    with torch.no_grad():
+        done = done | maps_edit_reached(probe(z + delta), target, confidence)
+    return delta.detach(), done, used
+
+
+def maps_causal_check(model, probes: nn.ModuleList, best: int, data: dict, mu: torch.Tensor, sd: torch.Tensor,
+                      selectivity: float, batch: int = BATCH, seed: int = CAUSAL_SEED, max_cases: int | None = None,
+                      mode: str | None = None, confidence: float | None = None) -> dict[str, Any]:
+    """B2 on navigation: probe guided edit to the neighbour vs a random edit of the same size, at every layer of
+    edit_layers(best), later layers seeing the earlier edits."""
+    mode = mode or EDIT_MODE
+    confidence = EDIT_CONFIDENCE if confidence is None else confidence
+    layers = edit_layers(best, model.n_layers, mode)
+    cases = maps_causal_cases(data, seed, max_cases)
+    n = len(cases["route"])
+    if n == 0:
+        raise ValueError("no causal check cases: no position with a neighbour whose legal turns differ")
+    dev = model.device
+    acc = {"edit": [], "random": [], "none": []}
+    reached = {layer: [] for layer in layers}
+    read = {layer: [] for layer in layers}
+    steps_used = {layer: [] for layer in layers}
+    sizes = {layer: [] for layer in layers}
+    for b0 in range(0, n, batch):
+        sl = slice(b0, b0 + batch)
+        tok = nav.inputs(data, cases["route"][sl]).to(dev)
+        pos = torch.as_tensor(cases["pos"][sl], device=dev)
+        target = torch.as_tensor(cases["target"][sl], device=dev)
+        rows = torch.arange(len(pos), device=dev)
+        norm_at: dict[int, torch.Tensor] = {}
+
+        def probe_step(layer):
+            def fn(v: torch.Tensor) -> torch.Tensor:
+                z = (v - mu[layer]) / sd[layer]
+                with torch.enable_grad():
+                    delta, ok, used = maps_probe_edit(probes[layer], z, target, confidence=confidence)
+                with torch.no_grad():
+                    now = probes[layer](z + delta).argmax(-1)
+                norm_at[layer] = delta.norm(dim=1)
+                reached[layer].append(ok.cpu().numpy())
+                read[layer].append((now == target).cpu().numpy())
+                steps_used[layer].append(used.cpu().numpy())
+                sizes[layer].append(norm_at[layer].cpu().numpy())
+                return (z + delta) * sd[layer] + mu[layer]
+            return fn
+
+        def random_step(layer):
+            def fn(v: torch.Tensor) -> torch.Tensor:
+                z = (v - mu[layer]) / sd[layer]
+                gen = torch.Generator(device="cpu").manual_seed(RANDOM_EDIT_SEED + 1000 * layer + b0)
+                r = torch.randn(z.shape, generator=gen).to(dev)
+                r = r / r.norm(dim=1, keepdim=True).clamp_min(1e-12) * norm_at[layer][:, None]
+                return (z + r) * sd[layer] + mu[layer]
+            return fn
+
+        runs = {"edit": {layer: probe_step(layer) for layer in layers},
+                "random": {layer: random_step(layer) for layer in layers},   # needs the edit sizes: runs second
+                "none": {}}
+        for name, edits in runs.items():
+            logits = model.logits_edited(tok, pos, edits)[rows, pos].float().cpu().numpy()
+            acc[name].append(boundary_accuracy(logits, cases["legal_before"][sl], cases["legal_after"][sl]))
+    acc = {k: np.concatenate(v) for k, v in acc.items()}
+    diff = acc["edit"] - acc["random"]
+    lo, hi = bootstrap_mean(diff)
+    cs = float(diff.mean())
+    cat = lambda d: {str(k): round(float(np.concatenate(v).mean()), 5) for k, v in d.items()}   # noqa: E731
+    reached_all = np.all(np.stack([np.concatenate(reached[layer]) for layer in layers]), axis=0)
+    return {
+        "causal_score": round(cs, 5), "causal_score_ci": [round(lo, 5), round(hi, 5)],
+        "causal_label": causal_label(selectivity, cs, lo),
+        "boundary_acc_edit": round(float(acc["edit"].mean()), 5),
+        "boundary_acc_random": round(float(acc["random"].mean()), 5),
+        "boundary_acc_none": round(float(acc["none"].mean()), 5),
+        "edit_success_rate": round(float(reached_all.mean()), 5),
+        "edit_success_by_layer": cat(reached), "target_read_by_layer": cat(read),
+        "edit_steps_by_layer": cat(steps_used), "edit_size_by_layer": cat(sizes),
+        "edit_size_unit": "standardized activation units (L2 norm)",
+        "mode": mode, "confidence": confidence, "layers": layers, "best_layer": best, "n_cases": n,
+        "mean_boundary_moves": round(float(((cases["legal_before"] ^ cases["legal_after"]).sum(1)).mean()), 3),
+    }
+
+
+def score_maps(model, split: str = "test", n_games: int = 1000, data_seed: int = 0, **config: Any):
+    """D4 on a navigation model (Amendment 5, G7). config may override n_fit, n_choose, epochs, batch, pos_batch,
+    mlp_hidden (0 = no MLP probe), causal (False = none) and causal_cases_max for tests only; layers_per_pass and
+    chunk change memory use only (the 1.5B anchors)."""
+    t0 = time.time()
+    epochs = maps_epochs(config)
+    n_fit, n_choose = config.pop("n_fit", N_FIT), config.pop("n_choose", N_CHOOSE)
+    causal, causal_cases_max = config.pop("causal", True), config.pop("causal_cases_max", None)
+    causal_mode, causal_confidence = config.pop("causal_mode", None), config.pop("causal_confidence", None)
+    chunk = config.get("chunk")
+    batch = config.get("batch", BATCH)
+    dist = nav.training_distribution(model)
+    fit, choose, test = maps_load_data(dist, split, n_games, data_seed, n_fit, n_choose)
+
+    freq = maps_class_freq(fit)
+    ctrl = maps_control_table(freq, SEED)
+    mu, sd = maps_activation_stats(model, fit, batch, chunk)
+    probes = maps_fit_probes(model, fit, ctrl, mu, sd, epochs=epochs, **config)
+    real, control = probes["real"], probes["control"]
+    ch = maps_evaluate_probes(model, real, control, choose, ctrl, mu, sd, batch, chunk)
+    te = maps_evaluate_probes(model, real, control, test, ctrl, mu, sd, batch, chunk)
+
+    sel_choose = ch["probe_acc"] - ch["control_acc"]
+    sel_test = te["probe_acc"] - te["control_acc"]
+    best = int(np.argmax(sel_choose))
+    base = maps_baselines(test)
+    r = lambda a: [round(float(v), 5) for v in a]   # noqa: E731
+    details = {
+        "best_layer": best, "best_layer_depth": round((best + 1) / model.n_layers, 4), "n_layers": model.n_layers,
+        "probe_acc_by_layer": r(te["probe_acc"]), "control_acc_by_layer": r(te["control_acc"]),
+        "selectivity_by_layer": r(sel_test), "selectivity_by_layer_choose": r(sel_choose),
+        "gain_over_layer0_by_layer": r(te["probe_acc"] - te["probe_acc"][0]),
+        "start_baseline_acc": round(base["start"], 5), "destination_baseline_acc": round(base["destination"], 5),
+        "gain_over_start_by_layer": r(te["probe_acc"] - base["start"]),
+        "gain_over_destination_by_layer": r(te["probe_acc"] - base["destination"]),
+        "epochs": epochs, "n_classes": MAPS_N_CLASSES,
+        "distribution": dist, "n_fit_routes": len(fit["tokens"]), "n_choose_routes": len(choose["tokens"]),
+        "n_test_routes": len(test["tokens"]),
+        "n_positions": {"fit": int(maps_mask(fit).sum()), "choose": int(maps_mask(choose).sum()),
+                        "test": int(maps_mask(test).sum())},
+    }
+    if probes["mlp_real"] is not None:       # nonlinear probe (B1)
+        mch = maps_evaluate_probes(model, probes["mlp_real"], probes["mlp_control"], choose, ctrl, mu, sd, batch, chunk)
+        mte = maps_evaluate_probes(model, probes["mlp_real"], probes["mlp_control"], test, ctrl, mu, sd, batch, chunk)
+        msel_choose = mch["probe_acc"] - mch["control_acc"]
+        msel_test = mte["probe_acc"] - mte["control_acc"]
+        mbest = int(np.argmax(msel_choose))
+        details["mlp"] = {
+            "hidden": config.get("mlp_hidden", MLP_HIDDEN), "best_layer": mbest,
+            "selectivity_at_best": round(float(msel_test[mbest]), 5),
+            "probe_acc_by_layer": r(mte["probe_acc"]), "control_acc_by_layer": r(mte["control_acc"]),
+            "selectivity_by_layer": r(msel_test), "selectivity_by_layer_choose": r(msel_choose),
+            "gain_over_linear_by_layer": r(mte["probe_acc"] - te["probe_acc"]),
+        }
+    if causal:                               # causal check, middle (or best) layer to last (B2, G7)
+        details["causal"] = maps_causal_check(model, real, best, test, mu, sd, float(sel_test[best]), batch,
+                                              max_cases=causal_cases_max, mode=causal_mode, confidence=causal_confidence)
+    return itf.result_for(model, DIAGNOSTIC, method=MAPS_METHOD, split=split, n_games=len(test["tokens"]),
+                          data_seed=data_seed, score=float(sel_test[best]), details=details,
+                          runtime_sec=round(time.time() - t0, 1))
+
+
+# ==========================================================================
 # Command line
 # ==========================================================================
 
@@ -601,13 +1102,62 @@ def load_any(model_id: str):
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Diagnostic 4, representation probing")
-    ap.add_argument("--models", nargs="+", required=True, help="othello_gpt_synthetic, othello_gpt_championship or zoo model ids")
+    ap.add_argument("--models", nargs="+", help="othello_gpt_synthetic, othello_gpt_championship, zoo model ids, "
+                                                 "or navigation ids (zoo, pilot, maps_vafa_*)")
     ap.add_argument("--split", default="test")
     ap.add_argument("--n_games", type=int, default=1000)
     ap.add_argument("--data_seed", type=int, default=0)
     ap.add_argument("--save", action="store_true", help="write results/D4_probing/{model_id}.json")
+    ap.add_argument("--epoch_rule", action="store_true",
+                    help="navigation: run the G7 epoch rule and write results/prereg/maps_d4_epochs.json")
+    ap.add_argument("--layers_per_pass", type=int, default=None,
+                    help="navigation, memory only: train the probes of this many layers at a time (1.5B anchors)")
+    ap.add_argument("--chunk", type=int, default=None,
+                    help="navigation, memory only: routes per forward pass inside a batch of 256 (1.5B anchors)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+
+    if args.epoch_rule:                      # G7: fixed once, before any navigation model is scored
+        import json
+        dirty = nav.uncommitted_src()
+        if dirty:
+            sys.exit(f"refusing to run the epoch rule: these files under src/ are not committed: {dirty}")
+        out = maps_epoch_rule()
+        MAPS_EPOCH_RULE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        MAPS_EPOCH_RULE_FILE.write_text(json.dumps(out, indent=2) + "\n")
+        for dist, by_e in out["accuracy"].items():
+            print(f"{dist:22s} " + "  ".join(f"{e} epochs {a:.5f}" for e, a in by_e.items()))
+        print(f"epoch count = {out['epochs']} (target {out['target']}); written to {MAPS_EPOCH_RULE_FILE}. "
+              f"Now set MAPS_EPOCHS = {out['epochs']} in this file and the count in src/docs/d4_representation_probe.md")
+        return
+    if not args.models:
+        ap.error("--models is required (or --epoch_rule)")
+
+    if any(nav.is_maps_id(m) for m in args.models):      # navigation: gates, loading, pilot folder (N0)
+        if MAPS_EPOCHS is None:
+            sys.exit("the navigation D4 epoch count is not fixed yet: run --epoch_rule first (Amendment 5, G7)")
+        extra = {k: v for k, v in (("layers_per_pass", args.layers_per_pass), ("chunk", args.chunk)) if v}
+        out, not_loaded = nav.main_for(sys.modules[__name__], args.models, args.save, split=args.split,
+                                       n_games=args.n_games, data_seed=args.data_seed, **extra)
+        for res in out:
+            d = res.details
+            if res.status == "ok":
+                b = d["best_layer"]
+                print(f"{res.model_id:45s} score {res.score:.4f}  best layer {b}  probe {d['probe_acc_by_layer'][b]:.4f}  "
+                      f"control {d['control_acc_by_layer'][b]:.4f}  start baseline {d['start_baseline_acc']:.4f}  "
+                      f"destination baseline {d['destination_baseline_acc']:.4f}")
+                if "mlp" in d:
+                    print(f"{'':45s} mlp: selectivity {d['mlp']['selectivity_at_best']:.4f}  best layer {d['mlp']['best_layer']}")
+                if "causal" in d:
+                    c = d["causal"]
+                    print(f"{'':45s} causal (layers {c['layers']}): score {c['causal_score']:.4f} {c['causal_score_ci']}  "
+                          f"{c['causal_label']}  edit {c['boundary_acc_edit']:.4f}  random {c['boundary_acc_random']:.4f}  "
+                          f"none {c['boundary_acc_none']:.4f}  edit success {c['edit_success_rate']:.4f}  cases {c['n_cases']}  "
+                          f"{res.provenance.get('runtime_sec', '?')} s")
+            else:
+                print(f"{res.model_id:45s} {res.status}: {res.reason}")
+        nav.report_not_loaded(not_loaded)
+        sys.exit(1 if not_loaded else 0)
 
     zoo = [m for m in args.models if not m.startswith("othello_gpt_")]
     if zoo and not prereg_tag_exists():
