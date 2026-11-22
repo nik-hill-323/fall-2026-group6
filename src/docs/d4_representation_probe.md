@@ -54,9 +54,10 @@ classes, from the model's vector at every scored position. Everything else is A6
   at which all three distributions reach 0.99 (20 if none). Othello's 2 epochs read 64 x 3 classes; a 4,579 way
   probe may need more, and an under trained probe would compress the differences between models.
 
-  **Epoch count: not fixed yet.** Filled in from `results/prereg/maps_d4_epochs.json` after
-  `python src/diagnostics/d4/representation_probe.py --epoch_rule`, in the same commit that sets
-  `MAPS_EPOCHS`. Navigation models are refused until then.
+  **Epoch count: 2.** The rule ran on 2026-11-21 (ET) from commit 65cd5d8, before any navigation
+  model was scored; output `results/prereg/maps_d4_epochs.json`. Probe accuracy on the test routes after 2, 5, 10
+  and 20 epochs: shortest paths 0.99772, 0.99954, 0.99954, 0.99954; noisy shortest paths 0.99774, 0.99914, 0.99914, 0.99914;
+  random walks 0.99978, 0.99990, 0.99990, 0.99990. All three reach 0.99 at 2 epochs, the same count as Othello.
 
 * **Control task.** The type of a position is (token just read, number of turns so far); each type gets a
   fixed random intersection drawn from the intersection frequencies of the fitting routes (seed 0).

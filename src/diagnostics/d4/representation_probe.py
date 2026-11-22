@@ -634,7 +634,7 @@ MAPS_EPOCH_TARGET = 0.99
 MAPS_SYNTH_WIDTH = 128                           # the smallest zoo width
 MAPS_SYNTH_SEED = 0
 MAPS_EPOCH_RULE_FILE = ROOT / "results" / "prereg" / "maps_d4_epochs.json"
-MAPS_EPOCHS: int | None = None
+MAPS_EPOCHS: int | None = 2
 
 
 def _take(data: dict, rows) -> dict:
