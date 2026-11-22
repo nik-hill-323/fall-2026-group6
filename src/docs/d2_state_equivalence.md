@@ -132,3 +132,31 @@ git tag `prereg-v1.1` exists, so the protocol is frozen before any zoo score.
 4. (1 min) The computation: accepted moves = top k, the two errors, score = 1 minus their mean.
 5. (1 min) Run `toy_check.py` live: it prints both pairs, the boards, what the model accepts, and
    each error.
+
+## Navigation (domain `maps`, Amendment 5, G5)
+
+The state of a route is **(current intersection, destination)**: nothing else changes which tokens may legally
+come next, so two prefixes with the same state must have the same future. A4 is unchanged except for what a
+history and a state are.
+
+* **Histories.** The route prefix up to every scored position of 1,000 test routes (tokens 0 to p, with
+  1 <= p <= length minus 2). A prefix shared by two routes is kept once.
+* **Accepted set.** The model's k highest scoring tokens over the whole vocabulary (padding excluded), with
+  k = the size of the legal next set (the turns at the intersection, plus `end` at the destination).
+* **Same state pairs.** Two different prefixes that reach the same intersection with the same destination:
+  routes to one destination that merge before they arrive, and random walks that pass an intersection twice.
+  All such pairs are counted and up to 2,000 are drawn uniformly (seed 0), without listing them all, since a
+  busy intersection can hold many prefixes. Fewer than 500: more test routes, 1,000 at a time, up to 5,000.
+* **Different state pairs.** Two prefixes with the same number of turns whose legal next sets differ. Up to
+  2,000, seed 0, drawn as on Othello.
+* **Errors and score.** As A4: compression error, distinction error (boundary = tokens legal after exactly one
+  of the two prefixes), score = 1 minus their mean. `details` also counts the same state pairs that come from
+  one route and those at the destination.
+* **Limitation.** Next token only: two intersections with the same turns are different states that D2 cannot
+  tell apart. Reported, not fixed.
+
+Code: `score_maps` in `src/diagnostics/d2/state_equiv.py`. Tests: `src/tests/test_d2_maps.py`.
+
+```bash
+python src/diagnostics/d2/state_equiv.py --models maps_transformer_small_shortest_paths_s100 --save
+```
