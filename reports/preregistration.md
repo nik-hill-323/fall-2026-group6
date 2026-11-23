@@ -884,3 +884,73 @@ gate (#145): next token 0.9996, 0.9998,
 `maps_rare_intersections.json`, `maps_data_manifest.json`; `results/prereg/maps_amendment5_numbers.json`;
 `src/docs/navigation_design.md`, `src/docs/navigation_reproduction.md`. After merge:
 `git tag prereg-v1.5 && git push origin prereg-v1.5`.
+
+### Amendment 6 (prereg-v1.6), 2026-11-22: navigation cutoff, pilot rule outcome, one deviation
+
+Written before any navigation zoo model was scored by a diagnostic or by the fragility suite. Only the 9 pilots
+(G2) and the anchors (G11) had been scored. Nothing in G1 to G11 changes.
+
+#### H1. Cutoff (changes G12)
+
+The navigation cutoff moves from 2026-11-22 to **2026-11-24**, end of day, US Eastern time. Reason: the scoring code
+was merged on 2026-11-21 and 2026-11-22 (#162, #164, #166, #168, #170, #172) and the pilot run ran in the night of
+2026-11-22; by the pilot timings the zoo needs about 3 hours on each of the four machines, and the whole route measure
+(G9), which G12 counts as part of "scored", is written after the pilot run. Everything else in G12 holds at the new
+date: if not every navigation model is scored by then, the analysis runs on the architectures whose 27 models are
+all scored, and the paper says which.
+
+#### H2. Pilot rule outcome (G8)
+
+The fragility suite ran on the 9 pilots on 2026-11-22 (commit 28d3039). Standard deviation of each drop
+across the pilots (sample, ddof 1): cross_distribution/noisy_shortest_paths 0.0489, cross_distribution/random_walks 0.1330, detour/random/p=0.1 0.0951, detour/random/p=0.5 0.1932, detour/adversarial/p=0.1 0.0920, detour/adversarial/p=0.5 0.1873, least_visited 0.0178, cross_distribution/shortest_paths 0.0314. None is below 0.001, so no drop is left out:
+`EXCLUDED_BY_PILOT_RULE = []` in `src/fragility/maps.py`, suite hash `47068aee3f4b`, output
+`results/prereg/maps_fragility_pilot_rule.json`. `fragility` is the mean of the drops kept. After merge:
+`git tag maps-fragility-v1`.
+
+#### H3. D4 epoch count (G7)
+
+The epoch rule ran on 2026-11-21 from commit 65cd5d8, before any navigation model was scored. The probe
+reached 0.99 on all three distributions at 2 epochs (shortest paths 0.99772; noisy shortest paths 0.99774; random walks 0.99978), so navigation D4 uses **2 epochs**, as Othello
+(`results/prereg/maps_d4_epochs.json`, `MAPS_EPOCHS = 2`). An exploratory check on one pilot afterwards
+(maps_transformer_small_shortest_paths_s100) found 10 and 20 epochs raise the probe accuracy at the best layer by
+only 0.03 (0.075, 0.101, 0.110), with the control rising as much, so the count does not compress the scores.
+
+#### H4. Deviation from the G12 order (recorded, nothing changed)
+
+In training, slice 4 started its LSTMs before all 27 transformers were on GitHub, and its Mamba models before all 27
+LSTMs: slice 4's LSTM records reached GitHub on 2026-11-17 at 03:17 UTC, slice 3's transformers at 05:21 UTC; slice
+4's Mamba records at 18:46 UTC, slices 1 and 2's LSTMs at 20:04 and 21:25 UTC. Slices 1, 2 and 3 kept the order. No
+model, setting or code changed: every record was trained from a commit after `prereg-v1.5` with the preregistered
+budget. Scoring keeps the order within every slice (`src/docs/maps_score_slices.csv`).
+
+#### H5. Choices where Amendment 5 is silent, fixed before scoring
+
+* Pilot results are saved in `results/pilot_scoring/`, which the analysis never reads (G2); fragility results in
+  `results/fragility_maps/`.
+* A zoo model or pilot is scored only if its checkpoint's sha256 equals `checkpoint_sha256` in its training record.
+* D2: the accepted set is the top k tokens over the whole vocabulary, padding excluded.
+* D3: the shortest paths anchor adapts with its GPT 2 dropout off, as every zoo model (none has dropout).
+* D4: the two 1.5B anchors train their probes 8 layers at a time and run their forward passes 32 routes at a time
+  (memory only; tests check the probes are the same).
+* Fragility: the pilot rule uses the sample standard deviation (ddof 1); the undisturbed detour drive (p = 0) is
+  run once and serves both detour modes.
+* Anchors (G11): in the pilot run the two 1.5B anchors ran out of GPU memory in D1, D2, D4 and the fragility suite
+  at the batch sizes used for the zoo. They are rerun with smaller batches (memory only); if that also fails, they
+  are reported as `failed` with the reason (Section 5). They are description only and enter no H statistic.
+
+#### H6. A secondary D4 number for navigation (added before any zoo model is scored)
+
+The pilots showed that the D4 control task (type = token just read and turns so far) is decoded at 0.92 to 0.98 by
+the navigation transformers, which can read the position from their position embedding, and at 0.08 to 0.12 by
+the LSTM and Mamba pilots; the probe of the current intersection reads 0.04 to 0.15 in all of them. The primary D4
+score (selectivity, G7) is unchanged and stays the D4 number of H1 to H3. Added as **secondary**, declared here:
+**probe accuracy minus the better baseline**, the probe accuracy of the current intersection at the layer chosen
+for the primary score (`best_layer`) minus the larger of the start and destination baselines
+(`start_baseline_acc`, `destination_baseline_acc`), all already in every D4 result file. It has no control task, so
+it does not depend on how an architecture stores position. H1 to H3 on navigation are run a second time with it in
+place of the primary D4 score, as a sensitivity analysis; both are reported, and the primary decides.
+
+Files: `reports/preregistration.md`, `src/fragility/maps.py`, `src/docs/maps_fragility_suite.md`,
+`src/tests/test_maps_fragility.py`, `results/prereg/maps_fragility_pilot_rule.json`,
+`src/docs/maps_score_slices.csv`. After merge: `git tag prereg-v1.6 && git tag maps-fragility-v1 && git push origin
+prereg-v1.6 maps-fragility-v1`.

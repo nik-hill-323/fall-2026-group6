@@ -1,0 +1,33 @@
+{
+  "model_id": "maps_vafa_random_walks",
+  "diagnostic": "D3",
+  "method": "inductive bias probe (Vafa et al. 2025), navigation (Amendment 5 G6): balanced accuracy of the adapted model minus that of a random weight model of the same architecture, tasks T1 (destination within 10 turns), T2 (within 823.9 m), T4 (east of the destination), higher is better",
+  "split": "test",
+  "n_games": 0,
+  "data_seed": 0,
+  "score": null,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "distribution": "random_walks"
+  },
+  "status": "skipped",
+  "reason": "1.5B parameters: weights, gradients and AdamW state need about 24 GB, more than the A10G's 23 GB (Amendment 5, G11)",
+  "domain": "maps",
+  "arch": "transformer",
+  "scale": "vafa_gpt2",
+  "distribution": "random_walks",
+  "seed": 0,
+  "run_id": "maps_vafa_random_walks_D3",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "28d3039",
+    "time_utc": "2026-11-22T07:49:04Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 0.0,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}

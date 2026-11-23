@@ -39,7 +39,7 @@ fr = _load("fragility_maps", "src/fragility/maps.py")
 nav, itf, maps, tasks = fx.nav, fx.itf, fx.maps, fr.maps_tasks
 
 FROZEN_VERSION = "maps-fragility-v1"
-FROZEN_HASH: str | None = None          # set in the commit tagged maps-fragility-v1
+FROZEN_HASH: str | None = "47068aee3f4b"   # frozen 2026-11-22, Amendment 6
 SMALL = {"n_detour_routes": 30, "n_test_routes": 60, "n_rare_routes": 150}
 
 
@@ -221,7 +221,7 @@ def test_pilot_rule_outcome_leaves_drops_out_of_fragility(data_dir) -> None:
 def test_untrained_model_end_to_end(data_dir) -> None:
     m = fx.tiny("transformer")
     res = fr.score_model(m, "cpu", "noisy_shortest_paths", batch=32, **SMALL)
-    assert not res["pilot_rule_applied"] and len(res["drops"]) == 7
+    assert res["pilot_rule_applied"] == (fr.EXCLUDED_BY_PILOT_RULE is not None) and len(res["drops"]) == 7
     assert res["detour"]["p=0.0"]["reached_destination_with_end"] == 1.0
     rec = fr.result_record(m, res, 1.0)
     assert rec["model_id"] == fx.ZOO_ID and rec["distribution"] == "shortest_paths" and "git_commit" in rec["provenance"]
