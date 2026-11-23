@@ -1,10 +1,13 @@
 \documentclass[journal]{IEEEtran}
 
-% WM-Concord paper draft, Fall 2026, Group 6. Built from the course IEEEtran template.
-% Figures come from the report (reports/Latex_report/fig, made by reports/Latex_report/make_figures.py)
-% and references from the report's bib file, so both documents always use the same numbers and sources.
+% WM-Concord paper, Fall 2026, Group 6. Built from the course IEEEtran template.
+% Every number comes from the report (reports/Latex_report/Sample_Report.tex) and the result files it cites.
+% Figures come from reports/Latex_report/fig (made by reports/Latex_report/make_figures.py), so the report and
+% the paper always show the same figures. References: research_paper/Latex/references.bib.
+% Status: Othello complete. Navigation: domain, design and reproduction written; zoo results are added after the
+% preregistered cutoff of November 22, 2026 (search for NAVIGATION RESULTS).
 
-\usepackage{amsmath, amsfonts, array, graphicx, booktabs, balance, cite}
+\usepackage{amsmath, amsfonts, amssymb, array, graphicx, booktabs, balance, cite}
 \usepackage[colorlinks,linktocpage]{hyperref}
 \hypersetup{
    colorlinks   = true,
@@ -17,158 +20,842 @@
 \graphicspath{{../../reports/Latex_report/fig/}{Fig/}}
 
 \begin{document}
-\raggedbottom
 
 \title{Do World Model Diagnostics Agree?\\ A Cross Diagnostic Validity Study on a Controlled Model Zoo}
 
 \author{Venkatesh~Nagarjuna, Siddardha~Reddy, Nikhil~Obuleni, Viharika~Vemparala, and~Amir~Jafari%
 \thanks{The authors are with the Data Science Program, The George Washington University, Washington, DC, USA.}}
 
-\markboth{WM-Concord draft, Fall 2026}{Nagarjuna \MakeLowercase{\textit{et al.}}: Do World Model Diagnostics Agree?}
+\markboth{WM-Concord, Fall 2026}{Nagarjuna \MakeLowercase{\textit{et al.}}: Do World Model Diagnostics Agree?}
 \maketitle
 
 \begin{abstract}
 Four families of diagnostics are used to claim that a sequence model has, or lacks, a world model: next token
-validity, state equivalence, inductive bias probes and representation probing. We find that on Othello they
-agree mainly because they all track how competent a model is, none of them reliably predicts when a model will
-break, and the one link to fragility comes from the training data. We run all four on the same controlled zoo of 81 Othello models
-(three architectures, three scales, three training distributions, three seeds) under a preregistered analysis,
-and judge them against a fragility suite frozen before any score. Raw agreement is strong (Kendall W 0.87), but
-with the legal move rate controlled W falls to 0.27 and no pair of the diagnostics that can be separated from
-competence agrees. Their disagreement is not explained by architecture, scale or training data. Only the
-representation probe adds to the legal move rate in predicting fragility, this rests on three of 27
-configurations, and an exploratory analysis traces it to the models trained on human games, which are both the most fragile and the least probe readable; among
-comparable models the link disappears. Navigation and a held out program interpreter test whether these
-findings generalize.
+validity, state equivalence, inductive bias probes and representation probing. Each has been applied to different
+models, so their conflicting verdicts cannot be compared. We run all four on one controlled zoo of 81 Othello models
+(three architectures, three scales, three training distributions, three seeds) with a known ground truth, under an
+analysis preregistered with git tags, and judge them against a fragility suite frozen before any score. Raw
+agreement is strong (Kendall W 0.87), but with the legal move rate controlled W falls to 0.27, and no pair of the
+diagnostics that can be separated from competence still agrees. The remaining disagreement is not explained by
+architecture, scale or training data. Only the representation probe adds to the legal move rate in predicting
+fragility, and this rests on three of 27 configurations: an exploratory analysis traces it to the models trained on
+human games, which are both the most fragile and the least probe readable, and among comparable models the link
+disappears. Whole game measures add two failures the next move unit misses: models trained on human games break
+once play leaves human lines, and LSTMs lose track of the board over long games. A study that reports one diagnostic
+on models of different quality therefore mostly reports how good the models are. The same pipeline is extended to
+city navigation, where our code reproduces the published results of Vafa et al.
 \end{abstract}
 
 \begin{IEEEkeywords}
 World models, interpretability, probing, measurement validity, Othello, preregistration.
 \end{IEEEkeywords}
 
+% ======================================================================================================================
 \section{Introduction}
 \IEEEPARstart{W}{hether} a sequence model trained only to predict the next token builds a coherent internal
-model of its domain is a central open question. The same Othello models have been reported both as having a
-world model~\cite{li2023othello, nanda2023emergent, yuan2025revisiting} and as lacking a coherent
-one~\cite{vafa2024evaluating, vafa2025inductive}. Each of these studies uses its own diagnostic on its own
-models, so their disagreement cannot be interpreted. Following the measurement view of Jacobs and
-Wallach~\cite{jacobs2021measurement}, we treat ``has a world model'' as a construct and the diagnostics as
-competing measures of it, and ask whether they agree (convergent validity) and which predicts failure on shifted
-tasks (predictive validity). We propose no new diagnostic.
+model of its domain is a central open question in machine learning. Several groups have built diagnostics to answer
+it, but each uses its own instrument, on its own models, in its own domain. The same Othello models have been
+reported both as having a world model~\cite{li2023othello, nanda2023emergent, yuan2025revisiting} and as lacking a
+coherent one~\cite{vafa2024evaluating, vafa2025inductive}. Because the instruments and the models differ at the
+same time, this disagreement cannot be interpreted: it may come from the diagnostics, from the models, or from
+both.
 
-Our headline result is a confound: the diagnostics agree because they share competence, not because they
-measure the same internal structure, and the one link to fragility we find comes from the training data. Our contributions are: the first head to head comparison of four world model diagnostics on the same models and
-ground truth; a test of their predictive validity against a fragility suite frozen before any score; and an open
-benchmark with a common interface to which future diagnostics can be added.
+We take the measurement view of Jacobs and Wallach~\cite{jacobs2021measurement}: ``has a world model'' is an
+unobservable construct, and each diagnostic is one operationalization of it. Two questions then follow directly.
+Do the operationalizations agree when they are applied to the same models (convergent validity)? And does any of
+them predict an outcome it should predict, namely failure when the situation shifts but the rules do not
+(predictive validity)? We propose no new diagnostic. We measure whether the existing ones agree, and which one can
+be trusted.
 
+To answer these questions we built WM-Concord, an open benchmark that runs four diagnostic families through one
+interface on one controlled zoo of models whose domain is a deterministic finite automaton, so the true state is
+known at every step. The zoo varies architecture, scale, training distribution and seed on purpose, so that models
+differ in quality and the diagnostics have something to disagree about. Every choice that could be tuned after
+seeing results was frozen with a git tag before the results it affects existed.
+
+\textbf{Contributions.} (i) The first head to head comparison of four world model diagnostics on the same models
+and the same ground truth. (ii) A test of their predictive validity against a fragility suite frozen before any
+diagnostic score. (iii) An open benchmark with a common interface, so a future diagnostic can be judged against
+these four on identical ground truth.
+
+\textbf{Findings.} Our headline is a confound. On Othello the four diagnostics agree because they all track
+competence, the model's legal move rate; with competence controlled, the diagnostics that can be separated from it
+do not measure the same thing (Section~\ref{sec:h1}). Their disagreement is consistent with seed noise
+(Section~\ref{sec:h2}). No diagnostic reliably predicts fragility: the representation probe adds to the legal move
+rate under the preregistered test, but an exploratory analysis shows that this is a difference between training
+distributions, not a link among comparable models (Sections~\ref{sec:h3} and~\ref{sec:explore}). The practical
+advice is to report several diagnostics, always with a competence control and within training distributions, rather
+than trust any single one.
+
+Section~\ref{sec:related} reviews the diagnostics, Section~\ref{sec:data} the domains, Section~\ref{sec:method} the
+zoo, the diagnostics and the preregistered analysis, Section~\ref{sec:results} the results, and
+Section~\ref{sec:discussion} what they mean and where they stop.
+
+% ======================================================================================================================
 \section{Related Work}
-Representation probing reads the board from activations~\cite{li2023othello}, linearly once squares are labelled
-relative to the player~\cite{nanda2023emergent}, and across fine tuned language models~\cite{yuan2025revisiting};
-state tracking has been tested behaviourally in chess~\cite{toshniwal2022chess}. Vafa et al.\ derive state
-equivalence metrics from the Myhill Nerode theorem~\cite{vafa2024evaluating, nerode1958linear} and propose
-inductive bias probes~\cite{vafa2025inductive}. Control tasks~\cite{hewitt2019control} and the limits of
-probing~\cite{belinkov2022probing} shape our D4. Benchmarks often claim more than they measure~\cite{raji2021benchmark}.
-For inference with repeated runs we follow the cluster bootstrap~\cite{cameron2008bootstrap} and the case for
-accounting for seed variance~\cite{bouthillier2021variance}.
+\label{sec:related}
 
+\subsection{Representation probing}
+Li et al.~\cite{li2023othello} trained a GPT model on Othello move sequences alone. It proposes legal moves almost
+every time, probes on its activations recover the board, and editing the decoded board inside the model changes its
+predictions to match, which is evidence that the representation is used and not only present. Nanda et
+al.~\cite{nanda2023emergent} showed that the board is in fact linear once squares are labelled relative to the
+player to move (``mine'' and ``theirs'') rather than by colour. Yuan and S{\o}gaard~\cite{yuan2025revisiting} found
+similar board representations in seven language models fine tuned on Othello. These works use probing as their only
+instrument. We use it as one of four, with a control task and a causal check, and compare its verdict with the other
+three on the same models. Toshniwal et al.~\cite{toshniwal2022chess} tested state tracking in chess behaviourally,
+by prompting the model for piece locations; this is close in spirit to our next token validity.
+
+\subsection{State equivalence and inductive bias}
+Vafa et al.~\cite{vafa2024evaluating} define the domain as a deterministic finite automaton and derive two metrics
+from the Myhill Nerode theorem~\cite{nerode1958linear}: compression error (two histories that reach the same state
+are treated differently) and distinction error (two different states are treated the same). On Manhattan taxi
+routes, Othello and logic puzzles, models with near perfect next token accuracy failed these metrics, and models
+trained on random walks built more coherent maps than models trained on shortest paths. In a second line of
+work~\cite{vafa2025inductive}, the same group adapts a pretrained model to small tasks generated from a postulated
+world model and asks whether it extrapolates as that world model would; symbolic regression on the adapted models
+recovered laws that make no physical sense. These are our D2 and D3. Both works compare their metric only with next
+token accuracy; we compare them with each other, with probing, and with an external criterion.
+
+\subsection{Probing confounds}
+Hewitt and Liang~\cite{hewitt2019control} showed that high probe accuracy does not show that a model encodes a
+property, because an expressive probe can learn the task by itself; they proposed control tasks and selectivity,
+the probe's accuracy minus its accuracy on random labels. Belinkov~\cite{belinkov2022probing} reviewed the
+method's limits: a probe shows that information can be decoded, not that the model uses it. We report selectivity
+for every probe, use a linear probe by default, and record models whose board is decodable but not used as a
+separate outcome.
+
+\subsection{Measurement validity and inference}
+Raji et al.~\cite{raji2021benchmark} argued that benchmarks are often read as measures of a broad capability they
+cannot establish; world model diagnostics face the same risk when a pass on one diagnostic is read as evidence of a
+world model. For inference, models trained from the same configuration with different seeds are near copies, so
+observations are clustered. Cameron et al.~\cite{cameron2008bootstrap} show that resampling whole clusters gives
+honest intervals when clusters are few, and Bouthillier et al.~\cite{bouthillier2021variance} show that seed
+variation is often as large as the differences papers report. Every interval in this paper resamples whole
+configurations, and disagreement is judged against the spread between seeds.
+
+% ======================================================================================================================
+\section{Domains and Data}
+\label{sec:data}
+
+Every domain is defined by a deterministic finite automaton, so the true state is known after every token, and
+every domain emits the same triple: the token sequence, the true state, and the set of legal next tokens. Othello is
+complete; navigation follows with the same code; a small program interpreter is held out for testing whether the
+findings generalize (H4).
+
+\subsection{Othello}
+\textbf{The game.} Othello is played on an $8\times8$ board by two players. A move places a disc so that at least
+one straight line of the opponent's discs is enclosed between it and another disc of the mover's colour, and every
+enclosed disc is flipped. A player with no legal move passes, and the game ends when neither can move, usually after
+60 moves.
+
+\textbf{Why Othello.} Three properties make it the standard test bed for world model
+studies~\cite{li2023othello, nanda2023emergent}. The state (board and player to move) is exact and small, so every
+diagnostic is scored against the truth. The board is hard to read from the moves: the move list says where discs
+were placed, never which were flipped, so knowing which discs are \emph{mine} requires replaying the rules, which is
+the internal state a world model should track. And the legal moves depend on the whole board, so a model that only
+learns which squares tend to follow which cannot stay legal for a whole game.
+
+\textbf{Tokens and data.} As in Othello GPT~\cite{li2023othello}, tokens 1 to 60 are the playable squares and 0 is
+padding; passes are not tokens. Our own rules engine replays every game; it is the only copy of the rules, shared by
+training, every diagnostic and the tests, and it found no illegal game in 101,000 replayed synthetic games. The
+\emph{synthetic} distribution is the \texttt{othello\_world} corpus of Li et al.\ (about 19 million games of random
+legal moves). The \emph{championship} distribution is the WTHOR tournament archive: 137,548 human games from 1977 to
+2025, which after removing 41 duplicates split into 110,005 training, 13,751 validation and 13,751 test games. The
+\emph{mixed} distribution pools both. Every model draws 1,280,000 training games uniformly with replacement from its
+pool; the mixed pool holds 640,000 synthetic and the 110,005 championship games, so mixed training is about 85\%
+synthetic by games, while its validation and test sets are half of each. The training split is used only for
+training, the validation split for checks during training and for fitting diagnostics, and the test split only for
+final scores.
+
+\subsection{Navigation}
+Navigation follows Vafa et al.~\cite{vafa2024evaluating}: taxi routes on the street graph of Manhattan. A route is
+the start intersection, the destination intersection, the turns taken (each one of eight compass directions) and an
+end token. All three distributions use one canonical map from OpenStreetMap with 4,579 intersections and 9,705
+street segments; the vocabulary has 4,589 tokens, and every route has at most 99 tokens. The state is the current
+intersection together with the destination, and the legal next tokens are the turns available there, plus the end
+token at the destination. The three training distributions are shortest paths, noisy shortest paths and random
+walks, with 2,000,000 training routes each. Validation and test are split by start and destination pair (107,331
+held out pairs, half each), so no test pair appears in any training route. The 6.1\% of shortest path routes that
+use a street missing from the canonical map are dropped.
+
+\subsection{Held out interpreter}
+The interpreter is a small deterministic register and stack machine whose full state is known after every
+instruction. Its models are trained and scored only after H1 to H3 are fixed on Othello and navigation.
+
+\subsection{Anchors}
+Two published Othello GPTs~\cite{li2023othello}, trained on synthetic and on championship games, and the three
+released navigation models of Vafa et al.~\cite{vafa2024evaluating} serve as anchors: every diagnostic scores them
+to check our code against published findings, but they never enter H1 to H4.
+
+% ======================================================================================================================
 \section{Method}
-\subsection{Model zoo and domain}
-Othello's true state (board and player to move) is replayed exactly by our rules engine. We train
-transformers~\cite{vaswani2017attention}, stacked LSTMs~\cite{hochreiter1997lstm} and Mamba~\cite{gu2023mamba}
-at three scales (0.48 to 25.3 million parameters) on synthetic, championship (WTHOR) or mixed games, three seeds
-each, with one fixed budget. A model is admitted if its validation legal move rate, its \emph{competence}, is
-at least 0.50; all 81 are admitted (competence 0.559 to 0.969).
+\label{sec:method}
+
+\subsection{Model zoo}
+The zoo crosses 3 architectures, 3 scales, 3 training distributions and 3 seeds, which gives 81 models per domain.
+The architectures are a GPT style transformer~\cite{vaswani2017attention}, a stacked LSTM~\cite{hochreiter1997lstm}
+and Mamba~\cite{gu2023mamba} (the plain PyTorch \texttt{mambapy} build). They remember the past in different ways
+(attention over the whole history, a fixed size recurrent state, a selective state space recurrence), which is the
+axis along which H2 asks whether the diagnostics disagree. The scales are small (4 layers, width 128), medium
+(6 layers, width 256) and large (8 layers, width 512), from 0.48 to 25.3 million parameters. Every model gets the
+same budget: 5,000 steps of 256 games, AdamW with learning rate $3\times10^{-4}$, 200 warmup steps and weight decay
+0.01. A model is \emph{admitted} if its legal move rate on 1,000 validation games is at least 0.50 (an untrained
+model scores about 0.15); this rate is also the model's \emph{competence} in the analysis. Models that fail are
+still scored and reported.
 
 \subsection{How the models see a game}
 \label{sec:see}
 Every model maps a batch of move sequences to scores for the next move at every position: tokens of shape
-$(B, T)$, one integer per move (the square played, 1 to 60, with 0 for padding), go through a learned embedding
-to $(B, T, D)$, through the layers at $(B, T, D)$, and through a linear head to $(B, T, 61)$, one score per
-token. $B$ is the batch (256 in training), $T \le 59$ the positions read and $D \in \{128, 256, 512\}$ the
-width. The 61 is the vocabulary, not the sequence length: written one hot, the input is $(B, T, 61)$ and the
-embedding is a learned $61 \times D$ matrix, which is where one integer per move becomes $D$ numbers. A batch
-is 256 whole games drawn from the training pool (synthetic games are made of random legal moves;
-championship games are human), each cut to its first 59 tokens.
+$(B, T)$, one integer per move, go through a learned embedding to $(B, T, D)$, through the layers at $(B, T, D)$,
+and through a linear head to $(B, T, 61)$, one score per token. $B$ is the batch (256 in training), $T \le 59$ the
+positions read and $D \in \{128, 256, 512\}$ the width. The 61 is the vocabulary, not the sequence length: written
+one hot, the input is $(B, T, 61)$ and the embedding is a learned $61 \times D$ matrix, which is where one integer
+per move becomes $D$ numbers. A batch is 256 whole games drawn from the training pool, each cut to its first 59
+tokens and padded with 0; nothing is cut into windows.
 
-Training is next move prediction at every prefix position. For the first synthetic test game, C4 C5 D6 E3
-\dots\ (tokens 27 33 40 21 \dots), the model reads the first 58 moves and at position $t$ predicts move $t+2$
-from moves 1 to $t+1$: C4$\to$C5, C4 C5$\to$D6, C4 C5 D6$\to$E3, up to 58 moves$\to$H5. All 58 predictions
-are made in one forward pass and all enter the cross entropy loss. So the pairs are $[a] \to b$,
-$[a\,b] \to c$, \dots, not a fixed window ($[a\,b\,c] \to d$, $[b\,c\,d] \to e$): each prediction is sequence to
-one, made at every position, and the history only grows.
+Training is next move prediction at every prefix position. For a game $m_1,\dots,m_T$ the model receives
+$m_1,\dots,m_{T-1}$ and is trained with
+\begin{equation}
+  \mathcal{L} = -\frac{1}{T-1}\sum_{t=1}^{T-1} \log p_\theta\!\left(m_{t+1}\mid m_1,\dots,m_t\right),
+\end{equation}
+ignoring padded positions. For the first synthetic test game, C4 C5 D6 E3 \dots\ (tokens 27 33 40 21 \dots), the
+pairs are C4$\to$C5, C4 C5$\to$D6, C4 C5 D6$\to$E3, up to 58 moves$\to$H5. All 58 predictions are made in one
+forward pass and all enter the loss. So the pairs are $[a] \to b$, $[a\,b] \to c$, \dots, not a fixed window
+($[a\,b\,c] \to d$, $[b\,c\,d] \to e$): each prediction is sequence to one, made at every position, and the history
+only grows. This is teacher forcing: the model always reads the real history, never its own earlier guesses.
 
-An LSTM reads one token per step and carries a memory $(h_t, c_t)$ per layer, so at step $t$ it sees only the
-new move but predicts from a summary of the whole history (Fig.~\ref{fig:lstm}). On this game the trained small
-LSTM (synthetic, seed 0) reads C4, turns its 128 numbers into 61 scores and predicts the highest, C5
-($p = 0.29$, legal), then reads C5 with the memory of C4 and
-predicts E6 (legal), then reads D6 and predicts E3 (legal). Running the game one token at a time gives the same
-top move as the single training pass at all 58 positions. The transformer has the same input and output shapes
-but attends to all earlier positions under a causal mask instead of carrying a memory; Mamba carries a
-selective state. The diagnostics read these same scores (D1, D2), adapt the same model (D3) and probe the same
-$(B, T, D)$ vectors (D4).
+An LSTM reads one token per step and carries a memory $(h_t, c_t)$ per layer, so at step $t$ it sees only the new
+move but predicts from a summary of the whole history (Fig.~\ref{fig:lstm}). On this game the trained small LSTM
+(synthetic, seed 0) reads C4 and predicts C5 ($p = 0.29$, legal), then reads C5 with the memory of C4 and predicts
+E6 (legal), then reads D6 and predicts E3 (legal). Running the game one token at a time gives the same top move as
+the single training pass at all 58 positions. The transformer has the same input and output shapes but attends to
+all earlier positions under a causal mask; Mamba carries a selective state. The diagnostics read these same scores
+(D1, D2), adapt the same model (D3) and probe the same $(B, T, D)$ vectors (D4). Navigation uses the same interface
+with 4,589 tokens, at most 98 positions read, and a loss on the turns and the end token only.
 
 \begin{figure*}[t]
     \centering
     \includegraphics[width=0.92\textwidth]{lstm_unrolled.pdf}
     \caption{The trained small LSTM unrolled over the first three moves of the first synthetic test game. The
-    same four layers run at every step and pass the memory $h, c$ forward; each step predicts the next move.}
+    same four layers (the same weights) run at every step and pass the memory $h, c$ forward; each step predicts
+    the next move.}
     \label{fig:lstm}
 \end{figure*}
 
-\subsection{Diagnostics}
-\textbf{D1} is the share of positions whose top predicted move is legal. \textbf{D2} is one minus the mean of the
-compression and distinction errors of Vafa et al.~\cite{vafa2024evaluating} with next move continuations.
-\textbf{D3} is the balanced accuracy gain of the pretrained model over a random weight twin when adapted on 64
-examples to ``is square $X$ mine?''~\cite{vafa2025inductive}, with a symbolic regression arm~\cite{cranmer2023pysr}.
-\textbf{D4} is the selectivity of a linear mine, theirs or empty probe~\cite{hewitt2019control} at the best
-layer, with a causal edit check~\cite{li2023othello}. Protocols were tuned only on the two published Othello GPTs.
+\subsection{The four diagnostics}
+\label{sec:diagnostics}
+Every diagnostic implements one interface, \texttt{score(model, domain)}, and writes one score per model, where
+higher always means more world model like. Final scores use 1,000 test games of the model's own training
+distribution. Protocols were fixed in the preregistration and tuned, if at all, only on the two Othello GPT
+anchors, never on a zoo model. Notation: $x_{\le t}$ is the history after $t$ moves, $L(x_{\le t})$ the set of truly
+legal next moves, and $f(x_{\le t})$ the model's scores.
 
-\subsection{Fragility and analysis}
-The fragility suite keeps the rules and shifts the situations (other distributions, after a pass, symmetries,
-forced detours); relative fragility divides the mean drop in legal move rate by the model's own rate. All
-rules were preregistered with git tags before the results they affect. H1 uses Kendall's tau~\cite{kendall1938tau},
-Kendall's partial tau given competence~\cite{kendall1942partial} and Kendall's W~\cite{kendall1939w}; H2 regresses
-per model disagreement on the design factors against a seed noise floor; H3 tests D2 to D4 beyond D1 by partial
-Spearman correlation. Intervals are 95\% cluster bootstrap intervals over the 27 configurations.
+\textbf{D1, next token validity.} The share of the $N$ test positions whose top move is legal:
+\begin{equation}
+  \mathrm{D1}=\frac{1}{N}\sum_{g,t}\mathbf{1}\!\left[\arg\max_v f(x_{g,\le t})_v \in L(x_{g,\le t})\right].
+\end{equation}
+Nothing is fitted.
 
-\section{Results on Othello}
+\textbf{D2, state equivalence.} Following Myhill Nerode~\cite{nerode1958linear} and Vafa et
+al.~\cite{vafa2024evaluating}, two histories are the same state exactly when every continuation is equally allowed
+after both; we use the next move as the continuation. The model's accepted set $A(h)$ is its $k$ best moves, with
+$k=|L(h)|$, so no threshold is tuned. Over up to 2,000 same state pairs $S$ (different move lists, same board and
+player) and 2,000 different state pairs $D$ (same length, different legal sets),
+\begin{align}
+  \mathrm{CE}&=\operatorname*{mean}_{(h,g)\in S}\frac{|A(h)\,\triangle\,A(g)|}{|A(h)\cup A(g)|},\\
+  \mathrm{DE}&=\operatorname*{mean}_{(h,g)\in D}\big(1-\rho(h,g)\big),\\
+  \rho(h,g)&=\frac{|B_h\cap A(h)\setminus A(g)|+|B_g\cap A(g)\setminus A(h)|}{|B_h|+|B_g|},
+\end{align}
+where $B_h=L(h)\setminus L(g)$ and $B_g=L(g)\setminus L(h)$ are the moves legal after only one of the two
+histories, so $\rho$ is the share of these boundary moves the model separates correctly, and
+$\mathrm{D2}=1-\tfrac{1}{2}(\mathrm{CE}+\mathrm{DE})$. Each error has a standard error of at most
+0.011.
+
+\textbf{D3, inductive bias probe.} Following~\cite{vafa2025inductive}, a copy of the model with a new linear head is
+adapted on only 64 labelled validation positions to four questions ``is square $X$ mine?'' ($X$ = C4, F5, C3, F6),
+for 300 AdamW steps (head learning rate $10^{-3}$, body $10^{-4}$). We ask ``mine'' and not ``occupied'' because
+occupancy can be read straight off the move list. A model of the same architecture and size with random weights is
+adapted the same way, and with balanced accuracy BA on 1,000 test positions,
+\begin{equation}
+  \mathrm{D3}=\frac{1}{12}\sum_{j=1}^{4}\sum_{s=0}^{2}\left[\mathrm{BA}(f_{j,s})-\mathrm{BA}(f^{0}_{j,s})\right]
+\end{equation}
+over 4 tasks and 3 seeds: the help that pretraining gives on board questions. A symbolic regression
+arm~\cite{cranmer2023pysr} fits short formulas from the true board to each adapted model's answers and records
+whether they recover the ``is $X$ mine'' rule or only an \emph{occupancy shortcut}.
+
+\textbf{D4, representation probe.} After every layer $\ell$, a linear probe $P_\ell$ reads each of the 64 squares
+as mine, theirs or empty~\cite{nanda2023emergent}. Following~\cite{hewitt2019control}, an identical control probe
+$Q_\ell$ learns fixed random labels that depend only on the square just played and the move number. Probes are fit
+on 10,000 validation games, and
+\begin{equation}
+  \mathrm{Sel}_\ell=\mathrm{Acc}(P_\ell)-\mathrm{Acc}(Q_\ell),\qquad \mathrm{D4}=\mathrm{Sel}_{\ell^{*}},
+\end{equation}
+measured on the test games, where $\ell^{*}$ maximizes selectivity on 1,000 further validation games. A \emph{causal check} after
+Li et al.~\cite{li2023othello} edits the activations from the middle layer to the last until the probes read one
+flipped disc, and compares the share of boundary moves the model then gets right with the same share after a random
+edit of equal size. A model with selectivity of at least 0.10 is \emph{decodable}; it is \emph{decodable and causal}
+if its causal score is at least 0.20 with an interval above 0, and \emph{decodable but not causal} otherwise. An MLP
+probe is reported as a secondary result.
+
+\subsection{Fragility suite}
+\label{sec:fragility}
+H3 needs an outcome no diagnostic could have been tuned toward. The suite keeps the rules fixed and shifts the
+situations, so the right answer always comes from the true rules. With $r_0$ the model's legal top move rate on its
+own test games, each variant $v$ gives a drop $\delta_v$: the other training distributions, three board symmetries
+(rotation by 180 degrees and the two diagonal reflections, the only symmetries that keep the start position),
+positions right after a pass (compared with positions at the same move number and with the same number of legal
+moves), and self play with forced detours, where with probability $p\in\{0.1, 0.5\}$ the model's move is replaced by
+a random legal move or by the one it rates lowest. Then
+\begin{equation}
+  F=\frac{1}{|V|}\sum_{v\in V}\delta_v,\qquad \text{relative fragility}=F/r_0,
+\end{equation}
+so that models of different competence are comparable. Version 1 of the suite was frozen on October 6 (tag
+\texttt{fragility-v1}). Before any zoo model was scored, we found that two of its parts could not measure fragility
+on this zoo (detour games stopped at the first illegal proposal, and pass positions were compared with all
+positions); version 2 (tag \texttt{fragility-v2}, October 18) fixed both. H3 uses relative fragility v2; v1 is the
+preregistered secondary outcome.
+
+\subsection{Whole game measures}
+\label{sec:seqmethod}
+D1, D2, the probes of D4 and most of the fragility suite judge the next move given the real history. This is the
+unit every diagnostic in the literature is defined on, but a model can be legal at almost every step and still lose
+track of the board over a long game, because under teacher forcing an error never enters the history it reads next.
+We therefore add two whole game measures, decided after the Othello results were read and reported as exploratory.
+\emph{Legality by move number} splits D1 by the move being predicted. In \emph{free play} the model plays 1,000
+games against itself: its top move is checked against the rules at every step, the move actually played is drawn
+from its own probabilities over the legal moves, and each game runs to its end or to move 59 (no model is trained to
+predict move 60). We report the legal rate, the share of games with no illegal top move (full games) and the move of
+the first error. Both measures are preregistered for navigation.
+
+\subsection{Preregistration and analysis}
+\label{sec:analysis}
+Every choice that could be tuned after seeing results was frozen with a git tag before the results it affects
+existed (Table~\ref{tab:prereg}), and the scoring code refuses to score a zoo model until the required tag exists.
+Analyses decided after the preregistered results were read are labelled exploratory and never replace a
+preregistered result.
+
+\begin{table}[t]
+    \centering
+    \caption{Preregistration timeline (2026).}
+    \label{tab:prereg}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{l>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{4.3cm}}
+    \toprule
+    Date & Tag & Content \\
+    \midrule
+    Oct 6 & \texttt{fragility-v1} & fragility suite, before any score \\
+    Oct 6 & \texttt{prereg-v1} & admission rule, one score per diagnostic, H1 to H4 rules \\
+    Oct 13 & \texttt{prereg-v1.1} & competence control, relative fragility, D2 to D4 protocols \\
+    Oct 16 & \texttt{prereg-v1.2} & MLP probe and causal check, symbolic regression, D2 sample size \\
+    Oct 18 & \texttt{prereg-v1.3}, \texttt{fragility-v2} & fragility v2 and the exact analysis details \\
+    Oct 18 to 19 & (scoring) & all 81 Othello models scored \\
+    Oct 19 & \texttt{prereg-v1.4} & configuration bootstrap; written before any H statistic \\
+    Nov 10 & \texttt{prereg-v1.5} & navigation domain, before any navigation model is trained \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{Intervals.} The 81 models form 27 configurations of three seeds. Every interval is a 95\% percentile
+cluster bootstrap~\cite{cameron2008bootstrap}: each of 2,000 resamples draws 27 configurations with replacement and
+keeps all seeds of each.
+
+\textbf{H1, concordance.} For each of the six pairs we compute Kendall's tau b~\cite{kendall1938tau}, and Kendall's
+W~\cite{kendall1939w} across all four. A pair \emph{agrees} if tau is at least 0.50 and its interval excludes 0,
+\emph{disagrees} if its interval includes 0 or tau is below 0.30, and is \emph{partial} otherwise. Because every
+diagnostic may simply follow competence $c$, each pair is also tested with Kendall's partial
+tau~\cite{kendall1942partial},
+\begin{equation}
+  \tau_{xy\cdot c}=\frac{\tau_{xy}-\tau_{xc}\,\tau_{yc}}{\sqrt{(1-\tau_{xc}^{2})(1-\tau_{yc}^{2})}},
+\end{equation}
+and W is recomputed on ranks with competence regressed out. A pair that agrees raw but not after the control
+agrees \emph{through competence}. If tau(D1, competence) is at least 0.90, the controlled D1 pairs are not
+interpretable. As a sensitivity check, H1 is repeated on the models with competence of at least 0.90.
+
+\textbf{H2, disagreement.} Each model's disagreement is the standard deviation of its four rank percentiles,
+regressed on architecture, scale and training distribution. Disagreement is \emph{systematic} if a factor is
+significant at 0.05 after Holm correction and its effect exceeds the seed noise floor, the spread of disagreement
+across the seeds of one configuration.
+
+\textbf{H3, predictive validity.} The outcome is relative fragility v2, whose distribution is reported first. D1 is
+the reference. For D2, D3 and D4 we compute the partial Spearman correlation with the outcome given D1, and a least
+squares regression of the outcome on D1, the diagnostic, architecture and scale. A diagnostic \emph{adds to D1} if
+its partial correlation interval excludes 0, and is the \emph{best predictor} if it is the strongest and the
+interval of each difference to the other two excludes 0.
+
+\textbf{H4, generalization.} H1 to H3 are fixed on Othello and navigation before any interpreter model is scored;
+the findings generalize if every pair keeps its H1 category and the H3 verdict is the same on the interpreter.
+
+\subsection{Navigation protocol}
+\label{sec:navmethod}
+Navigation runs the same zoo, diagnostics and analysis, with the changes fixed in Amendment 5 (tag
+\texttt{prereg-v1.5}) before any navigation model was trained. Admission and D1 are as for Othello on routes (an
+untrained model scores about 0.0005). D2 uses the state (current intersection, destination). D3 asks three questions
+about the state at a random position: is the destination at most 10 turns away, at most 823.9 m away, and is the
+current intersection east of it (the medians of the data, with a fourth task dropped by a rule written before its
+numbers were computed because a shortcut answered it). D4 probes the current intersection (4,579 classes), with a
+control task over (token just read, turns so far), and the causal check moves the probe's reading to a neighbouring
+intersection with a different legal set. The fragility suite \texttt{maps-fragility-v1} has the other distributions,
+random and adversarial detours on drives the model makes itself, and the least visited intersections; no symmetry
+maps the street graph onto itself. Free play and full route rates are a preregistered secondary measure. Because the
+Othello result came from a training distribution difference, navigation adds, as a preregistered secondary analysis,
+the H3 regression with training distribution as a covariate and the partial correlation within each distribution.
+Models are trained and scored by architecture (all transformers, then LSTMs, then Mamba), and on the cutoff of
+November 22, 2026 the analysis runs on the architectures whose 27 models are all scored.
+
+% ======================================================================================================================
+\section{Experimental Setup}
+Training and scoring ran on four AWS g5.2xlarge instances (one NVIDIA A10G with 24 GB each), one per author, each
+with a slice of the zoo. Training one Othello model at the full budget takes 1.5, 4.7 and 16.1 minutes for the
+small, medium and large transformer, 0.6 to 5.9 minutes for the LSTMs and 17.7 to 145.7 minutes for Mamba in plain
+PyTorch, about 37 GPU hours per domain. Every training record stores the checkpoint's SHA 256 hash, which every
+later step checks; every result records the commit that produced it; library versions are pinned; and the test
+suite runs in GitHub Actions on every pull request.
+
+% ======================================================================================================================
+\section{Results}
+\label{sec:results}
+Numbers in brackets are 95\% configuration bootstrap intervals. Sections~\ref{sec:repro} to~\ref{sec:seqres} are
+for Othello.
+
+\subsection{Reproduction and anchors}
+\label{sec:repro}
+Before building on our code we reproduced published numbers. Linear probes on the synthetic Othello GPT match Nanda
+et al.~\cite{nanda2023emergent} within one percentage point, a tolerance fixed before comparing, on five of six
+values (Table~\ref{tab:repro}); the board is almost perfectly linear in mine and theirs labels but only about 75\%
+readable in black and white labels. The one miss, black and white at layer 0, most likely reflects a different
+definition of layer 0 and does not affect D4. All four diagnostics also order the two Othello GPTs as the literature
+does (Table~\ref{tab:anchors}): our D2 gives the order of Vafa et al.~\cite{vafa2024evaluating}, and only the
+synthetic model passes the causal check, while the championship model's board is readable but barely used.
+
+\begin{table}[t]
+    \centering
+    \caption{Reproduction gate: linear probe accuracy (\%) on the synthetic Othello GPT.}
+    \label{tab:repro}
+    \footnotesize
+    \begin{tabular}{llrrr}
+    \toprule
+    Labels & Layer & Ours & Nanda et al. & Difference \\
+    \midrule
+    mine, theirs, empty & 0 & 90.5 & 90.9 & $-0.4$ \\
+    mine, theirs, empty & 4 & 98.7 & 99.0 & $-0.3$ \\
+    mine, theirs, empty & 7 & 98.9 & 99.5 & $-0.6$ \\
+    black, white, empty & 0 & 75.8 & 62.2 & $+13.6$ \\
+    black, white, empty & 4 & 75.9 & 75.0 & $+0.9$ \\
+    black, white, empty & 7 & 75.2 & 74.4 & $+0.8$ \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{table}[t]
+    \centering
+    \caption{Anchor scores on the test split. Anchors check the code and never enter H1 to H4.}
+    \label{tab:anchors}
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lrr}
+    \toprule
+    Diagnostic & Othello GPT synthetic & Othello GPT champ. \\
+    \midrule
+    D1 next token validity & 0.9996 & 0.896 \\
+    D2 state equivalence & 0.999 & 0.766 \\
+    D3 inductive bias gap & 0.140 & 0.059 \\
+    D4 probe selectivity & 0.435 & 0.272 \\
+    D4 causal check & causal & not causal \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{The Othello zoo}
+\label{sec:zoo}
+All 81 models were admitted; competence ranges from 0.559 to 0.969 (mean 0.821). All 486 result files (81 models
+times four diagnostics and two fragility suites) have status ok. Competence rises with scale in every family
+(Table~\ref{tab:training}). Transformers and Mamba are close on every measure; the LSTMs are the weakest on all four
+diagnostics (Table~\ref{tab:descriptives}). Since every model has the same budget, part of this gap may come from the
+budget rather than the architecture.
+
+\begin{table*}[t]
+    \centering
+    \caption{Training results, mean over 3 seeds. Final loss is the mean of the last 20 steps; competence is the legal
+    move rate on 1,000 validation games of the model's own distribution. Championship losses are lower partly because
+    each game is drawn about 11.6 times, so losses compare within a column only.}
+    \label{tab:training}
+    \footnotesize
+    \begin{tabular}{llrrrrrrr}
+    \toprule
+    & & & \multicolumn{3}{c}{Final training loss} & \multicolumn{3}{c}{Competence (validation legal rate)} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){7-9}
+    Architecture & Scale & Parameters & synthetic & champ. & mixed & synthetic & champ. & mixed \\
+    \midrule
+    Transformer & small  & 0.82M  & 2.634 & 1.833 & 2.559 & 0.842 & 0.841 & 0.839 \\
+    Transformer & medium & 4.79M  & 2.468 & 1.550 & 2.387 & 0.943 & 0.887 & 0.916 \\
+    Transformer & large  & 25.31M & 2.358 & 1.094 & 2.258 & 0.969 & 0.899 & 0.928 \\
+    LSTM        & small  & 0.54M  & 3.472 & 2.722 & 3.386 & 0.566 & 0.601 & 0.581 \\
+    LSTM        & medium & 3.19M  & 3.296 & 2.377 & 3.235 & 0.677 & 0.722 & 0.664 \\
+    LSTM        & large  & 16.87M & 3.181 & 2.181 & 2.886 & 0.754 & 0.772 & 0.809 \\
+    Mamba       & small  & 0.48M  & 2.720 & 1.923 & 2.649 & 0.843 & 0.827 & 0.833 \\
+    Mamba       & medium & 2.66M  & 2.525 & 1.631 & 2.437 & 0.925 & 0.871 & 0.894 \\
+    Mamba       & large  & 13.63M & 2.384 & 1.131 & 2.281 & 0.963 & 0.887 & 0.924 \\
+    \bottomrule
+    \end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+    \centering
+    \caption{Diagnostic scores, means over the 9 models (3 distributions, 3 seeds) of each architecture and scale.
+    Causal: models labelled decodable and causal.}
+    \label{tab:descriptives}
+    \footnotesize
+    \begin{tabular}{llrrrrrrr}
+    \toprule
+    Architecture & Scale & Competence & D1 & D2 & D3 & D4 & Relative fragility v2 & Causal \\
+    \midrule
+    Transformer & small & 0.841 & 0.843 & 0.751 & 0.014 & 0.194 & 0.022 & 0 of 9 \\
+    Transformer & medium & 0.915 & 0.917 & 0.817 & 0.038 & 0.247 & 0.021 & 3 of 9 \\
+    Transformer & large & 0.932 & 0.933 & 0.840 & 0.056 & 0.268 & 0.013 & 4 of 9 \\
+    LSTM & small & 0.583 & 0.584 & 0.607 & 0.013 & 0.120 & 0.008 & 0 of 9 \\
+    LSTM & medium & 0.688 & 0.690 & 0.632 & 0.014 & 0.155 & 0.020 & 0 of 9 \\
+    LSTM & large & 0.778 & 0.780 & 0.666 & 0.017 & 0.174 & 0.014 & 0 of 9 \\
+    Mamba & small & 0.835 & 0.837 & 0.722 & 0.025 & 0.203 & 0.019 & 0 of 9 \\
+    Mamba & medium & 0.897 & 0.899 & 0.789 & 0.044 & 0.240 & 0.007 & 1 of 9 \\
+    Mamba & large & 0.924 & 0.925 & 0.826 & 0.070 & 0.269 & 0.008 & 2 of 9 \\
+    \bottomrule
+    \end{tabular}
+\end{table*}
+
+\textbf{Inside each diagnostic.} D1 is almost the same quantity as competence (tau 0.968). For D2, models treat
+histories that reach the same board alike fairly well (mean compression error 0.146, range 0.021 to 0.289) but often
+fail to separate boards whose legal moves differ (distinction error 0.376, range 0.160 to 0.648). For D3, adapted
+pretrained models reach a balanced accuracy of 0.579 against 0.547 for random weight models, a mean gap of 0.032,
+well below the anchors. Symbolic regression recovers the ``is $X$ mine'' rule in only 3.8\% of searches (2.7\% for
+random weights), while the occupancy shortcut appears in 22.7\% (14.8\%), and across models D3 rises with the
+shortcut rate (Spearman 0.357 [0.041, 0.605]): part of what D3 rewards is the shortcut. For D4, mean linear
+selectivity is 0.208 (0.111 to 0.314) and the MLP selectivity is lower, 0.183, as Hewitt and Liang predict; the best
+layer sits at 83\% of the depth on average. Every model is decodable, but only 10 of 81 pass the causal check (mean
+causal score 0.126), all of them medium or large transformers or Mamba, nine of the ten trained on synthetic games.
+
+\subsection{Concordance (H1)}
+\label{sec:h1}
+On raw scores the diagnostics agree: five of six pairs meet the agreement rule, D2 with D3 is partial, and W is
+0.872 (Table~\ref{tab:h1}, Fig.~\ref{fig:h1}). But every diagnostic follows competence: its tau with competence is
+0.968 for D1, 0.826 for D2, 0.790 for D4 and 0.577 for D3. D1 is above the 0.90 line, so its controlled pairs are
+not interpretable, and the controlled conclusion rests on the three pairs among D2, D3 and D4. All three lose their
+agreement: D2 with D3 disagrees outright, and D2 with D4 and D3 with D4 agree only through competence. On ranks with
+competence removed, W falls to 0.267.
+
+\begin{table*}[t]
+    \centering
+    \caption{H1 on 81 models. Through competence: agrees on raw scores but not with competence controlled; not
+    interpretable: tau(D1, competence) is above 0.90.}
+    \label{tab:h1}
+    \footnotesize
+    \begin{tabular}{lrlrl}
+    \toprule
+    Pair & Kendall tau & Raw & Partial tau given competence & Controlled \\
+    \midrule
+    D1, D2 & 0.842 [0.711, 0.920] & agree & 0.303 [0.154, 0.539] & not interpretable \\
+    D1, D3 & 0.574 [0.407, 0.688] & agree & 0.076 [$-0.003$, 0.211] & not interpretable \\
+    D1, D4 & 0.801 [0.688, 0.867] & agree & 0.238 [0.106, 0.440] & not interpretable \\
+    D2, D3 & 0.480 [0.264, 0.631] & partial & 0.006 [$-0.107$, 0.171] & disagree \\
+    D2, D4 & 0.683 [0.504, 0.804] & agree & 0.090 [$-0.029$, 0.341] & through competence \\
+    D3, D4 & 0.553 [0.376, 0.680] & agree & 0.194 [0.003, 0.393] & through competence \\
+    \midrule
+    Kendall W & 0.872 [0.764, 0.921] & & 0.267 [0.189, 0.427] & on residual ranks \\
+    \bottomrule
+    \end{tabular}
+\end{table*}
+
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{othello_h1.pdf}
-    \caption{Rank agreement between diagnostics, raw and with competence controlled (81 models).}
+    \caption{Rank agreement between diagnostics, raw (left) and with competence controlled (right), 81 models.}
     \label{fig:h1}
 \end{figure}
 
-\textbf{H1.} Five of six pairs agree on raw scores and W is 0.872 [0.764, 0.921] (Fig.~\ref{fig:h1}). Every
-diagnostic follows competence (tau 0.968 for D1, 0.826 D2, 0.790 D4, 0.577 D3). D1 pairs are not interpretable
-after the control (preregistered rule), and the three pairs among D2, D3 and D4 all lose their agreement; W on
-competence residuals is 0.267 [0.189, 0.427].
+\textbf{Sensitivity.} On the 23 models with competence of at least 0.90, where tau(D1, competence) is 0.855 and the
+D1 pairs can be read, three pairs agree on raw scores (D1 with D2, D1 with D4, D2 with D4); after the control only
+D1 with D2 agrees (partial tau 0.532 [0.088, 0.838]), and W is 0.830 raw and 0.466 on residual ranks. The direction
+is the same as on the full zoo.
 
-\textbf{H2.} Mean disagreement is 0.089 against a seed noise floor of 0.028; no factor is significant after Holm
-correction (architecture $p=0.78$, scale $p=0.081$, training data $p=0.34$).
+\textbf{Answer to H1.} The diagnostics agree on which models are better, but mostly because they all measure how
+competent the model is. With competence controlled, the three that can be separated from it do not measure the same
+thing.
 
-\textbf{H3.} D1 does not predict relative fragility (0.150 [$-0.315$, 0.588]). Only D4 adds to D1 (partial
-$-0.554$ [$-0.734$, $-0.124$]), but no single diagnostic wins. In an exploratory analysis, championship trained
-models are both the most fragile and the least probe readable (Fig.~\ref{fig:d4}); within each training
-distribution the D4 link vanishes, and with training data controlled it is $+0.231$ [$-0.336$, 0.589].
+\subsection{Disagreement (H2)}
+\label{sec:h2}
+The mean disagreement per model is 0.089, against a seed noise floor of 0.028. No factor is significant after Holm
+correction (Table~\ref{tab:h2}), so under the preregistered rule the disagreement is consistent with noise. Scale
+comes closest: small models are ranked least consistently.
+
+\begin{table}[t]
+    \centering
+    \caption{H2 on 81 models: mean disagreement per level and the $F$ test of each factor in one regression ($F$ on 2
+    and 74 degrees of freedom). None is systematic.}
+    \label{tab:h2}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{l>{\raggedright\arraybackslash}p{2.6cm}rrr}
+    \toprule
+    Factor & Mean per level & $F$ & $p$ & Holm $p$ \\
+    \midrule
+    Architecture & transformer 0.094, LSTM 0.087, Mamba 0.084 & 0.25 & 0.783 & 0.783 \\
+    Scale & small 0.110, medium 0.083, large 0.073 & 3.79 & 0.027 & 0.081 \\
+    Training data & synthetic 0.075, champ.\ 0.102, mixed 0.089 & 1.81 & 0.171 & 0.341 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Predictive validity (H3)}
+\label{sec:h3}
+Relative fragility v2 has mean 0.015, standard deviation 0.070 and range $-0.124$ to 0.215; 52\% of the models are
+slightly better under the shifts than on their own games, so the spread H3 tries to predict is small. D1 alone does
+not predict it (Spearman 0.150 [$-0.315$, 0.588]). Among D2, D3 and D4, only D4 adds to D1 (Table~\ref{tab:h3}).
+D4 is the strongest, but its difference to D2 has the interval [$-1.114$, 0.098], so under the preregistered rule no
+single diagnostic wins. The result is the same without the model whose fragility v1 output motivated version 2
+($-0.561$ [$-0.738$, $-0.117$]) and on relative fragility v1 ($-0.540$ [$-0.693$, $-0.197$]). The raw Spearman
+correlations of all four diagnostics with the outcome are near 0 (0.15, 0.15, 0.13 and $-0.04$), so the D4 signal
+appears only after D1 is controlled, and the causal label adds nothing beyond D4 selectivity (partial $-0.049$
+[$-0.241$, 0.122]).
+
+\begin{table}[t]
+    \centering
+    \caption{H3 on 81 models, outcome relative fragility v2 (higher breaks more). Regression: least squares on D1, the
+    diagnostic, architecture and scale; the diagnostic's coefficient.}
+    \label{tab:h3}
+    \footnotesize
+    \setlength{\tabcolsep}{2.5pt}
+    \begin{tabular}{lrrl}
+    \toprule
+    & Partial Spearman given D1 & Coefficient & Adds \\
+    \midrule
+    D2 & 0.031 [$-0.297$, 0.438] & $-0.03$ [$-1.02$, 0.95] & no \\
+    D3 & 0.026 [$-0.373$, 0.386] & $-0.08$ [$-2.20$, 2.24] & no \\
+    D4 & $-0.554$ [$-0.734$, $-0.124$] & $-1.48$ [$-2.47$, $-0.60$] & yes \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Exploratory: where the D4 signal comes from}
+\label{sec:explore}
+The analyses in this subsection were decided after the preregistered results were read. Models trained on human
+championship games behave differently from the rest: their mean relative fragility is $+0.090$, against $-0.024$
+for synthetic and $-0.022$ for mixed training, and their mean D4 is the lowest (0.175, against 0.236 for synthetic).
+They break on random games (a mean drop of 0.190) and on rotated or reflected boards (0.14 to 0.18), while synthetic
+and mixed models barely change under any shift (Fig.~\ref{fig:shifts}): human games cover a narrow part of the game
+tree and are recorded in one orientation. Under forced detours every group is slightly more often legal than on its
+own line.
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.8\textwidth]{othello_shifts.pdf}
+    \caption{Mean drop in legal move rate per fragility v2 shift, by training distribution (exploratory). ``Other
+    distribution'' averages both other distributions for mixed models.}
+    \label{fig:shifts}
+\end{figure*}
+
+Within each training distribution the D4 link is not there: its sign flips between distributions, every interval
+includes 0, and with training data added as a control it is $+0.231$ (Table~\ref{tab:simpson},
+Fig.~\ref{fig:d4}). The same holds for D2 ($+0.153$ [$-0.346$, 0.555]) and D3 ($-0.259$ [$-0.502$, 0.078]). The
+preregistered result is computed as planned, but it is a between distribution effect, a Simpson's paradox:
+championship trained models are both less probe readable and more fragile, which is not the same as probing
+predicting fragility among comparable models.
+
+\begin{table}[t]
+    \centering
+    \caption{D4 partial Spearman with relative fragility v2 given D1, within and across training distributions
+    (exploratory).}
+    \label{tab:simpson}
+    \footnotesize
+    \begin{tabular}{lr}
+    \toprule
+    Models & value [95\% CI] \\
+    \midrule
+    all 81 (preregistered) & $-0.554$ [$-0.734$, $-0.124$] \\
+    within synthetic (27) & $+0.449$ [$-0.226$, 0.726] \\
+    within championship (27) & $-0.530$ [$-0.761$, 0.191] \\
+    within mixed (27) & $+0.341$ [$-0.221$, 0.666] \\
+    all 81, given D1 and distribution & $+0.231$ [$-0.336$, 0.589] \\
+    \bottomrule
+    \end{tabular}
+\end{table}
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=0.9\columnwidth]{othello_h3_d4.pdf}
-    \caption{D4 against relative fragility, by training distribution (exploratory).}
+    \caption{D4 against relative fragility v2, one point per model, by training distribution (exploratory).}
     \label{fig:d4}
 \end{figure}
 
-\section{Discussion}
-On Othello the diagnostics agree mainly because better models score higher on all of them; beyond competence they
-measure different things, and none reliably predicts fragility among comparable models. A board that can be read
-out is not a board that is used: every model is decodable but only 10 of 81 pass the causal check. Studies that
-report a single diagnostic on models of different quality mostly report competence.
+The fragility H3 predicts is concentrated in few models: all 20 models with relative fragility above 0.05 were
+trained on championship games, and the nine most fragile configurations are exactly the nine championship
+configurations, led by the three LSTM ones (mean relative fragility 0.20, 0.18 and 0.13). Leaving out any single
+configuration barely moves the D4 statistic ($-0.628$ to $-0.485$), but leaving out the three championship LSTM
+configurations brings its interval across 0, and without all nine championship configurations its sign flips
+(Table~\ref{tab:h3sens}). With nine configurations per distribution the within distribution estimates are imprecise,
+so the honest summary is that no diagnostic shows a reliable link to fragility among comparable Othello models.
 
-\section{Conclusion and Future Work}
-On navigation, our code already reproduces the next token rate and probe results of Vafa
-et al.~\cite{vafa2024evaluating} on their released models; we will repeat the analysis on 81 navigation models and
-test generalization (H4) on a held out program interpreter.
+\begin{table}[t]
+    \centering
+    \caption{Sensitivity of the D4 statistic to the most fragile configurations, ranked by mean relative fragility v2
+    (exploratory).}
+    \label{tab:h3sens}
+    \footnotesize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{3.6cm}rr}
+    \toprule
+    Left out & Kept & D4 partial given D1 \\
+    \midrule
+    none (preregistered) & 81 & $-0.554$ [$-0.734$, $-0.124$] \\
+    most fragile (LSTM medium, champ.) & 78 & $-0.521$ [$-0.722$, $-0.074$] \\
+    3 championship LSTMs & 72 & $-0.379$ [$-0.642$, 0.075] \\
+    5 most fragile & 66 & $-0.243$ [$-0.560$, 0.215] \\
+    all 9 championship & 54 & $+0.259$ [$-0.136$, 0.505] \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Exploratory: next move versus whole game}
+\label{sec:seqres}
+The teacher forced rate reproduces every model's D1 exactly, and in free play each model played at least 978
+distinct games of 1,000 (Table~\ref{tab:sequence}, Fig.~\ref{fig:sequence}). Three findings stand out.
+
+First, playing its own games is much harder than following real ones for models trained on human games. Free play is
+below the teacher forced rate by 0.03 for synthetic and 0.014 for mixed training, but by 0.24 for championship
+training, and lower for all 27 championship models: they are legal 81\% of the time on human test games but 58\% in
+their own games, with the first illegal move at move 7 on average. As soon as the random opening takes them off
+human lines they fail, the same weakness the fragility suite found.
+
+Second, the LSTMs lose track of the board over a long game. With the real history their legal rate is flat after the
+opening, but in their own games it falls steadily (for the large LSTM, from 0.74 at move 10 to 0.64 at move 30 and
+0.43 at move 58), while transformers and Mamba stay flat, so D1 understates how much worse LSTMs are at playing a
+whole game.
+
+Third, a whole game without an illegal move is rare: only the large transformers trained on synthetic or mixed games
+and the large Mamba models trained on synthetic games reach it in more than 10\% of games (at most 0.219 in the zoo,
+against 0.965 for the synthetic Othello GPT), and 40 of 81 models never manage one.
+
+The free play legal rate ranks models much as D1 does (Spearman 0.891 [0.730, 0.951] with D1, 0.884 [0.724, 0.946]
+with competence) and is not related to relative fragility ($-0.173$ [$-0.594$, 0.371]). With D1 controlled, D4 is
+the only diagnostic that relates to the full game rate (partial Spearman 0.324 [0.136, 0.512]; D2 0.064, D3
+$-0.001$, both intervals including 0), which fits the causal check: models whose board can be read and used play
+cleaner whole games. Whole game measures do not change the H1 to H3 answers, but they show two failures the next
+move unit misses.
+
+\begin{table*}[t]
+    \centering
+    \caption{Whole game measures (exploratory): means over 9 models per architecture and scale and 27 per training
+    distribution. Full games: share of games with every top move legal. First error: mean move number of the first
+    illegal top move, over games that have one.}
+    \label{tab:sequence}
+    \footnotesize
+    \begin{tabular}{llrrrrrr}
+    \toprule
+    & & \multicolumn{2}{c}{Teacher forced} & \multicolumn{4}{c}{Free play (own moves)} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-8}
+    Architecture & Scale & legal (D1) & full games & legal & full games & errors per game & first error \\
+    \midrule
+    Transformer & small  & 0.843 & 0.000 & 0.777 & 0.000 & 13.0 & 11.6 \\
+    Transformer & medium & 0.917 & 0.041 & 0.867 & 0.031 &  7.7 & 18.1 \\
+    Transformer & large  & 0.933 & 0.116 & 0.890 & 0.112 &  6.4 & 22.8 \\
+    LSTM        & small  & 0.584 & 0.000 & 0.416 & 0.000 & 33.8 &  5.8 \\
+    LSTM        & medium & 0.690 & 0.000 & 0.491 & 0.000 & 29.5 &  8.4 \\
+    LSTM        & large  & 0.780 & 0.000 & 0.639 & 0.000 & 20.9 & 11.0 \\
+    Mamba       & small  & 0.837 & 0.001 & 0.788 & 0.001 & 12.3 & 10.9 \\
+    Mamba       & medium & 0.899 & 0.015 & 0.838 & 0.012 &  9.4 & 16.7 \\
+    Mamba       & large  & 0.925 & 0.079 & 0.865 & 0.075 &  7.9 & 22.4 \\
+    \midrule
+    \multicolumn{2}{l}{trained on synthetic}    & 0.832 & 0.060 & 0.803 & 0.047 & 11.4 & 18.2 \\
+    \multicolumn{2}{l}{trained on championship} & 0.814 & 0.003 & 0.578 & 0.001 & 24.5 &  7.2 \\
+    \multicolumn{2}{l}{trained on mixed}        & 0.823 & 0.021 & 0.809 & 0.030 & 11.1 & 17.2 \\
+    \midrule
+    \multicolumn{2}{l}{Othello GPT synthetic}    & 0.9996 & 0.981 & 0.999 & 0.965 & 0.04 & 54.6 \\
+    \multicolumn{2}{l}{Othello GPT championship} & 0.896 & 0.019 & 0.949 & 0.470 & 3.0 & 27.8 \\
+    \bottomrule
+    \end{tabular}
+\end{table*}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.92\textwidth]{othello_sequence.pdf}
+    \caption{Share of top moves that are legal at each move number, with the real history (left) and in games the
+    model plays itself (right); mean over the 9 models of each architecture and scale (exploratory).}
+    \label{fig:sequence}
+\end{figure*}
+
+\subsection{Navigation}
+\label{sec:navres}
+\textbf{Reproduction.} Before training any navigation model we ran our own D1 and probe code on the three released
+models of Vafa et al.~\cite{vafa2024evaluating}. It gives next token rates of 0.9996 to 1.0000 against a published
+1.00, our D1 computation equals theirs on the same routes, and linear probes of the current state, with their recipe, reach
+0.909, 0.914 and 0.992 against the published 0.91, 0.92 and 0.99.
+
+% NAVIGATION RESULTS: added after the preregistered cutoff of November 22, 2026, in the same order as Othello:
+% the zoo (admission, training results), H1 (table and figure), H2, H3, the preregistered training distribution
+% control, the whole route measure. If not every architecture is complete on November 22, state which are
+% analyzed (G12); if none is complete, keep the reproduction above and say that navigation is reported as
+% incomplete.
+\textbf{Zoo.} \emph{[To be completed after the November 22, 2026 cutoff: admission and training results of the 81
+navigation models, then H1 to H3 and the preregistered training distribution control, in the order of the Othello
+results above.]}
+
+% ======================================================================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\textbf{Why published verdicts disagree.} Published claims for and against world models in Othello rely on
+different diagnostics, and our results suggest how they can disagree without either being wrong in its own terms:
+the diagnostics share a large common factor, competence, and beyond it they measure different things. A study that
+reports one diagnostic on models of different quality will mostly be reporting how good the models are.
+
+\textbf{What each diagnostic licenses.} D1 measures competence and little more. D2 adds whether predictions depend
+on the board rather than the move order, but its distinction error shows that even good models often fail to
+separate boards with different legal moves. D3, at our preregistered protocol, gives small gaps on the zoo and
+partly rewards an occupancy shortcut that the move list gives away. D4 shows that the board is decodable in every
+model, while the causal check shows that only a few models, almost all trained on synthetic games, use it.
+``Decodable'' is therefore not the same claim as ``has a world model'', as Li et al.~\cite{li2023othello} and
+Belinkov~\cite{belinkov2022probing} warned.
+
+\textbf{Predictive validity needs comparable models.} On Othello the fragility suite mostly separates the
+championship trained models from the rest, so any diagnostic that also separates them looks predictive. The
+preregistered test was passed by D4, but the link disappears within each training distribution. Evaluations of
+world model diagnostics should therefore report predictive validity within training distributions, not only across
+them; we preregistered exactly this control for navigation before any navigation score existed.
+
+\textbf{Recommendations.} Report several diagnostics rather than one; control for competence before reading
+agreement as shared meaning; compare models within a training distribution before claiming that a diagnostic
+predicts robustness; pair probes with a control task and a causal check; and add a whole game measure, because the
+next move unit hides both drift over long sequences and failure off the training distribution.
+
+\textbf{Limitations.} The 81 models are 27 configurations, so intervals are honest but wide, and within distribution
+analyses rest on nine configurations each. D2 uses next move continuations only, a simplification of Vafa et
+al.~\cite{vafa2024evaluating}, and its same board pairs come mostly from the opening. D3 measures help from
+pretraining with 64 examples, not closeness to a perfect answer. Fragility is small for most models, so H3 rests on
+the minority of fragile ones. The undisturbed self play run that the fragility detours are compared with plays the
+model's best legal move, so its games collapse into at most four distinct games; we found this after scoring, kept
+the preregistered suite unchanged, and the navigation suite draws its undisturbed games from the model's own
+probabilities. The mixed distribution trains on about 85\% synthetic games. In training a model reads at most 58
+tokens, so no model is trained to predict move 60. All models share a modest budget of 5,000 steps, the LSTMs are
+the weakest family under it, and Mamba runs without its optimized kernels; the best zoo models remain below the
+published Othello GPT. Finally, the whole game measures were added after the Othello results were read and are
+exploratory here, though preregistered for navigation.
+
+% ======================================================================================================================
+\section{Conclusion}
+On Othello, the four world model diagnostics agree mainly because they all track competence, none of them reliably
+predicts when a model will break, and the one link to fragility comes from the training data. In detail, on 81
+models and under a preregistered analysis: the diagnostics agree on which models are better, but almost entirely
+through competence (H1); their remaining disagreement is not systematic in architecture, scale or training data
+(H2); and no single diagnostic wins, with the representation probe's added value traced to differences between
+training distributions (H3). The same pipeline, with its rules frozen in advance, runs on navigation, where our code
+already reproduces the published results, and the held out interpreter will test whether these findings generalize
+(H4). Any new world model diagnostic can be added through the common interface and judged against these four on
+identical ground truth.
+
+\section*{Code and Data Availability}
+Code, data references, preregistration, result files and tags are at
+\url{https://github.com/nik-hill-323/fall-2026-group6}. A plain language summary of every Othello result is in
+\texttt{results/analysis/othello/RESULTS.md}.
 
 \section*{Acknowledgment}
 We thank the GWU Data Science Program for compute on AWS.
