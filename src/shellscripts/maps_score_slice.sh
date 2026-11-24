@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Score navigation models: D1, D2, D4, the fragility suite and D3, one model after another (Amendment 5).
+# Score navigation models: D1, D2, D4, the fragility suite, the whole route measure (G9) and D3, one model after
+# another (Amendment 5).
 #
 #   bash src/shellscripts/maps_score_slice.sh pilots                     # the 9 pilots and the 3 anchors
 #   bash src/shellscripts/maps_score_slice.sh <slice>                    # a zoo slice of src/docs/maps_score_slices.csv
 #   bash src/shellscripts/maps_score_slice.sh <slice> --dry_run          # only print the plan
 #   bash src/shellscripts/maps_score_slice.sh <slice> --only <model_id>  # one model
 #   JOBS="D1 D4" bash src/shellscripts/maps_score_slice.sh pilots        # only some jobs
+#   JOBS=G9 bash src/shellscripts/maps_score_slice.sh <slice>            # only the whole route measure
 #   PY=.venv/bin/python bash src/shellscripts/maps_score_slice.sh <slice>  # another Python (default: python)
 #
 # What it does for every model:
@@ -21,9 +23,10 @@
 #   4. writes how long every job took to outputs/score_logs/timings.csv (to split the zoo by GPU hours).
 #
 # Results: zoo models and anchors in results/D1_next_token, D2_state_equiv, D3_inductive_bias, D4_probing and
-# fragility_maps; pilots in results/pilot_scoring/<same folders> (G2: never in any analysis).
+# fragility_maps, the whole route measure in results/whole_route_maps; pilots in results/pilot_scoring/<same
+# folders> (G2: never in any analysis).
 # Jobs run cheapest first, D3 last (PySR makes it the slowest). The two 1.5B anchors run D4 with
-# --layers_per_pass 8 --chunk 32 (memory only; the probes are the same).
+# --layers_per_pass 8 --chunk 32 (memory only; the probes are the same) and G9 with --batch 32 (memory only).
 #
 # Run from the repo root of a clean, up to date main, inside tmux, with the wmconcord env active and a valid AWS
 # login (aws sso login --use-device-code).
@@ -48,7 +51,7 @@ S3="${S3_NAV:-s3://dats-capstone/shared/group6/navigation}"
 VAFA_WEIGHTS="${WMC_VAFA_WEIGHTS:-$HOME/artifacts/vafa_weights}"
 PY="${PY:-python}"
 AWS="${AWS:-aws}"
-JOBS="${JOBS:-D1 D2 D4 fragility D3}"
+JOBS="${JOBS:-D1 D2 D4 fragility G9 D3}"
 DISTS="shortest_paths noisy_shortest_paths random_walks"
 BIG_ANCHORS="maps_vafa_noisy_shortest_paths maps_vafa_random_walks"
 
@@ -61,7 +64,7 @@ if [[ ! -f src/diagnostics/navigation.py || ! -f src/fragility/maps.py ]]; then
   exit 1
 fi
 for j in $JOBS; do
-  [[ "$j" =~ ^(D1|D2|D3|D4|fragility)$ ]] || { echo "unknown job $j (use D1 D2 D3 D4 fragility)"; exit 1; }
+  [[ "$j" =~ ^(D1|D2|D3|D4|fragility|G9)$ ]] || { echo "unknown job $j (use D1 D2 D3 D4 fragility G9)"; exit 1; }
 done
 
 # ---- the models of this slice ------------------------------------------------
@@ -114,6 +117,7 @@ result_file() {   # job model_id
     D3) echo "$base/D3_inductive_bias/$2.json" ;;
     D4) echo "$base/D4_probing/$2.json" ;;
     fragility) echo "$base/fragility_maps/$2.json" ;;
+    G9) echo "$base/whole_route_maps/$2.json" ;;
   esac
 }
 
@@ -145,6 +149,10 @@ if job == "fragility":
     rel = d.get("relative_fragility")
     print(f"fragility {d['fragility']:+.4f}  relative {rel if rel is None else round(rel, 4)}  "
           f"in distribution {d['in_distribution_legal_rate']:.4f}")
+elif job == "G9" and d.get("status") == "ok":
+    tf, fp = d["teacher_forced"], d["free_play"]
+    print(f"teacher forced all legal {tf['share_routes_all_legal']:.4f}  free play no illegal "
+          f"{fp['share_drives_no_illegal']:.4f}  reached {fp['share_reached_destination']:.4f}")
 elif d.get("status") == "ok":
     extra = ""
     if job == "D4" and "causal" in d["details"]:
@@ -199,12 +207,16 @@ for model_id in "${models[@]}"; do
     if [[ "$job" == "D4" && " $BIG_ANCHORS " == *" $model_id "* ]]; then
       extra=(--layers_per_pass 8 --chunk 32)
     fi
+    if [[ "$job" == "G9" && " $BIG_ANCHORS " == *" $model_id "* ]]; then
+      extra=(--batch 32)
+    fi
     case "$job" in
       D1) cmd=("$PY" src/diagnostics/d1/next_token.py --models "$model_id" --save) ;;
       D2) cmd=("$PY" src/diagnostics/d2/state_equiv.py --models "$model_id" --save) ;;
       D3) cmd=("$PY" src/diagnostics/d3/inductive_bias.py --models "$model_id" --save) ;;
       D4) cmd=("$PY" src/diagnostics/d4/representation_probe.py --models "$model_id" --save "${extra[@]}") ;;
       fragility) cmd=("$PY" src/fragility/maps.py --models "$model_id" --save) ;;
+      G9) cmd=("$PY" src/analysis/whole_route_maps.py --models "$model_id" --save "${extra[@]}") ;;
     esac
     if [[ "$DRY_RUN" == "--dry_run" ]]; then
       echo "[plan] $model_id $job  ${cmd[*]}  -> $out"
@@ -248,8 +260,8 @@ fi
 if [[ "$DRY_RUN" != "--dry_run" ]]; then
   echo "next: commit only this slice's result files, on a branch, and open a PR:"
   if [[ "$SLICE" == "pilots" ]]; then
-    echo "  git add results/pilot_scoring results/D1_next_token results/D2_state_equiv results/D3_inductive_bias results/D4_probing results/fragility_maps && git status"
+    echo "  git add results/pilot_scoring results/D1_next_token results/D2_state_equiv results/D3_inductive_bias results/D4_probing results/fragility_maps results/whole_route_maps && git status"
   else
-    echo "  git add results/D1_next_token results/D2_state_equiv results/D3_inductive_bias results/D4_probing results/fragility_maps && git status"
+    echo "  git add results/D1_next_token results/D2_state_equiv results/D3_inductive_bias results/D4_probing results/fragility_maps results/whole_route_maps && git status"
   fi
 fi
