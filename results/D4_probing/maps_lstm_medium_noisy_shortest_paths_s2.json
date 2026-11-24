@@ -1,0 +1,202 @@
+{
+  "model_id": "maps_lstm_medium_noisy_shortest_paths_s2",
+  "diagnostic": "D4",
+  "method": "linear probe of the current intersection (4,579 classes) per layer, navigation (Amendment 5 G7), selectivity over a Hewitt and Liang control task (type = token just read + turns so far); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit to a neighbouring intersection vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.023161195199790957,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 1,
+    "best_layer_depth": 0.3333,
+    "n_layers": 6,
+    "probe_acc_by_layer": [
+      0.17223,
+      0.16381,
+      0.08701,
+      0.04188,
+      0.0469,
+      0.07008
+    ],
+    "control_acc_by_layer": [
+      0.15293,
+      0.14065,
+      0.10993,
+      0.06939,
+      0.1058,
+      0.12917
+    ],
+    "selectivity_by_layer": [
+      0.0193,
+      0.02316,
+      -0.02292,
+      -0.02751,
+      -0.0589,
+      -0.05909
+    ],
+    "selectivity_by_layer_choose": [
+      0.03146,
+      0.03605,
+      -0.01732,
+      -0.02519,
+      -0.05539,
+      -0.04985
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      -0.00842,
+      -0.08522,
+      -0.13034,
+      -0.12532,
+      -0.10214
+    ],
+    "start_baseline_acc": 0.01866,
+    "destination_baseline_acc": 0.01866,
+    "gain_over_start_by_layer": [
+      0.15356,
+      0.14514,
+      0.06835,
+      0.02322,
+      0.02824,
+      0.05142
+    ],
+    "gain_over_destination_by_layer": [
+      0.15356,
+      0.14514,
+      0.06835,
+      0.02322,
+      0.02824,
+      0.05142
+    ],
+    "epochs": 2,
+    "n_classes": 4579,
+    "distribution": "noisy_shortest_paths",
+    "n_fit_routes": 10000,
+    "n_choose_routes": 1000,
+    "n_test_routes": 1000,
+    "n_positions": {
+      "fit": 529594,
+      "choose": 53400,
+      "test": 53581
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 1,
+      "selectivity_at_best": 0.01672,
+      "probe_acc_by_layer": [
+        0.20811,
+        0.21347,
+        0.14294,
+        0.07365,
+        0.09246,
+        0.10957
+      ],
+      "control_acc_by_layer": [
+        0.19878,
+        0.19675,
+        0.15018,
+        0.11381,
+        0.18988,
+        0.19947
+      ],
+      "selectivity_by_layer": [
+        0.00933,
+        0.01672,
+        -0.00724,
+        -0.04016,
+        -0.09742,
+        -0.0899
+      ],
+      "selectivity_by_layer_choose": [
+        0.0211,
+        0.03021,
+        0.0056,
+        -0.0335,
+        -0.09236,
+        -0.07551
+      ],
+      "gain_over_linear_by_layer": [
+        0.03589,
+        0.04966,
+        0.05593,
+        0.03176,
+        0.04556,
+        0.03949
+      ]
+    },
+    "causal": {
+      "causal_score": 0.14378,
+      "causal_score_ci": [
+        0.11257,
+        0.17395
+      ],
+      "causal_label": "not decodable",
+      "boundary_acc_edit": 0.58902,
+      "boundary_acc_random": 0.44523,
+      "boundary_acc_none": 0.44782,
+      "edit_success_rate": 1.0,
+      "edit_success_by_layer": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "target_read_by_layer": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "edit_steps_by_layer": {
+        "1": 17.827,
+        "2": 19.893,
+        "3": 22.034,
+        "4": 20.597,
+        "5": 18.987
+      },
+      "edit_size_by_layer": {
+        "1": 13.98635,
+        "2": 15.62914,
+        "3": 17.30429,
+        "4": 16.14517,
+        "5": 14.90435
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "best_layer": 1,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.927
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "maps",
+  "arch": "lstm",
+  "scale": "medium",
+  "distribution": "noisy_shortest_paths",
+  "seed": 2,
+  "run_id": "maps_lstm_medium_noisy_shortest_paths_s2_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "b66e3e9",
+    "time_utc": "2026-11-23T02:17:24Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-27",
+    "runtime_sec": 28.5,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
