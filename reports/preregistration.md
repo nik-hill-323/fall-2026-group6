@@ -954,3 +954,50 @@ Files: `reports/preregistration.md`, `src/fragility/maps.py`, `src/docs/maps_fra
 `src/tests/test_maps_fragility.py`, `results/prereg/maps_fragility_pilot_rule.json`,
 `src/docs/maps_score_slices.csv`. After merge: `git tag prereg-v1.6 && git tag maps-fragility-v1 && git push origin
 prereg-v1.6 maps-fragility-v1`.
+
+### Amendment 7 (prereg-v1.7), 2026-11-24: the interpreter domain and H4 are dropped
+
+Written after the navigation zoo was scored and before any H1 to H3 statistic was computed for navigation. When this
+was written, result files for all four navigation slices had been pushed to GitHub and merged to main; the scoring
+logs print each model's score as it finishes, but no correlation, regression, summary across models or other H
+statistic had been computed for navigation. This amendment changes nothing about Othello or navigation, so no
+navigation or Othello result can have motivated it. It records a decision taken on 2026-11-20, before any navigation
+zoo model was scored, and already told to the instructor in class. Frozen with the git tag `prereg-v1.7`. No earlier
+text is deleted; this amendment says how it is read from now on.
+
+#### I1. What is dropped
+
+* **The interpreter domain.** Section 1 lists three domains (Othello, navigation, interpreter) and names the
+  interpreter as the H4 held out domain. The study now has two domains, Othello and navigation.
+* **Reason.** Building the interpreter generator, freezing its fragility suite, training 81 models and scoring them
+  to the standard of Amendments 1 to 6 does not fit before the final presentation on 2026-12-08; the team chose to
+  finish navigation fully (Amendments 5 and 6) instead of running both domains with less care.
+* **Nothing about the interpreter was ever seen.** No interpreter generator, fragility suite or model was built,
+  trained or scored. There is no interpreter result of any kind.
+
+#### I2. H4 is not tested
+
+* Section 4, H4, and the last line of Amendment 5, G10 ("H4 is unchanged"), are not tested. No replacement test is
+  added. The paper and the report state that H4 was preregistered and not tested, and why (I1).
+* H1 to H3 run per domain, on Othello and on navigation, exactly as Sections 4 and Amendments 1 to 6 say. The two
+  domains are reported side by side; no generalization rule is applied to them, and no claim of generalization to a
+  held out domain is made.
+* Section 4, H1, last bullet: "the paper's weight moves to H3 and H4" is read as "the paper's weight moves to H3".
+* Section 1, reference models: "never enter the H1 to H4 statistics" is read as "never enter the H1 to H3
+  statistics"; the same holds for the navigation anchors (Amendment 5, G11).
+
+#### I3. Planned runs (Section 5)
+
+* The planned runs are the 81 Othello and the 81 navigation zoo models, the two Othello GPT anchors and the three
+  navigation anchors (G11). Section 5 ("Every planned run has a score or a written reason") applies to these.
+* The 81 interpreter rows of `src/docs/models.csv` and the 324 interpreter rows of `src/docs/run_matrix.csv` are not
+  planned runs and are not reported as missing. A separate pull request after this tag removes them, together with
+  the interpreter entries of `src/component/run_matrix.py` (`DOMAINS`, its training distributions,
+  `HELD_OUT_DOMAIN`); no Othello or navigation row or setting changes.
+
+#### I4. What does not change
+
+Sections 1 to 6 and Amendments 1 to 6 stay in force for Othello and navigation, including the navigation cutoff of
+Amendment 6, H1. No diagnostic, fragility suite, admission rule, decision rule or analysis changes.
+
+Files: `reports/preregistration.md`. After merge: `git tag prereg-v1.7 && git push origin prereg-v1.7`.
