@@ -1,0 +1,192 @@
+{
+  "model_id": "maps_mamba_medium_noisy_shortest_paths_s1",
+  "diagnostic": "D4",
+  "method": "linear probe of the current intersection (4,579 classes) per layer, navigation (Amendment 5 G7), selectivity over a Hewitt and Liang control task (type = token just read + turns so far); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit to a neighbouring intersection vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.2454974711184935,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 4,
+    "best_layer_depth": 0.8333,
+    "n_layers": 6,
+    "probe_acc_by_layer": [
+      0.20808,
+      0.32026,
+      0.36765,
+      0.39893,
+      0.394,
+      0.26435
+    ],
+    "control_acc_by_layer": [
+      0.11952,
+      0.14824,
+      0.1556,
+      0.15455,
+      0.1485,
+      0.11431
+    ],
+    "selectivity_by_layer": [
+      0.08856,
+      0.17202,
+      0.21205,
+      0.24438,
+      0.2455,
+      0.15003
+    ],
+    "selectivity_by_layer_choose": [
+      0.09558,
+      0.18006,
+      0.22107,
+      0.2564,
+      0.26361,
+      0.1688
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.11219,
+      0.15957,
+      0.19085,
+      0.18592,
+      0.05627
+    ],
+    "start_baseline_acc": 0.01866,
+    "destination_baseline_acc": 0.01866,
+    "gain_over_start_by_layer": [
+      0.18941,
+      0.3016,
+      0.34899,
+      0.38027,
+      0.37534,
+      0.24568
+    ],
+    "gain_over_destination_by_layer": [
+      0.18941,
+      0.3016,
+      0.34899,
+      0.38027,
+      0.37534,
+      0.24568
+    ],
+    "epochs": 2,
+    "n_classes": 4579,
+    "distribution": "noisy_shortest_paths",
+    "n_fit_routes": 10000,
+    "n_choose_routes": 1000,
+    "n_test_routes": 1000,
+    "n_positions": {
+      "fit": 529594,
+      "choose": 53400,
+      "test": 53581
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 4,
+      "selectivity_at_best": 0.23995,
+      "probe_acc_by_layer": [
+        0.26278,
+        0.35458,
+        0.39626,
+        0.42157,
+        0.42677,
+        0.35531
+      ],
+      "control_acc_by_layer": [
+        0.17372,
+        0.20746,
+        0.20205,
+        0.19998,
+        0.18682,
+        0.15252
+      ],
+      "selectivity_by_layer": [
+        0.08906,
+        0.14712,
+        0.19421,
+        0.22159,
+        0.23995,
+        0.2028
+      ],
+      "selectivity_by_layer_choose": [
+        0.09751,
+        0.15852,
+        0.20251,
+        0.23618,
+        0.26026,
+        0.23294
+      ],
+      "gain_over_linear_by_layer": [
+        0.0547,
+        0.03432,
+        0.02861,
+        0.02264,
+        0.03277,
+        0.09097
+      ]
+    },
+    "causal": {
+      "causal_score": 0.37655,
+      "causal_score_ci": [
+        0.34696,
+        0.4033
+      ],
+      "causal_label": "decodable and causal",
+      "boundary_acc_edit": 0.72075,
+      "boundary_acc_random": 0.3442,
+      "boundary_acc_none": 0.33512,
+      "edit_success_rate": 1.0,
+      "edit_success_by_layer": {
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "target_read_by_layer": {
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0
+      },
+      "edit_steps_by_layer": {
+        "3": 14.544,
+        "4": 9.714,
+        "5": 12.981
+      },
+      "edit_size_by_layer": {
+        "3": 11.37191,
+        "4": 7.66267,
+        "5": 10.17873
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        3,
+        4,
+        5
+      ],
+      "best_layer": 4,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.927
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "maps",
+  "arch": "mamba",
+  "scale": "medium",
+  "distribution": "noisy_shortest_paths",
+  "seed": 1,
+  "run_id": "maps_mamba_medium_noisy_shortest_paths_s1_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "b66e3e9",
+    "time_utc": "2026-11-23T06:38:15Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-123",
+    "runtime_sec": 87.7,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
