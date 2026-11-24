@@ -1,0 +1,880 @@
+{
+  "model_id": "maps_lstm_medium_shortest_paths_s1",
+  "diagnostic": "D3",
+  "method": "inductive bias probe (Vafa et al. 2025), navigation (Amendment 5 G6): balanced accuracy of the adapted model minus that of a random weight model of the same architecture, tasks T1 (destination within 10 turns), T2 (within 823.9 m), T4 (east of the destination), higher is better",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.00014602545618914843,
+  "score_std": 0.014870948559692019,
+  "score_ci": null,
+  "details": {
+    "gap_by_seed": [
+      -0.007554487113598037,
+      0.017288072090276423,
+      -0.00929550860811094
+    ],
+    "gap_by_task": {
+      "T1": -0.012445887445887446,
+      "T2": 0.001241759967933631,
+      "T4": 0.01164220384652126
+    },
+    "pretrained_balanced_accuracy": 0.6096491808543748,
+    "random_balanced_accuracy": 0.6095031553981857,
+    "shortcut_agreement_by_task_pretrained": {
+      "T1": 0.5454323847984175,
+      "T2": 0.5762845820742996,
+      "T4": 0.8191186098077726
+    },
+    "shortcut_agreement_by_task_random": {
+      "T1": 0.6853720254467088,
+      "T2": 0.6831039502415139,
+      "T4": 0.823349960066507
+    },
+    "data_shortcut_balanced_accuracy": {
+      "T1": 0.5264610389610389,
+      "T2": 0.5208079429304994,
+      "T4": 0.8754111327691482
+    },
+    "positive_rate_adapt": [
+      0.4375,
+      0.4688,
+      0.4844
+    ],
+    "positive_rate_test": [
+      0.44,
+      0.438,
+      0.453
+    ],
+    "cells": [
+      {
+        "task": "T1",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.5276785714285714,
+        "random_balanced_accuracy": 0.5568993506493507,
+        "pretrained_accuracy": 0.546,
+        "random_accuracy": 0.558,
+        "pretrained_shortcut_agreement": 0.5346365171920605,
+        "random_shortcut_agreement": 0.6923517496230237,
+        "gap": -0.02922077922077926
+      },
+      {
+        "task": "T2",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.536289994962544,
+        "random_balanced_accuracy": 0.5314922244430361,
+        "pretrained_accuracy": 0.549,
+        "random_accuracy": 0.532,
+        "pretrained_shortcut_agreement": 0.5896965085246697,
+        "random_shortcut_agreement": 0.6298440636096958,
+        "gap": 0.004797770519507916
+      },
+      {
+        "task": "T4",
+        "seed": 0,
+        "pretrained_balanced_accuracy": 0.7499788127898108,
+        "random_balanced_accuracy": 0.7482192654293336,
+        "pretrained_accuracy": 0.752,
+        "random_accuracy": 0.748,
+        "pretrained_shortcut_agreement": 0.8120912483649935,
+        "random_shortcut_agreement": 0.8300433201732806,
+        "gap": 0.0017595473604772316
+      },
+      {
+        "task": "T1",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.551948051948052,
+        "random_balanced_accuracy": 0.5349837662337662,
+        "pretrained_accuracy": 0.559,
+        "random_accuracy": 0.549,
+        "pretrained_shortcut_agreement": 0.5002750470815887,
+        "random_shortcut_agreement": 0.6792303859072347,
+        "gap": 0.016964285714285765
+      },
+      {
+        "task": "T2",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.5454955394140302,
+        "random_balanced_accuracy": 0.5370009262418953,
+        "pretrained_accuracy": 0.535,
+        "random_accuracy": 0.528,
+        "pretrained_shortcut_agreement": 0.5821643618077152,
+        "random_shortcut_agreement": 0.7403670129469111,
+        "gap": 0.008494613172134846
+      },
+      {
+        "task": "T4",
+        "seed": 1,
+        "pretrained_balanced_accuracy": 0.7618618109616572,
+        "random_balanced_accuracy": 0.7354564935772485,
+        "pretrained_accuracy": 0.765,
+        "random_accuracy": 0.733,
+        "pretrained_shortcut_agreement": 0.83311733246933,
+        "random_shortcut_agreement": 0.8129932519730079,
+        "gap": 0.026405317384408655
+      },
+      {
+        "task": "T1",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.5225649350649351,
+        "random_balanced_accuracy": 0.5476461038961039,
+        "pretrained_accuracy": 0.528,
+        "random_accuracy": 0.546,
+        "pretrained_shortcut_agreement": 0.6013855901216032,
+        "random_shortcut_agreement": 0.6845339408098681,
+        "gap": -0.025081168831168843
+      },
+      {
+        "task": "T2",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.5396659029233494,
+        "random_balanced_accuracy": 0.5492330067111912,
+        "pretrained_accuracy": 0.546,
+        "random_accuracy": 0.561,
+        "pretrained_shortcut_agreement": 0.5569928758905137,
+        "random_shortcut_agreement": 0.6791007741679349,
+        "gap": -0.009567103787841869
+      },
+      {
+        "task": "T4",
+        "seed": 2,
+        "pretrained_balanced_accuracy": 0.7513590081964237,
+        "random_balanced_accuracy": 0.7445972614017458,
+        "pretrained_accuracy": 0.756,
+        "random_accuracy": 0.743,
+        "pretrained_shortcut_agreement": 0.8121472485889943,
+        "random_shortcut_agreement": 0.8270133080532323,
+        "gap": 0.006761746794677892
+      }
+    ],
+    "symbolic_regression": {
+      "t4_recovery_rate_pretrained": 0.0,
+      "t4_recovery_rate_random": 0.0,
+      "t4_start_shortcut_rate_pretrained": 1.0,
+      "t4_start_shortcut_rate_random": 1.0,
+      "fit_r2_by_task_pretrained": {
+        "T1": 0.1282,
+        "T2": 0.2077,
+        "T4": 0.5141
+      },
+      "fit_r2_by_task_random": {
+        "T1": 0.1052,
+        "T2": 0.0569,
+        "T4": 0.4325
+      },
+      "linear_r2_by_task_pretrained": {
+        "T1": 0.2322,
+        "T2": 0.3154,
+        "T4": 0.6165
+      },
+      "linear_r2_by_task_random": {
+        "T1": 0.1767,
+        "T2": 0.1132,
+        "T4": 0.5215
+      },
+      "settings": {
+        "binary_operators": [
+          "+",
+          "-",
+          "*"
+        ],
+        "unary_operators": [],
+        "maxsize": 15,
+        "niterations": 40,
+        "populations": 15,
+        "select_k_features": null,
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "deterministic": true,
+        "inputs": [
+          "cur_lat",
+          "cur_lon",
+          "start_lat",
+          "start_lon",
+          "dest_lat",
+          "dest_lon",
+          "turns"
+        ],
+        "standardized": "over the test positions",
+        "contrast_percentiles": [
+          10,
+          90
+        ],
+        "target": "adapted model margin logit(yes) - logit(no)"
+      },
+      "cells": [
+        {
+          "model": "pretrained",
+          "task": "T1",
+          "seed": 0,
+          "equation": "-1.1826031 - start_lon",
+          "complexity": 3,
+          "top_input": "start_lon",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 2.8195,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": -2.8195,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon"
+          ],
+          "fit_r2": 0.1881,
+          "linear_r2": 0.3146,
+          "law_agreement": 0.4929
+        },
+        {
+          "model": "pretrained",
+          "task": "T1",
+          "seed": 1,
+          "equation": "-0.87376815 - start_lon",
+          "complexity": 3,
+          "top_input": "start_lon",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 2.8195,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": -2.8195,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon"
+          ],
+          "fit_r2": 0.1614,
+          "linear_r2": 0.2823,
+          "law_agreement": 0.5002
+        },
+        {
+          "model": "pretrained",
+          "task": "T1",
+          "seed": 2,
+          "equation": "start_lon * turns",
+          "complexity": 3,
+          "top_input": "start_lon",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 2.165,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 2.0081
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": -0.0
+          },
+          "inputs_used": [
+            "start_lon",
+            "turns"
+          ],
+          "fit_r2": 0.0352,
+          "linear_r2": 0.0996,
+          "law_agreement": 0.4869
+        },
+        {
+          "model": "pretrained",
+          "task": "T2",
+          "seed": 0,
+          "equation": "-1.5584173 - start_lon",
+          "complexity": 3,
+          "top_input": "start_lon",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 2.8195,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": -2.8195,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon"
+          ],
+          "fit_r2": 0.1786,
+          "linear_r2": 0.3222,
+          "law_agreement": 0.5075
+        },
+        {
+          "model": "pretrained",
+          "task": "T2",
+          "seed": 1,
+          "equation": "start_lon * -2.423579",
+          "complexity": 3,
+          "top_input": "start_lon",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 6.8334,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": -6.8334,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon"
+          ],
+          "fit_r2": 0.2979,
+          "linear_r2": 0.4072,
+          "law_agreement": 0.5327
+        },
+        {
+          "model": "pretrained",
+          "task": "T2",
+          "seed": 2,
+          "equation": "start_lon * -1.7023978",
+          "complexity": 3,
+          "top_input": "start_lon",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 4.8,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": -4.8,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon"
+          ],
+          "fit_r2": 0.1466,
+          "linear_r2": 0.2169,
+          "law_agreement": 0.5327
+        },
+        {
+          "model": "pretrained",
+          "task": "T4",
+          "seed": 0,
+          "equation": "(start_lon * 3.6357949) - dest_lon",
+          "complexity": 5,
+          "top_input": "start_lon",
+          "recovered": false,
+          "start_shortcut": true,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 10.2513,
+            "dest_lat": 0.0,
+            "dest_lon": 2.7488,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 10.2513,
+            "dest_lat": 0.0,
+            "dest_lon": -2.7488,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon",
+            "dest_lon"
+          ],
+          "fit_r2": 0.5163,
+          "linear_r2": 0.6102,
+          "law_agreement": 0.7148
+        },
+        {
+          "model": "pretrained",
+          "task": "T4",
+          "seed": 1,
+          "equation": "(start_lon - dest_lon) * 3.5227985",
+          "complexity": 5,
+          "top_input": "start_lon",
+          "recovered": false,
+          "start_shortcut": true,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 9.9327,
+            "dest_lat": 0.0,
+            "dest_lon": 9.6834,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 9.9327,
+            "dest_lat": 0.0,
+            "dest_lon": -9.6834,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon",
+            "dest_lon"
+          ],
+          "fit_r2": 0.5487,
+          "linear_r2": 0.6017,
+          "law_agreement": 0.8735
+        },
+        {
+          "model": "pretrained",
+          "task": "T4",
+          "seed": 2,
+          "equation": "(start_lon * 3.914115) - dest_lon",
+          "complexity": 5,
+          "top_input": "start_lon",
+          "recovered": false,
+          "start_shortcut": true,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 11.036,
+            "dest_lat": 0.0,
+            "dest_lon": 2.7488,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 11.036,
+            "dest_lat": 0.0,
+            "dest_lon": -2.7488,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon",
+            "dest_lon"
+          ],
+          "fit_r2": 0.4772,
+          "linear_r2": 0.6377,
+          "law_agreement": 0.7095
+        },
+        {
+          "model": "random",
+          "task": "T1",
+          "seed": 0,
+          "equation": "-2.5686388 - turns",
+          "complexity": 3,
+          "top_input": "turns",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 2.4344
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": -2.4344
+          },
+          "inputs_used": [
+            "turns"
+          ],
+          "fit_r2": 0.1079,
+          "linear_r2": 0.2475,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "T1",
+          "seed": 1,
+          "equation": "(turns * (start_lon + -2.0014858)) + -2.7347672",
+          "complexity": 7,
+          "top_input": "turns",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 2.165,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 4.8917
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": -4.8725
+          },
+          "inputs_used": [
+            "start_lon",
+            "turns"
+          ],
+          "fit_r2": 0.0916,
+          "linear_r2": 0.124,
+          "law_agreement": 0.4836
+        },
+        {
+          "model": "random",
+          "task": "T1",
+          "seed": 2,
+          "equation": "turns * -4.3113546",
+          "complexity": 3,
+          "top_input": "turns",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 10.4958
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": -10.4958
+          },
+          "inputs_used": [
+            "turns"
+          ],
+          "fit_r2": 0.116,
+          "linear_r2": 0.1587,
+          "law_agreement": 0.4965
+        },
+        {
+          "model": "random",
+          "task": "T2",
+          "seed": 0,
+          "equation": "2.3664887 - turns",
+          "complexity": 3,
+          "top_input": "turns",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 2.4344
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": -2.4344
+          },
+          "inputs_used": [
+            "turns"
+          ],
+          "fit_r2": 0.0241,
+          "linear_r2": 0.0869,
+          "law_agreement": 0.4919
+        },
+        {
+          "model": "random",
+          "task": "T2",
+          "seed": 1,
+          "equation": "-1.6316937 - turns",
+          "complexity": 3,
+          "top_input": "turns",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": 2.4344
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 0.0,
+            "dest_lat": 0.0,
+            "dest_lon": 0.0,
+            "turns": -2.4344
+          },
+          "inputs_used": [
+            "turns"
+          ],
+          "fit_r2": 0.0535,
+          "linear_r2": 0.1952,
+          "law_agreement": 0.5
+        },
+        {
+          "model": "random",
+          "task": "T2",
+          "seed": 2,
+          "equation": "1.3046457 - ((dest_lat - start_lat) * (dest_lat - (cur_lat * start_lat)))",
+          "complexity": 11,
+          "top_input": "start_lat",
+          "recovered": null,
+          "start_shortcut": null,
+          "contrast": {
+            "cur_lat": 1.5974,
+            "cur_lon": 0.0,
+            "start_lat": 2.8455,
+            "start_lon": 0.0,
+            "dest_lat": 2.7271,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": -1.0601,
+            "cur_lon": 0.0,
+            "start_lat": 2.2428,
+            "start_lon": 0.0,
+            "dest_lat": 1.8775,
+            "dest_lon": 0.0,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "cur_lat",
+            "start_lat",
+            "dest_lat"
+          ],
+          "fit_r2": 0.093,
+          "linear_r2": 0.0574,
+          "law_agreement": 0.5908
+        },
+        {
+          "model": "random",
+          "task": "T4",
+          "seed": 0,
+          "equation": "((start_lon + 0.7723197) - dest_lon) * 5.8446",
+          "complexity": 7,
+          "top_input": "start_lon",
+          "recovered": false,
+          "start_shortcut": true,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 16.4791,
+            "dest_lat": 0.0,
+            "dest_lon": 16.0655,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 16.4791,
+            "dest_lat": 0.0,
+            "dest_lon": -16.0655,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon",
+            "dest_lon"
+          ],
+          "fit_r2": 0.3855,
+          "linear_r2": 0.4279,
+          "law_agreement": 0.6912
+        },
+        {
+          "model": "random",
+          "task": "T4",
+          "seed": 1,
+          "equation": "(start_lon - dest_lon) * 8.929116",
+          "complexity": 5,
+          "top_input": "start_lon",
+          "recovered": false,
+          "start_shortcut": true,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 25.176,
+            "dest_lat": 0.0,
+            "dest_lon": 24.5442,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 25.176,
+            "dest_lat": 0.0,
+            "dest_lon": -24.5442,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon",
+            "dest_lon"
+          ],
+          "fit_r2": 0.4455,
+          "linear_r2": 0.5628,
+          "law_agreement": 0.8735
+        },
+        {
+          "model": "random",
+          "task": "T4",
+          "seed": 2,
+          "equation": "(start_lon - dest_lon) * 7.665105",
+          "complexity": 5,
+          "top_input": "start_lon",
+          "recovered": false,
+          "start_shortcut": true,
+          "contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 21.612,
+            "dest_lat": 0.0,
+            "dest_lon": 21.0697,
+            "turns": 0.0
+          },
+          "signed_contrast": {
+            "cur_lat": 0.0,
+            "cur_lon": 0.0,
+            "start_lat": 0.0,
+            "start_lon": 21.612,
+            "dest_lat": 0.0,
+            "dest_lon": -21.0697,
+            "turns": 0.0
+          },
+          "inputs_used": [
+            "start_lon",
+            "dest_lon"
+          ],
+          "fit_r2": 0.4664,
+          "linear_r2": 0.5737,
+          "law_agreement": 0.8735
+        }
+      ]
+    },
+    "distribution": "shortest_paths",
+    "tasks": [
+      "T1: destination at most 10 turns away",
+      "T2: destination at most 823.9 m away",
+      "T4: current intersection east of the destination"
+    ],
+    "shortcut_rules": {
+      "T1": "turns so far > 4",
+      "T2": "turns so far > 5",
+      "T4": "start instead of current"
+    },
+    "n_adapt_routes": 64,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "protocol": {
+      "steps": 300,
+      "batch": 16,
+      "head_lr": 0.001,
+      "body_lr": 0.0001,
+      "weight_decay": 0.01,
+      "position_seed": 0,
+      "h_turns": 10,
+      "r_metres": 823.9
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "maps",
+  "arch": "lstm",
+  "scale": "medium",
+  "distribution": "shortest_paths",
+  "seed": 1,
+  "run_id": "maps_lstm_medium_shortest_paths_s1_D3",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "b66e3e9",
+    "time_utc": "2026-11-23T04:48:19Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-67",
+    "runtime_sec": 186.0,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
