@@ -1,0 +1,221 @@
+{
+  "model_id": "maps_mamba_large_shortest_paths_s1",
+  "diagnostic": "D4",
+  "method": "linear probe of the current intersection (4,579 classes) per layer, navigation (Amendment 5 G7), selectivity over a Hewitt and Liang control task (type = token just read + turns so far); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit to a neighbouring intersection vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.23337226039488335,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 6,
+    "best_layer_depth": 0.875,
+    "n_layers": 8,
+    "probe_acc_by_layer": [
+      0.18837,
+      0.28978,
+      0.36037,
+      0.40021,
+      0.41628,
+      0.42538,
+      0.4819,
+      0.35238
+    ],
+    "control_acc_by_layer": [
+      0.18405,
+      0.22653,
+      0.25181,
+      0.27158,
+      0.27256,
+      0.26789,
+      0.24853,
+      0.15488
+    ],
+    "selectivity_by_layer": [
+      0.00432,
+      0.06325,
+      0.10855,
+      0.12862,
+      0.14372,
+      0.15749,
+      0.23337,
+      0.1975
+    ],
+    "selectivity_by_layer_choose": [
+      0.02034,
+      0.0937,
+      0.14855,
+      0.17281,
+      0.1851,
+      0.20252,
+      0.27289,
+      0.22207
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.10141,
+      0.17199,
+      0.21184,
+      0.22791,
+      0.23701,
+      0.29353,
+      0.16401
+    ],
+    "start_baseline_acc": 0.02716,
+    "destination_baseline_acc": 0.02716,
+    "gain_over_start_by_layer": [
+      0.16121,
+      0.26262,
+      0.33321,
+      0.37305,
+      0.38913,
+      0.39822,
+      0.45474,
+      0.32522
+    ],
+    "gain_over_destination_by_layer": [
+      0.16121,
+      0.26262,
+      0.33321,
+      0.37305,
+      0.38913,
+      0.39822,
+      0.45474,
+      0.32522
+    ],
+    "epochs": 2,
+    "n_classes": 4579,
+    "distribution": "shortest_paths",
+    "n_fit_routes": 10000,
+    "n_choose_routes": 1000,
+    "n_test_routes": 1000,
+    "n_positions": {
+      "fit": 376323,
+      "choose": 39038,
+      "test": 36821
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 6,
+      "selectivity_at_best": 0.21898,
+      "probe_acc_by_layer": [
+        0.21773,
+        0.30844,
+        0.36262,
+        0.3929,
+        0.40594,
+        0.41503,
+        0.49434,
+        0.36333
+      ],
+      "control_acc_by_layer": [
+        0.23617,
+        0.27984,
+        0.30923,
+        0.31316,
+        0.30583,
+        0.29907,
+        0.27536,
+        0.19014
+      ],
+      "selectivity_by_layer": [
+        -0.01844,
+        0.0286,
+        0.05339,
+        0.07974,
+        0.10011,
+        0.11597,
+        0.21898,
+        0.17319
+      ],
+      "selectivity_by_layer_choose": [
+        0.00272,
+        0.06353,
+        0.10052,
+        0.12918,
+        0.14437,
+        0.16089,
+        0.26131,
+        0.2008
+      ],
+      "gain_over_linear_by_layer": [
+        0.02936,
+        0.01866,
+        0.00225,
+        -0.00731,
+        -0.01035,
+        -0.01035,
+        0.01244,
+        0.01094
+      ]
+    },
+    "causal": {
+      "causal_score": 0.17033,
+      "causal_score_ci": [
+        0.14815,
+        0.19269
+      ],
+      "causal_label": "decodable but not causal",
+      "boundary_acc_edit": 0.5125,
+      "boundary_acc_random": 0.34217,
+      "boundary_acc_none": 0.33892,
+      "edit_success_rate": 1.0,
+      "edit_success_by_layer": {
+        "4": 1.0,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "target_read_by_layer": {
+        "4": 1.0,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "edit_steps_by_layer": {
+        "4": 10.851,
+        "5": 4.467,
+        "6": 3.772,
+        "7": 8.445
+      },
+      "edit_size_by_layer": {
+        "4": 12.14647,
+        "5": 5.04076,
+        "6": 4.25505,
+        "7": 9.43795
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "best_layer": 6,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.946
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "maps",
+  "arch": "mamba",
+  "scale": "large",
+  "distribution": "shortest_paths",
+  "seed": 1,
+  "run_id": "maps_mamba_large_shortest_paths_s1_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "b66e3e9",
+    "time_utc": "2026-11-23T04:43:20Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 196.8,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
