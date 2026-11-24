@@ -1,0 +1,40 @@
+{
+  "model_id": "maps_transformer_small_shortest_paths_s2",
+  "diagnostic": "D1",
+  "method": "legal next token rate (navigation, Amendment 5 G4): share of scored positions (every prediction of a turn or of end) where the top token is legal (argmax), higher is better",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": 0.9492409222997746,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "argmax_legal_rate": 0.9492409222997746,
+    "sampled_legal_rate": 0.871747100839195,
+    "n_samples": 10,
+    "temperature": 1.0,
+    "sample_seed": 0,
+    "n_positions": 36821,
+    "distribution": "shortest_paths",
+    "illegal_routes_dropped": 0
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "maps",
+  "arch": "transformer",
+  "scale": "small",
+  "distribution": "shortest_paths",
+  "seed": 2,
+  "run_id": "maps_transformer_small_shortest_paths_s2_D1",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "b66e3e9",
+    "time_utc": "2026-11-23T04:51:52Z",
+    "python": "3.13.14",
+    "host": "ip-10-0-2-123",
+    "runtime_sec": 0.3,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
