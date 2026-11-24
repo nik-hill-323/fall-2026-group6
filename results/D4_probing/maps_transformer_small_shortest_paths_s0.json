@@ -1,0 +1,163 @@
+{
+  "model_id": "maps_transformer_small_shortest_paths_s0",
+  "diagnostic": "D4",
+  "method": "linear probe of the current intersection (4,579 classes) per layer, navigation (Amendment 5 G7), selectivity over a Hewitt and Liang control task (type = token just read + turns so far); layer chosen on val, scored on test; higher is better. details add an MLP probe with its own control and a causal check (probe guided edit to a neighbouring intersection vs random edit)",
+  "split": "test",
+  "n_games": 1000,
+  "data_seed": 0,
+  "score": -0.8536704597919665,
+  "score_std": null,
+  "score_ci": null,
+  "details": {
+    "best_layer": 3,
+    "best_layer_depth": 1.0,
+    "n_layers": 4,
+    "probe_acc_by_layer": [
+      0.02941,
+      0.0554,
+      0.07048,
+      0.07213
+    ],
+    "control_acc_by_layer": [
+      0.97651,
+      0.96866,
+      0.95668,
+      0.9258
+    ],
+    "selectivity_by_layer": [
+      -0.9471,
+      -0.91326,
+      -0.88621,
+      -0.85367
+    ],
+    "selectivity_by_layer_choose": [
+      -0.94779,
+      -0.91408,
+      -0.88422,
+      -0.84753
+    ],
+    "gain_over_layer0_by_layer": [
+      0.0,
+      0.02599,
+      0.04106,
+      0.04272
+    ],
+    "start_baseline_acc": 0.02716,
+    "destination_baseline_acc": 0.02716,
+    "gain_over_start_by_layer": [
+      0.00225,
+      0.02824,
+      0.04332,
+      0.04497
+    ],
+    "gain_over_destination_by_layer": [
+      0.00225,
+      0.02824,
+      0.04332,
+      0.04497
+    ],
+    "epochs": 2,
+    "n_classes": 4579,
+    "distribution": "shortest_paths",
+    "n_fit_routes": 10000,
+    "n_choose_routes": 1000,
+    "n_test_routes": 1000,
+    "n_positions": {
+      "fit": 376323,
+      "choose": 39038,
+      "test": 36821
+    },
+    "mlp": {
+      "hidden": 256,
+      "best_layer": 3,
+      "selectivity_at_best": -0.87203,
+      "probe_acc_by_layer": [
+        0.04095,
+        0.08088,
+        0.09937,
+        0.09992
+      ],
+      "control_acc_by_layer": [
+        0.98452,
+        0.978,
+        0.97518,
+        0.97195
+      ],
+      "selectivity_by_layer": [
+        -0.94356,
+        -0.89712,
+        -0.8758,
+        -0.87203
+      ],
+      "selectivity_by_layer_choose": [
+        -0.94267,
+        -0.89187,
+        -0.87233,
+        -0.86718
+      ],
+      "gain_over_linear_by_layer": [
+        0.01154,
+        0.02547,
+        0.0289,
+        0.02778
+      ]
+    },
+    "causal": {
+      "causal_score": 0.31647,
+      "causal_score_ci": [
+        0.28238,
+        0.34889
+      ],
+      "causal_label": "not decodable",
+      "boundary_acc_edit": 0.70168,
+      "boundary_acc_random": 0.38522,
+      "boundary_acc_none": 0.38372,
+      "edit_success_rate": 0.999,
+      "edit_success_by_layer": {
+        "2": 0.999,
+        "3": 1.0
+      },
+      "target_read_by_layer": {
+        "2": 1.0,
+        "3": 1.0
+      },
+      "edit_steps_by_layer": {
+        "2": 31.312,
+        "3": 21.885
+      },
+      "edit_size_by_layer": {
+        "2": 17.35982,
+        "3": 12.30652
+      },
+      "edit_size_unit": "standardized activation units (L2 norm)",
+      "mode": "from_middle",
+      "confidence": 0.99,
+      "layers": [
+        2,
+        3
+      ],
+      "best_layer": 3,
+      "n_cases": 1000,
+      "mean_boundary_moves": 1.946
+    }
+  },
+  "status": "ok",
+  "reason": "",
+  "domain": "maps",
+  "arch": "transformer",
+  "scale": "small",
+  "distribution": "shortest_paths",
+  "seed": 0,
+  "run_id": "maps_transformer_small_shortest_paths_s0_D4",
+  "schema_version": 1,
+  "provenance": {
+    "git_commit": "b66e3e9",
+    "time_utc": "2026-11-23T03:29:19Z",
+    "python": "3.13.15",
+    "host": "ip-10-0-2-159",
+    "runtime_sec": 13.5,
+    "torch": "2.13.0+cu130",
+    "gpu": "NVIDIA A10G",
+    "numpy": "2.4.4"
+  }
+}
