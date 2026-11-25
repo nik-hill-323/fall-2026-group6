@@ -26,7 +26,8 @@
 # fragility_maps, the whole route measure in results/whole_route_maps; pilots in results/pilot_scoring/<same
 # folders> (G2: never in any analysis).
 # Jobs run cheapest first, D3 last (PySR makes it the slowest). The two 1.5B anchors run D4 with
-# --layers_per_pass 8 --chunk 32 (memory only; the probes are the same) and G9 with --batch 32 (memory only).
+# --layers_per_pass 8 --chunk 32 (memory only; the probes are the same), and D1, D2, fragility and G9 with
+# --batch 32 (memory only: the same scores; Amendment 6, H5).
 #
 # Run from the repo root of a clean, up to date main, inside tmux, with the wmconcord env active and a valid AWS
 # login (aws sso login --use-device-code).
@@ -207,15 +208,15 @@ for model_id in "${models[@]}"; do
     if [[ "$job" == "D4" && " $BIG_ANCHORS " == *" $model_id "* ]]; then
       extra=(--layers_per_pass 8 --chunk 32)
     fi
-    if [[ "$job" == "G9" && " $BIG_ANCHORS " == *" $model_id "* ]]; then
+    if [[ "$job" =~ ^(D1|D2|fragility|G9)$ && " $BIG_ANCHORS " == *" $model_id "* ]]; then
       extra=(--batch 32)
     fi
     case "$job" in
-      D1) cmd=("$PY" src/diagnostics/d1/next_token.py --models "$model_id" --save) ;;
-      D2) cmd=("$PY" src/diagnostics/d2/state_equiv.py --models "$model_id" --save) ;;
+      D1) cmd=("$PY" src/diagnostics/d1/next_token.py --models "$model_id" --save "${extra[@]}") ;;
+      D2) cmd=("$PY" src/diagnostics/d2/state_equiv.py --models "$model_id" --save "${extra[@]}") ;;
       D3) cmd=("$PY" src/diagnostics/d3/inductive_bias.py --models "$model_id" --save) ;;
       D4) cmd=("$PY" src/diagnostics/d4/representation_probe.py --models "$model_id" --save "${extra[@]}") ;;
-      fragility) cmd=("$PY" src/fragility/maps.py --models "$model_id" --save) ;;
+      fragility) cmd=("$PY" src/fragility/maps.py --models "$model_id" --save "${extra[@]}") ;;
       G9) cmd=("$PY" src/analysis/whole_route_maps.py --models "$model_id" --save "${extra[@]}") ;;
     esac
     if [[ "$DRY_RUN" == "--dry_run" ]]; then

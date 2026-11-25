@@ -75,8 +75,12 @@ classes, from the model's vector at every scored position. Everything else is A6
   make a given class its reading at 0.99 within 100 steps, so `edit_success_rate` matters here: it is reported
   for every model.
 * **Memory, for the 1.5B anchors only.** `--layers_per_pass` trains the probes of a few layers at a time and
-  `--chunk` runs the forward passes in smaller pieces. Neither changes a result (tests check that the probes
-  are the same).
+  `--chunk` runs the forward passes in smaller pieces. Since N13, `--chunk` also holds every layer's activations
+  for only `chunk` routes at a time in the feature statistics and the probe evaluation, and runs the causal
+  check `chunk` cases at a time (the random edits are still drawn for the whole batch of cases and sliced).
+  Neither changes a result (tests check the probes, statistics, accuracies, causal check and the whole result).
+  D1, D2, the fragility suite and G9 take `--batch` for the same reason (the runner gives the two 1.5B anchors
+  `--batch 32`); D1 records it, since its secondary sampled rate groups its random draws by batch.
 
 Code: `score_maps` in `src/diagnostics/d4/representation_probe.py`. Tests: `src/tests/test_d4_maps.py`.
 

@@ -236,3 +236,93 @@ def test_other_architectures(data_dir, arch: str) -> None:
 
 def test_module_passes_interface_check() -> None:
     itf.check_diagnostic(d4)
+
+
+# ==========================================================================
+# Memory only options for the 1.5B anchors (Amendment 6, H5; ticket N13)
+# ==========================================================================
+
+def test_stats_and_evaluation_do_not_depend_on_the_chunk(routes) -> None:
+    """chunk holds every layer for fewer routes at a time: the same means, spreads and accuracies."""
+    model = fx.tiny("transformer")
+    fit, test = d4._take(routes, slice(0, 60)), d4._take(routes, slice(60, 100))
+    ctrl = d4.maps_control_table(d4.maps_class_freq(fit))
+    mu, sd = d4.maps_activation_stats(model, fit, 32)
+    mu7, sd7 = d4.maps_activation_stats(model, fit, 32, chunk=7)
+    assert torch.allclose(mu, mu7, atol=1e-6) and torch.allclose(sd, sd7, atol=1e-6)
+    probes = d4.maps_fit_probes(model, fit, ctrl, mu, sd, epochs=1, batch=16, mlp_hidden=0)
+    a = d4.maps_evaluate_probes(model, probes["real"], probes["control"], test, ctrl, mu, sd, 32)
+    b = d4.maps_evaluate_probes(model, probes["real"], probes["control"], test, ctrl, mu, sd, 32, chunk=7)
+    assert np.array_equal(a["probe_acc"], b["probe_acc"]) and np.array_equal(a["control_acc"], b["control_acc"])
+
+
+def test_causal_check_does_not_depend_on_the_chunk(routes) -> None:
+    """The causal check with chunk runs each batch of cases a few at a time: the random edits are drawn for the
+    whole batch and sliced, every case is edited on its own, so every number is the same."""
+    model = fx.tiny("transformer")
+    fit, test = d4._take(routes, slice(0, 60)), d4._take(routes, slice(60, 100))
+    ctrl = d4.maps_control_table(d4.maps_class_freq(fit))
+    mu, sd = d4.maps_activation_stats(model, fit, 32)
+    probes = d4.maps_fit_probes(model, fit, ctrl, mu, sd, epochs=1, batch=16, mlp_hidden=0)
+    kw = dict(max_cases=23)
+
+    def run(batch, chunk=None):
+        """The causal check, recording every edited vector the model receives (edit, then random runs)."""
+        seen = []
+        orig = model.logits_edited
+
+        def recording(tok, pos, edits):
+            wrapped = {}
+            for layer, fn in edits.items():
+                def w(v, fn=fn):
+                    out = fn(v)
+                    seen.append(out.detach().cpu().clone())
+                    return out
+                wrapped[layer] = w
+            return orig(tok, pos, wrapped)
+
+        model.logits_edited = recording
+        try:
+            res = d4.maps_causal_check(model, probes["real"], 1, test, mu, sd, 0.1, batch, chunk=chunk, **kw)
+        finally:
+            model.logits_edited = orig
+        return res, seen
+
+    a, va = run(10)
+    b, vb = run(10, chunk=3)
+    assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    # the same edited vectors, case by case (pieces of 3 inside batches of 10 hold the same cases in order)
+    n_layers_edited = len(a["layers"])
+    def by_run(vs):
+        # per model call: edit vectors for each layer, then random vectors for each layer
+        return torch.cat([v for v in vs], dim=0)
+    assert torch.allclose(by_run(sorted_runs(va, n_layers_edited)), by_run(sorted_runs(vb, n_layers_edited)), atol=1e-5)
+    c, vc = run(5)                                                                   # other batches: other draws
+    assert c["n_cases"] == a["n_cases"]
+    assert not torch.allclose(by_run(sorted_runs(va, n_layers_edited)), by_run(sorted_runs(vc, n_layers_edited)),
+                              atol=1e-5)
+
+
+def sorted_runs(vs: list, k: int) -> list:
+    """Edited vectors grouped as [edit vectors of every piece..., random vectors of every piece...]: each model
+    call records k vectors; calls alternate edit, random per piece."""
+    calls = [vs[i:i + k] for i in range(0, len(vs), k)]
+    edit = [v for j, c in enumerate(calls) if j % 2 == 0 for v in c]
+    rand = [v for j, c in enumerate(calls) if j % 2 == 1 for v in c]
+    return [torch.cat(edit_rows(edit, k)), torch.cat(edit_rows(rand, k))]
+
+
+def edit_rows(vs: list, k: int) -> list:
+    """Rows of the same layer stacked across pieces, layer by layer."""
+    return [torch.cat(vs[layer::k], dim=0) for layer in range(k)]
+
+
+def test_score_maps_with_memory_options_equals_default(data_dir) -> None:
+    """The whole D4 result with layers_per_pass and chunk equals the default run (the 1.5B anchor options)."""
+    model = fx.tiny("transformer")
+    a = d4.score(model, n_games=100, **SMALL)
+    b = d4.score(model, n_games=100, layers_per_pass=1, chunk=5, **SMALL)
+    da, db = dict(a.details), dict(b.details)
+    assert a.score == pytest.approx(b.score, abs=1e-5)
+    assert da["best_layer"] == db["best_layer"] and da["causal"]["causal_label"] == db["causal"]["causal_label"]
+    assert np.allclose(da["probe_acc_by_layer"], db["probe_acc_by_layer"], atol=1e-4)

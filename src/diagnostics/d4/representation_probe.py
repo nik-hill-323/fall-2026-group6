@@ -703,19 +703,29 @@ def maps_scored_acts(model, data: dict, idx: np.ndarray, layers: list[int] | Non
 
 @torch.no_grad()
 def maps_activation_stats(model, data: dict, batch: int = BATCH, chunk: int | None = None) -> tuple[torch.Tensor, torch.Tensor]:
-    """(L, d) mean and standard deviation of every feature over the scored positions of the fitting routes (A6)."""
+    """(L, d) mean and standard deviation of every feature over the scored positions of the fitting routes (A6).
+    With chunk (memory only, the 1.5B anchors), the activations of every layer are held for `chunk` routes at a
+    time instead of `batch`: the same sums, added in smaller pieces."""
     L, d, dev = model.n_layers, model.d_model, model.device
     s1 = torch.zeros(L, d, dtype=torch.float64, device=dev)
     s2 = torch.zeros(L, d, dtype=torch.float64, device=dev)
     n = 0
     for idx in _batches(len(data["tokens"]), batch):
-        x = maps_scored_acts(model, data, idx, chunk=chunk).double()
-        s1 += x.sum(1)
-        s2 += (x * x).sum(1)
-        n += x.shape[1]
+        for sub in _pieces(idx, chunk):
+            x = maps_scored_acts(model, data, sub, chunk=chunk).double()
+            s1 += x.sum(1)
+            s2 += (x * x).sum(1)
+            n += x.shape[1]
+            del x
     mu = s1 / max(n, 1)
     sd = (s2 / max(n, 1) - mu * mu).clamp_min(0).sqrt().clamp_min(1e-6)
     return mu.float(), sd.float()
+
+
+def _pieces(idx: np.ndarray, chunk: int | None) -> list[np.ndarray]:
+    """idx in consecutive pieces of `chunk` routes (one piece when chunk is None): memory only."""
+    step = chunk or len(idx)
+    return [idx[j:j + step] for j in range(0, len(idx), step)]
 
 
 def maps_mlp_probe(d: int, hidden: int) -> nn.Module:
@@ -791,18 +801,21 @@ def maps_fit_probes(model, data: dict, ctrl: np.ndarray, mu: torch.Tensor, sd: t
 @torch.no_grad()
 def maps_evaluate_probes(model, real: nn.ModuleList, control: nn.ModuleList, data: dict, ctrl: np.ndarray,
                          mu: torch.Tensor, sd: torch.Tensor, batch: int = BATCH, chunk: int | None = None) -> dict[str, np.ndarray]:
-    """Per layer: probe accuracy and control accuracy (on the control labels)."""
+    """Per layer: probe accuracy and control accuracy (on the control labels). With chunk (memory only, the 1.5B
+    anchors), every layer's activations are held for `chunk` routes at a time; the counts are the same."""
     L, dev = model.n_layers, model.device
     hit_p, hit_c = np.zeros(L), np.zeros(L)
     n = 0
     for idx in _batches(len(data["tokens"]), batch):
-        x_all = (maps_scored_acts(model, data, idx, chunk=chunk) - mu[:, None]) / sd[:, None]
-        y = torch.as_tensor(maps_labels(data, idx), device=dev)
-        c = torch.as_tensor(ctrl[maps_types(data, idx)], device=dev)
-        for layer in range(L):
-            hit_p[layer] += float((real[layer](x_all[layer]).argmax(-1) == y).sum())
-            hit_c[layer] += float((control[layer](x_all[layer]).argmax(-1) == c).sum())
-        n += len(y)
+        for sub in _pieces(idx, chunk):
+            x_all = (maps_scored_acts(model, data, sub, chunk=chunk) - mu[:, None]) / sd[:, None]
+            y = torch.as_tensor(maps_labels(data, sub), device=dev)
+            c = torch.as_tensor(ctrl[maps_types(data, sub)], device=dev)
+            for layer in range(L):
+                hit_p[layer] += float((real[layer](x_all[layer]).argmax(-1) == y).sum())
+                hit_c[layer] += float((control[layer](x_all[layer]).argmax(-1) == c).sum())
+            n += len(y)
+            del x_all
     return {"probe_acc": hit_p / max(n, 1), "control_acc": hit_c / max(n, 1)}
 
 
@@ -947,9 +960,12 @@ def maps_probe_edit(probe: nn.Module, z: torch.Tensor, target: torch.Tensor, ste
 
 def maps_causal_check(model, probes: nn.ModuleList, best: int, data: dict, mu: torch.Tensor, sd: torch.Tensor,
                       selectivity: float, batch: int = BATCH, seed: int = CAUSAL_SEED, max_cases: int | None = None,
-                      mode: str | None = None, confidence: float | None = None) -> dict[str, Any]:
+                      mode: str | None = None, confidence: float | None = None,
+                      chunk: int | None = None) -> dict[str, Any]:
     """B2 on navigation: probe guided edit to the neighbour vs a random edit of the same size, at every layer of
-    edit_layers(best), later layers seeing the earlier edits."""
+    edit_layers(best), later layers seeing the earlier edits. With chunk (memory only, the 1.5B anchors), each
+    batch of cases runs through the model `chunk` cases at a time; the random edits are still drawn for the whole
+    batch from the same seed and sliced, and every case is edited on its own, so the cases get the same edits."""
     mode = mode or EDIT_MODE
     confidence = EDIT_CONFIDENCE if confidence is None else confidence
     layers = edit_layers(best, model.n_layers, mode)
@@ -963,8 +979,10 @@ def maps_causal_check(model, probes: nn.ModuleList, best: int, data: dict, mu: t
     read = {layer: [] for layer in layers}
     steps_used = {layer: [] for layer in layers}
     sizes = {layer: [] for layer in layers}
-    for b0 in range(0, n, batch):
-        sl = slice(b0, b0 + batch)
+    pieces = [(b0, s0) for b0 in range(0, n, batch) for s0 in range(b0, min(b0 + batch, n), chunk or batch)]
+    for b0, s0 in pieces:
+        nb = min(b0 + batch, n) - b0                 # cases in this batch (the random draws are for all of them)
+        sl = slice(s0, min(s0 + (chunk or batch), b0 + nb))
         tok = nav.inputs(data, cases["route"][sl]).to(dev)
         pos = torch.as_tensor(cases["pos"][sl], device=dev)
         target = torch.as_tensor(cases["target"][sl], device=dev)
@@ -986,11 +1004,11 @@ def maps_causal_check(model, probes: nn.ModuleList, best: int, data: dict, mu: t
                 return (z + delta) * sd[layer] + mu[layer]
             return fn
 
-        def random_step(layer):
+        def random_step(layer, b0=b0, s0=s0, nb=nb):
             def fn(v: torch.Tensor) -> torch.Tensor:
                 z = (v - mu[layer]) / sd[layer]
                 gen = torch.Generator(device="cpu").manual_seed(RANDOM_EDIT_SEED + 1000 * layer + b0)
-                r = torch.randn(z.shape, generator=gen).to(dev)
+                r = torch.randn((nb, z.shape[1]), generator=gen)[s0 - b0:s0 - b0 + len(z)].to(dev)
                 r = r / r.norm(dim=1, keepdim=True).clamp_min(1e-12) * norm_at[layer][:, None]
                 return (z + r) * sd[layer] + mu[layer]
             return fn
@@ -1078,7 +1096,8 @@ def score_maps(model, split: str = "test", n_games: int = 1000, data_seed: int =
         }
     if causal:                               # causal check, middle (or best) layer to last (B2, G7)
         details["causal"] = maps_causal_check(model, real, best, test, mu, sd, float(sel_test[best]), batch,
-                                              max_cases=causal_cases_max, mode=causal_mode, confidence=causal_confidence)
+                                              max_cases=causal_cases_max, mode=causal_mode, confidence=causal_confidence,
+                                              chunk=chunk)
     return itf.result_for(model, DIAGNOSTIC, method=MAPS_METHOD, split=split, n_games=len(test["tokens"]),
                           data_seed=data_seed, score=float(sel_test[best]), details=details,
                           runtime_sec=round(time.time() - t0, 1))

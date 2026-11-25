@@ -154,3 +154,14 @@ def test_untrained_model_scores_and_repeats(data_dir) -> None:
     a = d2.score(m, n_games=100, **SMALL)
     b = d2.score(m, n_games=100, **SMALL)
     assert a.status == "ok" and a.score == b.score and 0.0 <= a.score <= 1.0
+
+
+def test_batch_is_memory_only(data_dir) -> None:
+    """--batch (the 1.5B anchors) changes only how many routes go through the model at once."""
+    m = fx.tiny("lstm")
+    a = d2.score(m, n_games=100, **SMALL)
+    b = d2.score(m, n_games=100, batch=7, **SMALL)
+    assert a.score == b.score and a.score_std == b.score_std
+    assert {k: v for k, v in b.details.items() if k != "batch"} == a.details and b.details["batch"] == 7
+    src = (ROOT / "src/diagnostics/d2/state_equiv.py").read_text()
+    assert '"--batch"' in src and "batch=args.batch" in src

@@ -261,3 +261,11 @@ def test_zoo_models_need_the_pilot_rule(monkeypatch) -> None:
     monkeypatch.setattr(sys, "argv", ["maps.py", "--models", fx.ZOO_ID])
     with pytest.raises(SystemExit, match="pilot rule"):
         fr.main()
+
+
+def test_batch_is_memory_only(data_dir) -> None:
+    """--batch (the 1.5B anchors, Amendment 6 H5) changes only how many routes go through the model at once."""
+    m = fx.tiny("transformer")
+    a = fr.score_model(m, "cpu", "shortest_paths", batch=32, **SMALL)
+    b = fr.score_model(m, "cpu", "shortest_paths", batch=5, **SMALL)
+    assert json.dumps(a, sort_keys=True, default=str) == json.dumps(b, sort_keys=True, default=str)
