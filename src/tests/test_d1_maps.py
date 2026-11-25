@@ -101,6 +101,13 @@ def test_batch_size_does_not_change_the_score(data_dir) -> None:
     a = d1.score_maps(m, n_games=50, batch=7)
     b = d1.score_maps(m, n_games=50, batch=50)
     assert a.score == b.score
+    assert a.details["batch"] == 7 and "batch" not in d1.score_maps(m, n_games=50).details   # recorded if not 256
+
+
+def test_command_line_batch_reaches_the_scorer() -> None:
+    """--batch (memory only, the 1.5B anchors) is an option of the command line."""
+    src = (ROOT / "src/diagnostics/d1/next_token.py").read_text()
+    assert '"--batch"' in src and "batch=args.batch" in src
 
 
 def test_pilot_result_uses_its_meta(data_dir) -> None:

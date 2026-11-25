@@ -513,6 +513,8 @@ def score_maps(model, split: str = "test", n_games: int = 1000, data_seed: int =
     out = maps_evaluate(model, h, same, diff, batch)
     details = {k: v for k, v in out.items() if k not in ("score", "score_se")}
     details.update({"distribution": dist, "routes_requested": n_games, "routes_used": used})
+    if batch != 256:                         # memory only (the 1.5B anchors): the score does not depend on it
+        details["batch"] = batch
     return itf.result_for(model, DIAGNOSTIC, method=MAPS_METHOD, split=split, n_games=used,
                           data_seed=data_seed, score=out["score"], score_std=out["score_se"],
                           details=details, runtime_sec=round(time.time() - t0, 1))
@@ -541,12 +543,14 @@ def main() -> None:
     ap.add_argument("--n_games", type=int, default=1000)
     ap.add_argument("--data_seed", type=int, default=0)
     ap.add_argument("--save", action="store_true", help="write results/D2_state_equiv/{model_id}.json")
+    ap.add_argument("--batch", type=int, default=256,
+                    help="navigation, memory only: routes per forward pass (256; smaller for the 1.5B anchors)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 
     if any(nav.is_maps_id(m) for m in args.models):      # navigation: gates, loading, pilot folder (N0)
         out, not_loaded = nav.main_for(sys.modules[__name__], args.models, args.save, split=args.split,
-                                       n_games=args.n_games, data_seed=args.data_seed)
+                                       n_games=args.n_games, data_seed=args.data_seed, batch=args.batch)
         for r in out:
             d = r.details
             if r.status == "ok":

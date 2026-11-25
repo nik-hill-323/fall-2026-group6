@@ -137,6 +137,8 @@ def score_maps(model, split: str = "test", n_games: int = 1000, data_seed: int =
                "n_samples": N_SAMPLES, "temperature": TEMPERATURE, "sample_seed": SAMPLE_SEED,
                "n_positions": int(data["score"][:, :maps.N_CTX].sum()), "distribution": dist,
                "illegal_routes_dropped": data["n_illegal"]}
+    if batch != BATCH:              # memory only (the 1.5B anchors): the argmax score does not depend on it; the
+        details["batch"] = batch    # sampled rate's random draws are grouped by batch, so it is recorded
     if hasattr(model, "known"):     # anchors: routes with an intersection their own tokenizer does not have
         known = model.known(nav.inputs(data)).cpu().numpy()
         details["routes_with_words_unknown_to_the_model"] = int((~known).sum())
@@ -184,12 +186,14 @@ def main() -> None:
     ap.add_argument("--n_games", type=int, default=1000)
     ap.add_argument("--data_seed", type=int, default=0)
     ap.add_argument("--save", action="store_true", help="write results/D1_next_token/{model_id}.json")
+    ap.add_argument("--batch", type=int, default=BATCH,
+                    help="navigation, memory only: routes per forward pass (256; smaller for the 1.5B anchors)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
 
     if any(nav.is_maps_id(m) for m in args.models):      # navigation: gates, loading, pilot folder (N0)
         out, not_loaded = nav.main_for(sys.modules[__name__], args.models, args.save, split=args.split,
-                                       n_games=args.n_games, data_seed=args.data_seed)
+                                       n_games=args.n_games, data_seed=args.data_seed, batch=args.batch)
         for res in out:
             if res.status == "ok":
                 print(f"{res.model_id:45s} score {res.score:.4f}  sampled {res.details['sampled_legal_rate']:.4f}  "
