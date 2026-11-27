@@ -1,0 +1,1662 @@
+{
+  "domain": "maps",
+  "protocol": "reports/preregistration.md: Section 4, Amendments 1, 3 (E4), 4 (F1, F3), 5 (G3, G8 to G12), 6 (H1, H6), 7 (H4 not tested)",
+  "G12_completeness": {
+    "by_arch": {
+      "transformer": {
+        "planned": 27,
+        "scored": 27,
+        "not_scored": []
+      },
+      "lstm": {
+        "planned": 27,
+        "scored": 27,
+        "not_scored": []
+      },
+      "mamba": {
+        "planned": 27,
+        "scored": 27,
+        "not_scored": []
+      }
+    },
+    "complete_architectures": [
+      "transformer",
+      "lstm",
+      "mamba"
+    ]
+  },
+  "architectures_analysed": [
+    "transformer",
+    "lstm",
+    "mamba"
+  ],
+  "architecture_left_out_of_H2_and_regressions": false,
+  "counts": {
+    "planned": 81,
+    "trained": 81,
+    "admitted": 78,
+    "in_complete_architectures": 81,
+    "admitted_in_scope": 78,
+    "all_four_scores": 78,
+    "with_fragility": 78
+  },
+  "missing_scores": {
+    "D1": [],
+    "D2": [],
+    "D3": [],
+    "D4": []
+  },
+  "bootstrap": {
+    "resamples": 2000,
+    "seed": 0,
+    "level": 0.95,
+    "unit": "configuration (arch, scale, distribution), seeds kept together (Amendment 4)",
+    "n_configurations": 26
+  },
+  "section5": {
+    "admission_by_arch_scale": [
+      {
+        "domain": "maps",
+        "arch": "transformer",
+        "scale": "small",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.9256,
+        "competence_min": 0.8743,
+        "competence_max": 0.9549
+      },
+      {
+        "domain": "maps",
+        "arch": "transformer",
+        "scale": "medium",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.9566,
+        "competence_min": 0.9112,
+        "competence_max": 0.9813
+      },
+      {
+        "domain": "maps",
+        "arch": "transformer",
+        "scale": "large",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.9773,
+        "competence_min": 0.9497,
+        "competence_max": 0.9921
+      },
+      {
+        "domain": "maps",
+        "arch": "lstm",
+        "scale": "small",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 6,
+        "not_admitted": 3,
+        "competence_mean": 0.9466,
+        "competence_min": 0.9342,
+        "competence_max": 0.957
+      },
+      {
+        "domain": "maps",
+        "arch": "lstm",
+        "scale": "medium",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.8881,
+        "competence_min": 0.8174,
+        "competence_max": 0.9507
+      },
+      {
+        "domain": "maps",
+        "arch": "lstm",
+        "scale": "large",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.9202,
+        "competence_min": 0.8679,
+        "competence_max": 0.9559
+      },
+      {
+        "domain": "maps",
+        "arch": "mamba",
+        "scale": "small",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.9437,
+        "competence_min": 0.8942,
+        "competence_max": 0.9691
+      },
+      {
+        "domain": "maps",
+        "arch": "mamba",
+        "scale": "medium",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.9636,
+        "competence_min": 0.9242,
+        "competence_max": 0.9844
+      },
+      {
+        "domain": "maps",
+        "arch": "mamba",
+        "scale": "large",
+        "planned": 9,
+        "trained": 9,
+        "admitted": 9,
+        "not_admitted": 0,
+        "competence_mean": 0.9791,
+        "competence_min": 0.9522,
+        "competence_max": 0.9929
+      },
+      {
+        "domain": "maps",
+        "arch": "all",
+        "scale": "all",
+        "planned": 81,
+        "trained": 81,
+        "admitted": 78,
+        "not_admitted": 3,
+        "competence_mean": 0.9445,
+        "competence_min": 0.8174,
+        "competence_max": 0.9929
+      }
+    ],
+    "not_admitted": [
+      {
+        "model_id": "maps_lstm_small_random_walks_s0",
+        "competence": 0.4804
+      },
+      {
+        "model_id": "maps_lstm_small_random_walks_s1",
+        "competence": 0.4777
+      },
+      {
+        "model_id": "maps_lstm_small_random_walks_s2",
+        "competence": 0.4797
+      }
+    ],
+    "runs_not_ok": []
+  },
+  "H1": {
+    "n_models": 78,
+    "pairs": [
+      {
+        "pair": "D1-D2",
+        "tau": 0.310023,
+        "tau_ci": [
+          0.103466,
+          0.520543
+        ],
+        "category": "partial",
+        "spearman": 0.403306,
+        "spearman_ci": [
+          0.055924,
+          0.693048
+        ],
+        "partial_tau": 0.102635,
+        "partial_tau_ci": [
+          0.019588,
+          0.186633
+        ],
+        "partial_category": "not interpretable (A5)",
+        "agreement_through_competence": false
+      },
+      {
+        "pair": "D1-D3",
+        "tau": 0.59707,
+        "tau_ci": [
+          0.362893,
+          0.743696
+        ],
+        "category": "agree",
+        "spearman": 0.77066,
+        "spearman_ci": [
+          0.480943,
+          0.908704
+        ],
+        "partial_tau": 0.098748,
+        "partial_tau_ci": [
+          -0.004744,
+          0.244316
+        ],
+        "partial_category": "not interpretable (A5)",
+        "agreement_through_competence": false
+      },
+      {
+        "pair": "D1-D4",
+        "tau": 0.256077,
+        "tau_ci": [
+          0.020274,
+          0.493601
+        ],
+        "category": "disagree",
+        "spearman": 0.326319,
+        "spearman_ci": [
+          -0.051449,
+          0.663393
+        ],
+        "partial_tau": 0.072272,
+        "partial_tau_ci": [
+          -0.047623,
+          0.181847
+        ],
+        "partial_category": "not interpretable (A5)",
+        "agreement_through_competence": false
+      },
+      {
+        "pair": "D2-D3",
+        "tau": 0.289377,
+        "tau_ci": [
+          0.100672,
+          0.451732
+        ],
+        "category": "disagree",
+        "spearman": 0.450625,
+        "spearman_ci": [
+          0.180519,
+          0.643663
+        ],
+        "partial_tau": 0.148065,
+        "partial_tau_ci": [
+          -0.017268,
+          0.311107
+        ],
+        "partial_category": "disagree",
+        "agreement_through_competence": false
+      },
+      {
+        "pair": "D2-D4",
+        "tau": 0.209457,
+        "tau_ci": [
+          -0.082073,
+          0.456658
+        ],
+        "category": "disagree",
+        "spearman": 0.276066,
+        "spearman_ci": [
+          -0.160254,
+          0.615273
+        ],
+        "partial_tau": 0.147657,
+        "partial_tau_ci": [
+          -0.129201,
+          0.39633
+        ],
+        "partial_category": "disagree",
+        "agreement_through_competence": false
+      },
+      {
+        "pair": "D3-D4",
+        "tau": 0.099567,
+        "tau_ci": [
+          -0.183633,
+          0.361031
+        ],
+        "category": "disagree",
+        "spearman": 0.125305,
+        "spearman_ci": [
+          -0.279648,
+          0.495628
+        ],
+        "partial_tau": -0.060626,
+        "partial_tau_ci": [
+          -0.239503,
+          0.116077
+        ],
+        "partial_category": "disagree",
+        "agreement_through_competence": false
+      }
+    ],
+    "kendall_w": 0.544035,
+    "tau_with_competence": {
+      "D1": 0.970525,
+      "D2": 0.295087,
+      "D3": 0.595504,
+      "D4": 0.246461
+    },
+    "a5_d1_not_interpretable": true,
+    "kendall_w_ci": [
+      0.390654,
+      0.683385
+    ],
+    "kendall_w_residual": 0.347608,
+    "kendall_w_residual_ci": [
+      0.2186,
+      0.427894
+    ],
+    "all_pairs_agree": false
+  },
+  "A3": {
+    "competence_by_arch_scale": {
+      "lstm/large": {
+        "n": 9,
+        "mean": 0.920178,
+        "min": 0.8679,
+        "max": 0.9559
+      },
+      "lstm/medium": {
+        "n": 9,
+        "mean": 0.8881,
+        "min": 0.8174,
+        "max": 0.9507
+      },
+      "lstm/small": {
+        "n": 6,
+        "mean": 0.946567,
+        "min": 0.9342,
+        "max": 0.957
+      },
+      "mamba/large": {
+        "n": 9,
+        "mean": 0.979133,
+        "min": 0.9522,
+        "max": 0.9929
+      },
+      "mamba/medium": {
+        "n": 9,
+        "mean": 0.9636,
+        "min": 0.9242,
+        "max": 0.9844
+      },
+      "mamba/small": {
+        "n": 9,
+        "mean": 0.943744,
+        "min": 0.8942,
+        "max": 0.9691
+      },
+      "transformer/large": {
+        "n": 9,
+        "mean": 0.977256,
+        "min": 0.9497,
+        "max": 0.9921
+      },
+      "transformer/medium": {
+        "n": 9,
+        "mean": 0.956578,
+        "min": 0.9112,
+        "max": 0.9813
+      },
+      "transformer/small": {
+        "n": 9,
+        "mean": 0.925644,
+        "min": 0.8743,
+        "max": 0.9549
+      }
+    },
+    "n_at_or_above_0.90": 64,
+    "sensitivity_h1": {
+      "n_models": 64,
+      "pairs": [
+        {
+          "pair": "D1-D2",
+          "tau": 0.228175,
+          "tau_ci": [
+            -0.052841,
+            0.522535
+          ],
+          "category": "disagree",
+          "spearman": 0.228938,
+          "spearman_ci": [
+            -0.217412,
+            0.682041
+          ],
+          "partial_tau": 0.105556,
+          "partial_tau_ci": [
+            0.00306,
+            0.217679
+          ],
+          "partial_category": "not interpretable (A5)",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D1-D3",
+          "tau": 0.581349,
+          "tau_ci": [
+            0.318981,
+            0.734677
+          ],
+          "category": "agree",
+          "spearman": 0.766209,
+          "spearman_ci": [
+            0.442207,
+            0.904234
+          ],
+          "partial_tau": 0.126005,
+          "partial_tau_ci": [
+            0.0117,
+            0.285924
+          ],
+          "partial_category": "not interpretable (A5)",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D1-D4",
+          "tau": 0.22619,
+          "tau_ci": [
+            -0.077177,
+            0.504393
+          ],
+          "category": "disagree",
+          "spearman": 0.309249,
+          "spearman_ci": [
+            -0.161811,
+            0.670696
+          ],
+          "partial_tau": 0.076766,
+          "partial_tau_ci": [
+            -0.061664,
+            0.220452
+          ],
+          "partial_category": "not interpretable (A5)",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D2-D3",
+          "tau": 0.228175,
+          "tau_ci": [
+            -0.026059,
+            0.454008
+          ],
+          "category": "disagree",
+          "spearman": 0.342766,
+          "spearman_ci": [
+            -0.041854,
+            0.617978
+          ],
+          "partial_tau": 0.135745,
+          "partial_tau_ci": [
+            -0.052284,
+            0.314486
+          ],
+          "partial_category": "disagree",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D2-D4",
+          "tau": 0.208333,
+          "tau_ci": [
+            -0.098089,
+            0.484613
+          ],
+          "category": "disagree",
+          "spearman": 0.262042,
+          "spearman_ci": [
+            -0.195842,
+            0.636311
+          ],
+          "partial_tau": 0.171505,
+          "partial_tau_ci": [
+            -0.128324,
+            0.455409
+          ],
+          "partial_category": "disagree",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D3-D4",
+          "tau": 0.081349,
+          "tau_ci": [
+            -0.215737,
+            0.351354
+          ],
+          "category": "disagree",
+          "spearman": 0.095788,
+          "spearman_ci": [
+            -0.361374,
+            0.491533
+          ],
+          "partial_tau": -0.052077,
+          "partial_tau_ci": [
+            -0.248941,
+            0.138442
+          ],
+          "partial_category": "disagree",
+          "agreement_through_competence": false
+        }
+      ],
+      "kendall_w": 0.500624,
+      "tau_with_competence": {
+        "D1": 0.962044,
+        "D2": 0.207889,
+        "D3": 0.575043,
+        "D4": 0.213843
+      },
+      "a5_d1_not_interpretable": true,
+      "kendall_w_ci": [
+        0.340492,
+        0.659797
+      ],
+      "kendall_w_residual": 0.355655,
+      "kendall_w_residual_ci": [
+        0.222783,
+        0.44612
+      ],
+      "all_pairs_agree": false
+    }
+  },
+  "H2": {
+    "n_models": 78,
+    "mean_disagreement": 0.181987,
+    "noise_floor_score_sd_by_diagnostic": {
+      "D1": 0.004375,
+      "D2": 0.005901,
+      "D3": 0.00656,
+      "D4": 0.011318
+    },
+    "noise_floor_disagreement_sd": 0.02341,
+    "n_configs_with_seeds": 26,
+    "factors": [
+      {
+        "factor": "arch",
+        "F": 7.761145,
+        "df": [
+          2,
+          71
+        ],
+        "p": 0.000895,
+        "level_means": {
+          "lstm": 0.160976,
+          "mamba": 0.162058,
+          "transformer": 0.220591
+        },
+        "effect": 0.059615,
+        "p_holm": 0.002684,
+        "systematic": true
+      },
+      {
+        "factor": "scale",
+        "F": 1.537245,
+        "df": [
+          2,
+          71
+        ],
+        "p": 0.222041,
+        "level_means": {
+          "large": 0.197716,
+          "medium": 0.179054,
+          "small": 0.167591
+        },
+        "effect": 0.030125,
+        "p_holm": 0.222041,
+        "systematic": false
+      },
+      {
+        "factor": "distribution",
+        "F": 3.226654,
+        "df": [
+          2,
+          71
+        ],
+        "p": 0.045578,
+        "level_means": {
+          "noisy_shortest_paths": 0.156167,
+          "random_walks": 0.20196,
+          "shortest_paths": 0.190052
+        },
+        "effect": 0.045793,
+        "p_holm": 0.091155,
+        "systematic": false
+      }
+    ],
+    "verdict": "systematic"
+  },
+  "fragility_distribution": {
+    "fragility": {
+      "n": 78,
+      "mean": 0.162394,
+      "sd": 0.11561,
+      "min": -0.005095,
+      "max": 0.340804,
+      "p05_p25_p50_p75_p95": [
+        0.004089,
+        0.014248,
+        0.202549,
+        0.255593,
+        0.31384
+      ],
+      "share_negative": 0.012821,
+      "share_within_0.01_of_0": 0.166667,
+      "mean_by_arch": {
+        "lstm": 0.127135,
+        "mamba": 0.167278,
+        "transformer": 0.18885
+      }
+    },
+    "relative_fragility": {
+      "n": 78,
+      "mean": 0.168263,
+      "sd": 0.118671,
+      "min": -0.00593,
+      "max": 0.348615,
+      "p05_p25_p50_p75_p95": [
+        0.00431,
+        0.015519,
+        0.20681,
+        0.267678,
+        0.331422
+      ],
+      "share_negative": 0.012821,
+      "share_within_0.01_of_0": 0.153846,
+      "mean_by_arch": {
+        "lstm": 0.135872,
+        "mamba": 0.170866,
+        "transformer": 0.194451
+      }
+    }
+  },
+  "H3": {
+    "n_models": 78,
+    "n_configurations": 26,
+    "outcome": "rel_frag",
+    "D1_reference": {
+      "spearman": 0.63692,
+      "ci": [
+        0.310622,
+        0.807909
+      ]
+    },
+    "D2": {
+      "partial_spearman_given_D1": -0.596531,
+      "ci": [
+        -0.780121,
+        -0.224321
+      ],
+      "adds_to_D1": true,
+      "regression_coef": -1.234578,
+      "regression_se": 0.108705,
+      "regression_ci": [
+        -1.925382,
+        -0.842083
+      ],
+      "regression_ci_model_based_t": [
+        -1.45133,
+        -1.017825
+      ],
+      "regression_dof": 71
+    },
+    "D3": {
+      "partial_spearman_given_D1": -0.066483,
+      "ci": [
+        -0.384213,
+        0.295788
+      ],
+      "adds_to_D1": false,
+      "regression_coef": 0.592258,
+      "regression_se": 0.277989,
+      "regression_ci": [
+        -0.881667,
+        1.544955
+      ],
+      "regression_ci_model_based_t": [
+        0.037964,
+        1.146553
+      ],
+      "regression_dof": 71
+    },
+    "D4": {
+      "partial_spearman_given_D1": -0.376849,
+      "ci": [
+        -0.695689,
+        0.055956
+      ],
+      "adds_to_D1": false,
+      "regression_coef": -0.552092,
+      "regression_se": 0.141059,
+      "regression_ci": [
+        -1.159663,
+        0.019905
+      ],
+      "regression_ci_model_based_t": [
+        -0.833356,
+        -0.270828
+      ],
+      "regression_dof": 71
+    },
+    "strongest": "D2",
+    "strongest_minus_others_ci": {
+      "D2-D3": [
+        -0.929421,
+        -0.047602
+      ],
+      "D2-D4": [
+        -0.681442,
+        0.291181
+      ]
+    },
+    "best_predictor": "no single diagnostic wins",
+    "any_adds_to_D1": true
+  },
+  "H3_secondary": {
+    "n_models": 78,
+    "fragility": {
+      "by_diagnostic": {
+        "D1": {
+          "spearman": 0.656192,
+          "ci": [
+            0.344596,
+            0.819487
+          ],
+          "regression_coef": 2.388885,
+          "regression_se": 0.216102,
+          "regression_ci": [
+            1.703893,
+            3.547421
+          ]
+        },
+        "D2": {
+          "spearman": -0.145361,
+          "ci": [
+            -0.528179,
+            0.276153
+          ],
+          "regression_coef": -1.403883,
+          "regression_se": 0.232001,
+          "regression_ci": [
+            -2.272207,
+            -0.650448
+          ]
+        },
+        "D3": {
+          "spearman": 0.474121,
+          "ci": [
+            0.124486,
+            0.705963
+          ],
+          "regression_coef": 1.756296,
+          "regression_se": 0.33706,
+          "regression_ci": [
+            0.555767,
+            3.000036
+          ]
+        },
+        "D4": {
+          "spearman": -0.05889,
+          "ci": [
+            -0.442965,
+            0.381269
+          ],
+          "regression_coef": 0.49015,
+          "regression_se": 0.181087,
+          "regression_ci": [
+            -0.185089,
+            1.187715
+          ]
+        }
+      },
+      "strongest": "D2",
+      "strongest_minus_others_ci": {
+        "D2-D1": [
+          -1.101261,
+          -0.395873
+        ],
+        "D2-D3": [
+          -0.936246,
+          -0.212906
+        ],
+        "D2-D4": [
+          -0.552046,
+          0.409146
+        ]
+      },
+      "best_predictor_section4": "no single diagnostic wins",
+      "D1_differs_from_0": true
+    },
+    "relative_fragility": {
+      "by_diagnostic": {
+        "D1": {
+          "spearman": 0.63692,
+          "ci": [
+            0.310622,
+            0.807909
+          ],
+          "regression_coef": 2.449505,
+          "regression_se": 0.224228,
+          "regression_ci": [
+            1.72717,
+            3.605522
+          ]
+        },
+        "D2": {
+          "spearman": -0.16395,
+          "ci": [
+            -0.5468,
+            0.256594
+          ],
+          "regression_coef": -1.439237,
+          "regression_se": 0.239501,
+          "regression_ci": [
+            -2.345608,
+            -0.692678
+          ]
+        },
+        "D3": {
+          "spearman": 0.458187,
+          "ci": [
+            0.114139,
+            0.687107
+          ],
+          "regression_coef": 1.764711,
+          "regression_se": 0.350289,
+          "regression_ci": [
+            0.5149,
+            3.039584
+          ]
+        },
+        "D4": {
+          "spearman": -0.066781,
+          "ci": [
+            -0.448114,
+            0.37223
+          ],
+          "regression_coef": 0.491204,
+          "regression_se": 0.18701,
+          "regression_ci": [
+            -0.204906,
+            1.212074
+          ]
+        }
+      },
+      "strongest": "D2",
+      "strongest_minus_others_ci": {
+        "D2-D1": [
+          -1.100618,
+          -0.395516
+        ],
+        "D2-D3": [
+          -0.934822,
+          -0.218519
+        ],
+        "D2-D4": [
+          -0.561982,
+          0.4082
+        ]
+      },
+      "best_predictor_section4": "no single diagnostic wins",
+      "D1_differs_from_0": true
+    }
+  },
+  "H3_causal_flag": {
+    "causal_labels": {
+      "not decodable": 58,
+      "decodable but not causal": 8,
+      "decodable and causal": 12
+    },
+    "flag_beyond_D4": {
+      "n_models": 78,
+      "n_causal": 12,
+      "regression_coef": 0.046507,
+      "regression_ci": [
+        -0.083371,
+        0.16261
+      ],
+      "regression_ci_model_based_t": [
+        -0.03434,
+        0.127355
+      ],
+      "partial_spearman_given_D4": 0.114624,
+      "partial_ci": [
+        -0.226456,
+        0.423272
+      ],
+      "adds_to_D4": false
+    }
+  },
+  "G10_training_distribution_control": {
+    "n_models": 78,
+    "outcome": "rel_frag",
+    "a_regression_with_distribution": {
+      "D2": {
+        "coef": -0.181338,
+        "ci": [
+          -1.077139,
+          0.899841
+        ],
+        "adds_to_D1_within_distributions": false
+      },
+      "D3": {
+        "coef": -0.353801,
+        "ci": [
+          -0.9317,
+          0.334517
+        ],
+        "adds_to_D1_within_distributions": false
+      },
+      "D4": {
+        "coef": -0.303627,
+        "ci": [
+          -0.823299,
+          0.299024
+        ],
+        "adds_to_D1_within_distributions": false
+      }
+    },
+    "b_within_distribution": {
+      "noisy_shortest_paths": {
+        "n_models": 27,
+        "n_configurations": 9,
+        "D2": {
+          "partial_spearman_given_D1": 0.044321,
+          "ci": [
+            -0.392068,
+            0.56995
+          ],
+          "adds_to_D1": false
+        },
+        "D3": {
+          "partial_spearman_given_D1": 0.461616,
+          "ci": [
+            -0.140784,
+            0.757672
+          ],
+          "adds_to_D1": false
+        },
+        "D4": {
+          "partial_spearman_given_D1": -0.447819,
+          "ci": [
+            -0.869647,
+            0.419568
+          ],
+          "adds_to_D1": false
+        }
+      },
+      "random_walks": {
+        "n_models": 24,
+        "n_configurations": 8,
+        "D2": {
+          "partial_spearman_given_D1": 0.010221,
+          "ci": [
+            -0.594374,
+            0.55018
+          ],
+          "adds_to_D1": false
+        },
+        "D3": {
+          "partial_spearman_given_D1": 0.243275,
+          "ci": [
+            -0.173222,
+            0.476146
+          ],
+          "adds_to_D1": false
+        },
+        "D4": {
+          "partial_spearman_given_D1": -0.169926,
+          "ci": [
+            -0.617922,
+            0.488823
+          ],
+          "adds_to_D1": false
+        }
+      },
+      "shortest_paths": {
+        "n_models": 27,
+        "n_configurations": 9,
+        "D2": {
+          "partial_spearman_given_D1": 0.096769,
+          "ci": [
+            -0.501713,
+            0.684741
+          ],
+          "adds_to_D1": false
+        },
+        "D3": {
+          "partial_spearman_given_D1": -0.017606,
+          "ci": [
+            -0.519821,
+            0.524099
+          ],
+          "adds_to_D1": false
+        },
+        "D4": {
+          "partial_spearman_given_D1": -0.45427,
+          "ci": [
+            -0.901245,
+            0.399973
+          ],
+          "adds_to_D1": false
+        }
+      }
+    }
+  },
+  "H6_sensitivity_secondary_D4": {
+    "note": "Amendment 6 H6: H1 to H3 with the secondary D4 number in place of the primary; the primary decides",
+    "H1": {
+      "n_models": 78,
+      "pairs": [
+        {
+          "pair": "D1-D2",
+          "tau": 0.310023,
+          "tau_ci": [
+            0.103466,
+            0.520543
+          ],
+          "category": "partial",
+          "spearman": 0.403306,
+          "spearman_ci": [
+            0.055924,
+            0.693048
+          ],
+          "partial_tau": 0.102635,
+          "partial_tau_ci": [
+            0.019588,
+            0.186633
+          ],
+          "partial_category": "not interpretable (A5)",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D1-D3",
+          "tau": 0.59707,
+          "tau_ci": [
+            0.362893,
+            0.743696
+          ],
+          "category": "agree",
+          "spearman": 0.77066,
+          "spearman_ci": [
+            0.480943,
+            0.908704
+          ],
+          "partial_tau": 0.098748,
+          "partial_tau_ci": [
+            -0.004744,
+            0.244316
+          ],
+          "partial_category": "not interpretable (A5)",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D1-D4",
+          "tau": 0.645688,
+          "tau_ci": [
+            0.452092,
+            0.784275
+          ],
+          "category": "agree",
+          "spearman": 0.82582,
+          "spearman_ci": [
+            0.629442,
+            0.929481
+          ],
+          "partial_tau": 0.172326,
+          "partial_tau_ci": [
+            0.035758,
+            0.288408
+          ],
+          "partial_category": "not interpretable (A5)",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D2-D3",
+          "tau": 0.289377,
+          "tau_ci": [
+            0.100672,
+            0.451732
+          ],
+          "category": "disagree",
+          "spearman": 0.450625,
+          "spearman_ci": [
+            0.180519,
+            0.643663
+          ],
+          "partial_tau": 0.148065,
+          "partial_tau_ci": [
+            -0.017268,
+            0.311107
+          ],
+          "partial_category": "disagree",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D2-D4",
+          "tau": 0.385947,
+          "tau_ci": [
+            0.15653,
+            0.573459
+          ],
+          "category": "partial",
+          "spearman": 0.548123,
+          "spearman_ci": [
+            0.216975,
+            0.776857
+          ],
+          "partial_tau": 0.269347,
+          "partial_tau_ci": [
+            0.039102,
+            0.456386
+          ],
+          "partial_category": "disagree",
+          "agreement_through_competence": false
+        },
+        {
+          "pair": "D3-D4",
+          "tau": 0.465201,
+          "tau_ci": [
+            0.24225,
+            0.623283
+          ],
+          "category": "partial",
+          "spearman": 0.65642,
+          "spearman_ci": [
+            0.368777,
+            0.823689
+          ],
+          "partial_tau": 0.14259,
+          "partial_tau_ci": [
+            -0.013463,
+            0.31598
+          ],
+          "partial_category": "disagree",
+          "agreement_through_competence": false
+        }
+      ],
+      "kendall_w": 0.706869,
+      "tau_with_competence": {
+        "D1": 0.970525,
+        "D2": 0.295087,
+        "D3": 0.595504,
+        "D4": 0.63214
+      },
+      "a5_d1_not_interpretable": true,
+      "kendall_w_ci": [
+        0.571041,
+        0.800807
+      ],
+      "kendall_w_residual": 0.399853,
+      "kendall_w_residual_ci": [
+        0.276869,
+        0.48442
+      ],
+      "all_pairs_agree": false
+    },
+    "H2": {
+      "n_models": 78,
+      "mean_disagreement": 0.140332,
+      "noise_floor_score_sd_by_diagnostic": {
+        "D1": 0.004375,
+        "D2": 0.005901,
+        "D3": 0.00656,
+        "D4": 0.010433
+      },
+      "noise_floor_disagreement_sd": 0.026671,
+      "n_configs_with_seeds": 26,
+      "factors": [
+        {
+          "factor": "arch",
+          "F": 0.944693,
+          "df": [
+            2,
+            71
+          ],
+          "p": 0.393631,
+          "level_means": {
+            "lstm": 0.123504,
+            "mamba": 0.149414,
+            "transformer": 0.146208
+          },
+          "effect": 0.02591,
+          "p_holm": 0.787261,
+          "systematic": false
+        },
+        {
+          "factor": "scale",
+          "F": 0.608209,
+          "df": [
+            2,
+            71
+          ],
+          "p": 0.547136,
+          "level_means": {
+            "large": 0.146687,
+            "medium": 0.131126,
+            "small": 0.14354
+          },
+          "effect": 0.015561,
+          "p_holm": 0.787261,
+          "systematic": false
+        },
+        {
+          "factor": "distribution",
+          "F": 17.112647,
+          "df": [
+            2,
+            71
+          ],
+          "p": 1e-06,
+          "level_means": {
+            "noisy_shortest_paths": 0.087425,
+            "random_walks": 0.175692,
+            "shortest_paths": 0.161807
+          },
+          "effect": 0.088267,
+          "p_holm": 3e-06,
+          "systematic": true
+        }
+      ],
+      "verdict": "systematic"
+    },
+    "fragility_distribution": {
+      "fragility": {
+        "n": 78,
+        "mean": 0.162394,
+        "sd": 0.11561,
+        "min": -0.005095,
+        "max": 0.340804,
+        "p05_p25_p50_p75_p95": [
+          0.004089,
+          0.014248,
+          0.202549,
+          0.255593,
+          0.31384
+        ],
+        "share_negative": 0.012821,
+        "share_within_0.01_of_0": 0.166667,
+        "mean_by_arch": {
+          "lstm": 0.127135,
+          "mamba": 0.167278,
+          "transformer": 0.18885
+        }
+      },
+      "relative_fragility": {
+        "n": 78,
+        "mean": 0.168263,
+        "sd": 0.118671,
+        "min": -0.00593,
+        "max": 0.348615,
+        "p05_p25_p50_p75_p95": [
+          0.00431,
+          0.015519,
+          0.20681,
+          0.267678,
+          0.331422
+        ],
+        "share_negative": 0.012821,
+        "share_within_0.01_of_0": 0.153846,
+        "mean_by_arch": {
+          "lstm": 0.135872,
+          "mamba": 0.170866,
+          "transformer": 0.194451
+        }
+      }
+    },
+    "H3": {
+      "n_models": 78,
+      "n_configurations": 26,
+      "outcome": "rel_frag",
+      "D1_reference": {
+        "spearman": 0.63692,
+        "ci": [
+          0.310622,
+          0.807909
+        ]
+      },
+      "D2": {
+        "partial_spearman_given_D1": -0.596531,
+        "ci": [
+          -0.780121,
+          -0.224321
+        ],
+        "adds_to_D1": true,
+        "regression_coef": -1.234578,
+        "regression_se": 0.108705,
+        "regression_ci": [
+          -1.925382,
+          -0.842083
+        ],
+        "regression_ci_model_based_t": [
+          -1.45133,
+          -1.017825
+        ],
+        "regression_dof": 71
+      },
+      "D3": {
+        "partial_spearman_given_D1": -0.066483,
+        "ci": [
+          -0.384213,
+          0.295788
+        ],
+        "adds_to_D1": false,
+        "regression_coef": 0.592258,
+        "regression_se": 0.277989,
+        "regression_ci": [
+          -0.881667,
+          1.544955
+        ],
+        "regression_ci_model_based_t": [
+          0.037964,
+          1.146553
+        ],
+        "regression_dof": 71
+      },
+      "D4": {
+        "partial_spearman_given_D1": -0.527374,
+        "ci": [
+          -0.735614,
+          -0.04034
+        ],
+        "adds_to_D1": true,
+        "regression_coef": -0.366041,
+        "regression_se": 0.159564,
+        "regression_ci": [
+          -1.089219,
+          0.333327
+        ],
+        "regression_ci_model_based_t": [
+          -0.684202,
+          -0.04788
+        ],
+        "regression_dof": 71
+      },
+      "strongest": "D2",
+      "strongest_minus_others_ci": {
+        "D2-D3": [
+          -0.929421,
+          -0.047602
+        ],
+        "D2-D4": [
+          -0.537775,
+          0.311051
+        ]
+      },
+      "best_predictor": "no single diagnostic wins",
+      "any_adds_to_D1": true
+    },
+    "H3_secondary": {
+      "n_models": 78,
+      "fragility": {
+        "by_diagnostic": {
+          "D1": {
+            "spearman": 0.656192,
+            "ci": [
+              0.344596,
+              0.819487
+            ],
+            "regression_coef": 2.388885,
+            "regression_se": 0.216102,
+            "regression_ci": [
+              1.703893,
+              3.547421
+            ]
+          },
+          "D2": {
+            "spearman": -0.145361,
+            "ci": [
+              -0.528179,
+              0.276153
+            ],
+            "regression_coef": -1.403883,
+            "regression_se": 0.232001,
+            "regression_ci": [
+              -2.272207,
+              -0.650448
+            ]
+          },
+          "D3": {
+            "spearman": 0.474121,
+            "ci": [
+              0.124486,
+              0.705963
+            ],
+            "regression_coef": 1.756296,
+            "regression_se": 0.33706,
+            "regression_ci": [
+              0.555767,
+              3.000036
+            ]
+          },
+          "D4": {
+            "spearman": 0.317113,
+            "ci": [
+              -0.09948,
+              0.664419
+            ],
+            "regression_coef": 0.715797,
+            "regression_se": 0.129152,
+            "regression_ci": [
+              0.259339,
+              1.186468
+            ]
+          }
+        },
+        "strongest": "D2",
+        "strongest_minus_others_ci": {
+          "D2-D1": [
+            -1.101261,
+            -0.395873
+          ],
+          "D2-D3": [
+            -0.936246,
+            -0.212906
+          ],
+          "D2-D4": [
+            -0.800517,
+            -0.064942
+          ]
+        },
+        "best_predictor_section4": "D2",
+        "D1_differs_from_0": true
+      },
+      "relative_fragility": {
+        "by_diagnostic": {
+          "D1": {
+            "spearman": 0.63692,
+            "ci": [
+              0.310622,
+              0.807909
+            ],
+            "regression_coef": 2.449505,
+            "regression_se": 0.224228,
+            "regression_ci": [
+              1.72717,
+              3.605522
+            ]
+          },
+          "D2": {
+            "spearman": -0.16395,
+            "ci": [
+              -0.5468,
+              0.256594
+            ],
+            "regression_coef": -1.439237,
+            "regression_se": 0.239501,
+            "regression_ci": [
+              -2.345608,
+              -0.692678
+            ]
+          },
+          "D3": {
+            "spearman": 0.458187,
+            "ci": [
+              0.114139,
+              0.687107
+            ],
+            "regression_coef": 1.764711,
+            "regression_se": 0.350289,
+            "regression_ci": [
+              0.5149,
+              3.039584
+            ]
+          },
+          "D4": {
+            "spearman": 0.296703,
+            "ci": [
+              -0.127198,
+              0.651664
+            ],
+            "regression_coef": 0.727977,
+            "regression_se": 0.133722,
+            "regression_ci": [
+              0.256759,
+              1.213738
+            ]
+          }
+        },
+        "strongest": "D2",
+        "strongest_minus_others_ci": {
+          "D2-D1": [
+            -1.100618,
+            -0.395516
+          ],
+          "D2-D3": [
+            -0.934822,
+            -0.218519
+          ],
+          "D2-D4": [
+            -0.80003,
+            -0.06006
+          ]
+        },
+        "best_predictor_section4": "D2",
+        "D1_differs_from_0": true
+      }
+    },
+    "H3_causal_flag": {
+      "causal_labels": {
+        "not decodable": 58,
+        "decodable but not causal": 8,
+        "decodable and causal": 12
+      },
+      "flag_beyond_D4": {
+        "n_models": 78,
+        "n_causal": 12,
+        "regression_coef": -0.007322,
+        "regression_ci": [
+          -0.14339,
+          0.093066
+        ],
+        "regression_ci_model_based_t": [
+          -0.082232,
+          0.067587
+        ],
+        "partial_spearman_given_D4": -0.045202,
+        "partial_ci": [
+          -0.406243,
+          0.275901
+        ],
+        "adds_to_D4": false
+      }
+    }
+  },
+  "G9_secondary": {
+    "n_models": 78,
+    "outcome": "free play share_drives_no_illegal",
+    "note": "preregistered secondary (G9): reported, not used in any H decision",
+    "D1": {
+      "spearman": 0.576503,
+      "ci": [
+        0.237826,
+        0.781684
+      ]
+    },
+    "D2": {
+      "spearman": 0.330069,
+      "ci": [
+        -0.033377,
+        0.583504
+      ]
+    },
+    "D3": {
+      "spearman": 0.420377,
+      "ci": [
+        0.008837,
+        0.692998
+      ]
+    },
+    "D4": {
+      "spearman": 0.325358,
+      "ci": [
+        -0.097792,
+        0.629175
+      ]
+    }
+  },
+  "D3_shortcut": {
+    "n_models": 78,
+    "note": "descriptive (G6): D3 score against its mean shortcut agreement over T1, T2, T4",
+    "spearman": 0.408414,
+    "ci": [
+      0.124153,
+      0.622434
+    ],
+    "mean_shortcut_agreement": 0.611473
+  },
+  "anchors": [
+    {
+      "model_id": "maps_vafa_shortest_paths",
+      "D1": 0.999946,
+      "D2": 0.65698,
+      "D3": 0.211927,
+      "D4": 0.532739,
+      "D1_status": "ok",
+      "D2_status": "ok",
+      "D3_status": "ok",
+      "D4_status": "ok",
+      "D4_secondary": 0.78667,
+      "causal_label": "decodable but not causal",
+      "fragility_status": "not the frozen suite (hash 9e928fd7f49b)",
+      "frag": null,
+      "in_dist": null,
+      "rel_frag": null,
+      "G9_status": "missing",
+      "g9_teacher_forced_all_legal": null,
+      "g9_no_illegal": null,
+      "g9_reached": null
+    },
+    {
+      "model_id": "maps_vafa_noisy_shortest_paths",
+      "D1": null,
+      "D2": null,
+      "D3": null,
+      "D4": null,
+      "D1_status": "missing",
+      "D2_status": "missing",
+      "D3_status": "skipped",
+      "D4_status": "missing",
+      "D4_secondary": null,
+      "causal_label": null,
+      "fragility_status": "missing",
+      "frag": null,
+      "in_dist": null,
+      "rel_frag": null,
+      "G9_status": "missing",
+      "g9_teacher_forced_all_legal": null,
+      "g9_no_illegal": null,
+      "g9_reached": null
+    },
+    {
+      "model_id": "maps_vafa_random_walks",
+      "D1": null,
+      "D2": null,
+      "D3": null,
+      "D4": null,
+      "D1_status": "missing",
+      "D2_status": "missing",
+      "D3_status": "skipped",
+      "D4_status": "missing",
+      "D4_secondary": null,
+      "causal_label": null,
+      "fragility_status": "missing",
+      "frag": null,
+      "in_dist": null,
+      "rel_frag": null,
+      "G9_status": "missing",
+      "g9_teacher_forced_all_legal": null,
+      "g9_no_illegal": null,
+      "g9_reached": null
+    }
+  ]
+}

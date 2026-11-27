@@ -1,0 +1,4 @@
+model_id,D1,D2,D3,D4,D1_status,D2_status,D3_status,D4_status,D4_secondary,causal_label,fragility_status,frag,in_dist,rel_frag,G9_status,g9_teacher_forced_all_legal,g9_no_illegal,g9_reached
+maps_vafa_shortest_paths,0.9999456831699302,0.6569803797468354,0.21192687932378446,0.5327394693245702,ok,ok,ok,ok,0.7866700000000001,decodable but not causal,not the frozen suite (hash 9e928fd7f49b),,,,missing,,,
+maps_vafa_noisy_shortest_paths,,,,,missing,missing,skipped,missing,,,missing,,,,missing,,,
+maps_vafa_random_walks,,,,,missing,missing,skipped,missing,,,missing,,,,missing,,,

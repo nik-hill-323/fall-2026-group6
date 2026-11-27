@@ -1,0 +1,118 @@
+{
+  "label": "EXPLORATORY: Amendment 5 G10 asks for this on Othello too, labelled exploratory, because the Othello results were seen first",
+  "domain": "othello",
+  "outcome": "rel_frag_v2",
+  "n_models": 81,
+  "a_regression_with_distribution": {
+    "D2": {
+      "coef": 0.444805,
+      "ci": [
+        -0.168197,
+        1.046756
+      ],
+      "adds_to_D1_within_distributions": false
+    },
+    "D3": {
+      "coef": 0.631173,
+      "ci": [
+        -1.029779,
+        1.882674
+      ],
+      "adds_to_D1_within_distributions": false
+    },
+    "D4": {
+      "coef": 1.950957,
+      "ci": [
+        -0.370136,
+        2.718852
+      ],
+      "adds_to_D1_within_distributions": false
+    }
+  },
+  "b_within_distribution": {
+    "championship": {
+      "n_models": 27,
+      "n_configurations": 9,
+      "D2": {
+        "partial_spearman_given_D1": 0.078973,
+        "ci": [
+          -0.499164,
+          0.400439
+        ],
+        "adds_to_D1": false
+      },
+      "D3": {
+        "partial_spearman_given_D1": -0.490774,
+        "ci": [
+          -0.775606,
+          0.010488
+        ],
+        "adds_to_D1": false
+      },
+      "D4": {
+        "partial_spearman_given_D1": -0.530214,
+        "ci": [
+          -0.761064,
+          0.19052
+        ],
+        "adds_to_D1": false
+      }
+    },
+    "mixed": {
+      "n_models": 27,
+      "n_configurations": 9,
+      "D2": {
+        "partial_spearman_given_D1": 0.046868,
+        "ci": [
+          -0.326972,
+          0.525638
+        ],
+        "adds_to_D1": false
+      },
+      "D3": {
+        "partial_spearman_given_D1": -0.135804,
+        "ci": [
+          -0.33961,
+          0.429364
+        ],
+        "adds_to_D1": false
+      },
+      "D4": {
+        "partial_spearman_given_D1": 0.341042,
+        "ci": [
+          -0.220665,
+          0.665858
+        ],
+        "adds_to_D1": false
+      }
+    },
+    "synthetic": {
+      "n_models": 27,
+      "n_configurations": 9,
+      "D2": {
+        "partial_spearman_given_D1": -0.114376,
+        "ci": [
+          -0.356439,
+          0.381063
+        ],
+        "adds_to_D1": false
+      },
+      "D3": {
+        "partial_spearman_given_D1": 0.154957,
+        "ci": [
+          -0.152461,
+          0.607207
+        ],
+        "adds_to_D1": false
+      },
+      "D4": {
+        "partial_spearman_given_D1": 0.449458,
+        "ci": [
+          -0.22637,
+          0.725635
+        ],
+        "adds_to_D1": false
+      }
+    }
+  }
+}
