@@ -1,4 +1,4 @@
 model_id,D1,D2,D3,D4,D1_status,D2_status,D3_status,D4_status,D4_secondary,causal_label,fragility_status,frag,in_dist,rel_frag,G9_status,g9_teacher_forced_all_legal,g9_no_illegal,g9_reached
-maps_vafa_shortest_paths,0.9999456831699302,0.6569803797468354,0.21192687932378446,0.5327394693245702,ok,ok,ok,ok,0.7866700000000001,decodable but not causal,not the frozen suite (hash 9e928fd7f49b),,,,missing,,,
-maps_vafa_noisy_shortest_paths,,,,,missing,missing,skipped,missing,,,missing,,,,missing,,,
-maps_vafa_random_walks,,,,,missing,missing,skipped,missing,,,missing,,,,missing,,,
+maps_vafa_shortest_paths,0.9999456831699302,0.6569803797468354,0.21192687932378446,0.5327394693245702,ok,ok,ok,ok,0.7866700000000001,decodable but not causal,ok,0.3342707918790198,0.9999456831699302,0.3342889493950783,ok,0.998,0.983,0.988
+maps_vafa_noisy_shortest_paths,0.9998506933427894,0.6786767857142857,,0.5691196506224221,ok,ok,skipped,ok,0.80523,decodable but not causal,ok,0.2370209580146678,0.9998506933427894,0.2370563521061713,ok,0.992,0.951,0.972
+maps_vafa_random_walks,0.999959242729922,0.9990625,,0.7901000590980416,ok,ok,skipped,ok,0.9591999999999999,decodable and causal,ok,0.011254146124293093,0.999959242729922,0.011254604831261821,ok,0.998,0.999,0.964
