@@ -54,7 +54,9 @@ Tests: src/tests/test_hypotheses_maps.py (fake navigation zoos in the real file 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
+import io
 import csv
 import importlib.util
 import json
@@ -528,7 +530,11 @@ def _print(summary: dict[str, Any]) -> None:
         return
     s = copy.deepcopy(summary)
     s["counts"]["with_fragility_v2"] = s["counts"]["with_fragility"]
-    hy._print(s)
+    buf = io.StringIO()                       # hypotheses._print names the Othello suite; say which suite this is
+    with contextlib.redirect_stdout(buf):
+        hy._print(s)
+    print(buf.getvalue().replace("with fragility v2", "with fragility (maps-fragility-v1)")
+          .replace("H3 on rel_frag ", "H3 on relative fragility (maps-fragility-v1) "), end="")
 
 
 def main() -> None:

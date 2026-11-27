@@ -6,7 +6,7 @@
   "distribution": "shortest_paths",
   "seed": 0,
   "suite_version": "maps-fragility-v1",
-  "suite_hash": "9e928fd7f49b",
+  "suite_hash": "47068aee3f4b",
   "train_distribution": "shortest_paths",
   "in_distribution_legal_rate": 0.9999456831699302,
   "legal_rate": {
@@ -580,7 +580,7 @@
     "detour/adversarial/p=0.5": 0.5004924311247884,
     "least_visited": 0.001049129634037351
   },
-  "pilot_rule_applied": false,
+  "pilot_rule_applied": true,
   "excluded_by_pilot_rule": [],
   "drops_used": [
     "cross_distribution/noisy_shortest_paths",
@@ -594,11 +594,11 @@
   "fragility": 0.3342707918790198,
   "relative_fragility": 0.3342889493950783,
   "provenance": {
-    "git_commit": "28d3039",
-    "time_utc": "2026-11-22T07:31:38Z",
+    "git_commit": "d538200",
+    "time_utc": "2026-11-25T03:17:04Z",
     "python": "3.13.15",
     "host": "ip-10-0-2-159",
-    "runtime_sec": 162.2,
+    "runtime_sec": 163.5,
     "torch": "2.13.0+cu130",
     "gpu": "NVIDIA A10G",
     "numpy": "2.4.4"

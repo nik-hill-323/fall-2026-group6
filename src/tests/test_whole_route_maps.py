@@ -266,12 +266,18 @@ def _runner(*args: str, jobs: str) -> subprocess.CompletedProcess:
 def test_runner_plans_g9() -> None:
     out = _runner("pilots", "--dry_run", jobs="G9")
     assert out.returncode == 0, out.stdout + out.stderr
-    plans = [line for line in out.stdout.splitlines() if line.startswith("[plan]") and " G9 " in line]
+    lines = out.stdout.splitlines()
+    plans = [line for line in lines if line.startswith("[plan]") and " G9 " in line]
     assert all("src/analysis/whole_route_maps.py" in p for p in plans)
+    # a pilot whose G9 result is committed is skipped, not planned; together they must cover all 9 pilots
     pilots = [p for p in plans if "_s100 " in p]
-    assert len(pilots) == 9 and all("results/pilot_scoring/whole_route_maps/" in p for p in pilots)
+    done = [line.split()[1] for line in lines if line.startswith("[skip]") and line.endswith(" G9 (result exists)")]
+    done_pilots = [m for m in done if m.endswith("_s100")]
+    assert len(pilots) + len(done_pilots) == 9
+    assert all("results/pilot_scoring/whole_route_maps/" in p for p in pilots)
+    assert all((ROOT / "results/pilot_scoring/whole_route_maps" / f"{m}.json").exists() for m in done_pilots)
     anchors = [p for p in plans if "maps_vafa_" in p]                 # only on a machine with their weights
-    assert len(plans) == 9 + len(anchors)
+    assert len(plans) == len(pilots) + len(anchors)
     assert all("-> results/whole_route_maps/" in p for p in anchors)
     big = [p for p in anchors if "maps_vafa_shortest_paths" not in p]
     assert all("--batch 32" in p for p in big)
